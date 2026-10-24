@@ -586,7 +586,9 @@
     var u = String(url || '').trim();
     if (!u) return false;
     if (/^(?:javascript|data|vbscript):/i.test(u)) return false;
-    return /^(?:https?:|mailto:|tel:|#|\/|\.\/|\.\.\/)/i.test(u);
+    if (/^\/\//.test(u)) return false;
+    if (/^[a-z][a-z0-9+.\-]*:/i.test(u)) return /^(?:https?:|mailto:|tel:)/i.test(u);
+    return true;
   }
 
   function makeInline() {
@@ -928,7 +930,8 @@
     isQuestionLike: isQuestionLike,
     pickTemplate: pickTemplate,
     unzipFiles: unzipFiles,
-    unzipTextFiles: unzipTextFiles
+    unzipTextFiles: unzipTextFiles,
+    decodeBytes: decodeBytes
   };
 
   global.MDReviewCore = API;

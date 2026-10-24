@@ -49,9 +49,11 @@ python -m http.server 8788 --directory dist
 
 > **打不开/白屏**：先换本地 HTTP 服务方式（方式 0）；文件很小（180 KB），基本不可能是体积问题。
 
+> **图片**：导入时把 md 引用的图片一起选中即可（也支持 zip 打包、电脑端整文件夹）。图片按**文件名**匹配 md 里的引用（如 `![](images/a.png)` 取 `a.png`），同名覆盖，只存本机；「备份全部」不含图片，换机后重新导入一次即可。
+>
 > **手机端只能单选文件？** 这是部分系统文件选择器（如 ColorOS）的限制，不是网页坏了：
-> - 在导入弹层里**分几次**点「选择 .md 文件」，每次加一个，最后一起「导入全部」；
-> - 或者把多个 md **在电脑上压成一个 zip**，手机端选这个 zip，网页在本地解压后批量导入。
+> - 在导入弹层里**分几次**点「选择文件」，每次加一个，最后一起「导入全部」；
+> - 或者把 md 和图片**在电脑上压成一个 zip**，手机端选这个 zip，网页在本地解压后批量导入。
 >
 > 数据存在浏览器本地（IndexedDB，失败时退化为 localStorage）。**清理浏览器数据会清掉卡片和进度**，记得用「备份全部」定期导出 json。
 
@@ -70,8 +72,8 @@ python -m http.server 8000
 
 **最简单：仓库根目录就有现成的 APK，直接下载安装**（debug 签名，安装时允许「未知来源」）：
 
-- GitHub：`https://raw.githubusercontent.com/fest77/flash-memory-cards/main/MDFlashCards-v1.7.1.apk`
-- Gitee：`https://gitee.com/festeel/flash-memory-cards/raw/main/MDFlashCards-v1.7.1.apk`
+- GitHub：`https://raw.githubusercontent.com/fest77/flash-memory-cards/main/MDFlashCards-v1.7.2.apk`
+- Gitee：`https://gitee.com/festeel/flash-memory-cards/raw/main/MDFlashCards-v1.7.2.apk`
 
 自己打包的其他方式：
 
@@ -195,7 +197,7 @@ cd android && gradle assembleDebug # 产物：app/build/outputs/apk/debug/app-de
 ## 5. 数据与备份
 
 - 全部数据只在本机浏览器：`IndexedDB`（不可用时 `localStorage`）。
-- 「备份全部」导出 json（含卡片 + 复习进度；**不含 API Key**），到新手机「恢复备份」。
+- 「备份全部」导出 json（含卡片 + 复习进度；**不含 API Key、不含图片**），到新手机「恢复备份」后重新导入图片即可。
 - 在 APK 里，备份会通过原生桥直接写进系统「下载/MD Flashcards」目录。
 - 删除笔记/卡片只影响本机，**不会改你的原始 .md 文件**。
 - AI 的 API Key 也只存本机，不上传。
@@ -207,7 +209,7 @@ cd android && gradle assembleDebug # 产物：app/build/outputs/apk/debug/app-de
 - **没有 SM-2 / FSRS 记忆曲线**：这是"随机抽背 / 主动回忆"工具，不做间隔排期。要记忆曲线请用 AnkiDroid（配 mdankideck 转 apkg）或 Obsidian + Spaced Repetition。
 - 单文件、单机；不做云同步（用 json 备份换机）。
 - 没有标题、没有分段、一整段几千字的笔记只能按段落切，卡片质量一般 → 建议补 `##` 小标题。
-- 自己导入 md 里的本地图片不会自动打包（`![](...)` 会渲染为 alt 文本）。
+- 图片按文件名匹配、只存本机且不进备份（见导入章节）；引用了图片但没导入图片时，卡面显示「图片未导入」占位。
 - 网页 AI 受浏览器 CORS 限制，不保证每个厂商都能直连（脚本方式不受限）。
 - 老安卓浏览器（不支持 IndexedDB / DecompressionStream）会退化：前者用 localStorage，后者 zip 导入不可用（可改选 md 文件）。
 
@@ -339,5 +341,6 @@ python scripts/build.py                      # 内联 → dist/md-flashcards.htm
 | 版本 | 变更 |
 |---|---|
 | 1.5 | 首个发布版：拆卡 / 随机复习 / 分类速记 / 管理 / 备份 / AI 提炼（BYO-key）/ Android 壳 |
+| 1.7.2 | 导入支持图片：md+图片多选 / zip 含图 / 文件夹，图片存本机并按文件名渲染进卡面；Android 选择器放行图片 |
 | 1.6 | 设置视图（右上角 ⚙）：浅色主题（默认深色）、简繁英三语切换、关于页；dist 精简为单文件 |
 | 1.7 | AI 多供应商管理（预置 DeepSeek/Z.ai/Kimi/Bailian/ChatGPT/Claude 按需添加 + 自定义，启停/多模型/测试连接），主页模型快捷切换弹窗，Claude 原生协议适配，备份文件不再包含 API Key |

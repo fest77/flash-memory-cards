@@ -187,7 +187,8 @@ Notes:
 | quick | `openQuick`/`renderQuick` (with TOC)/`toggleQuickToc`/`quickJump`/`toggleQuickAll` |
 | browse | `openBrowse`/`renderBrowse`/`openCardModal`/`saveCard`/`deleteCard` |
 | manage | `openManage`/`renderManage`/`openRenameModal`/`doRename`/`resetDeckProgress` |
-| backup | `backupJson` (via `stripAiKeys` — backups never contain API keys)/`showExport`/`downloadFile` (AndroidSaver bridge first)/`importBackup` |
+| backup | `backupJson` (via `stripAiKeys` — backups never contain API keys or images)/`showExport`/`downloadFile` (AndroidSaver bridge first)/`importBackup` |
+| user images | `IMG_URLS` (basename → objectURL)/`loadStoredImages` (kv keys `img/NAME` + `imgIndex`)/`storeImage`/`importImageFiles`/`importImageEntries` (zip)/`resolveImgSrc` (post-render `<img>` swap; missing → `.img-missing` chip)/`rememberImage` (test hook) |
 | AI | `aiChat` (openai + native anthropic `/v1/messages` protocols, fetch + timeout + error mapping)/`startAiRefine` (batched, question-only)/`parseAiQuestions` |
 | ai providers | `AI_PRESETS` (DeepSeek/Z.ai/Kimi/Bailian/ChatGPT/Claude, added on demand — not auto-seeded)/`normalizeAi` (migration)/`renderAiProviders`/`onProviderField`/`openAddProviderModal`/`addPreset`/`addCustomProvider`/`deleteProvider`/`testProviderModal` |
 | ai quick | `openAiQuick`/`pickAiQuick` — home modal to switch provider · model without opening settings |
@@ -287,3 +288,4 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.6 | repo build ships without bundled deck data (gitignored, regenerable); settings view (theme dark/light, zh-Hans/zh-Hant/en i18n, about page); dist reduced to a single ~180 KB file |
 | 1.7 | multi-provider AI settings (presets added on demand from an "add provider" sheet + custom, enable/disable, multi-model, per-provider test), home quick model-switcher modal, native Anthropic protocol support, API keys excluded from backups |
 | 1.7.1 | preset model lists refreshed to each vendor's current APIs (2026-10): DeepSeek v4.1-Flash-1017 (`deepseek-flash`), Z.ai GLM-5.3, Kimi K3.1, Bailian Qwen3.8, OpenAI GPT-6.1, Claude 5.5; untouched legacy presets auto-upgraded on load (keyed/edited ones untouched) |
+| 1.7.2 | image import: file picker accepts images (+zip/folder), images stored in IndexedDB (kv `img/*`), rendered into cards by filename via `resolveImgSrc`; `safeUrl` now allows relative paths; Android chooser MIME adds image types; ready-to-install APK shipped at repo root |

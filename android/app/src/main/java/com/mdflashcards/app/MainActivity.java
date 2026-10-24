@@ -103,7 +103,14 @@ public class MainActivity extends Activity {
                             "application/zip",
                             "application/x-zip-compressed",
                             "application/json",
-                            "application/octet-stream"
+                            "application/octet-stream",
+                            "image/png",
+                            "image/jpeg",
+                            "image/gif",
+                            "image/webp",
+                            "image/bmp",
+                            "image/svg+xml",
+                            "image/heic"
                     });
                     startActivityForResult(intent, REQ_PICK_FILES);
                     return true;

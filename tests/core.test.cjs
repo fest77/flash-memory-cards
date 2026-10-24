@@ -283,6 +283,22 @@ const zipAB = zipBytes.buffer.slice(zipBytes.byteOffset, zipBytes.byteOffset + z
     assert.ok(err, '应当抛错');
   });
 
+  test('img 相对路径渲染', () => {
+    assert.ok(/<img src="images\/a\.png"/.test(Core.renderMarkdown('![](images/a.png)')));
+  });
+  test('img ./ 相对路径渲染', () => {
+    assert.ok(/<img src="\.\/pic\/b\.jpg"/.test(Core.renderMarkdown('![](./pic/b.jpg)')));
+  });
+  test('img javascript: 拒绝', () => {
+    assert.ok(Core.renderMarkdown('![](javascript:alert(1))').indexOf('<img') < 0);
+  });
+  test('img 协议相对 // 拒绝', () => {
+    assert.ok(Core.renderMarkdown('![](//evil.com/x.png)').indexOf('<img') < 0);
+  });
+  test('img http 外链保留', () => {
+    assert.ok(/<img src="https:\/\/x\.test\/c\.png"/.test(Core.renderMarkdown('![](https://x.test/c.png)')));
+  });
+
   console.log('\n============================');
   console.log('通过 ' + pass + ' / ' + (pass + failures.length));
   if (failures.length) {

@@ -562,6 +562,10 @@ a { color: var(--link); }
   box-shadow: 0 6px 20px -10px rgba(0,0,0,.65);
 }
 .rv-answer .md-img, .quick-a .md-img { max-height: 70vh; object-fit: contain; }
+.img-missing {
+  display: inline-block; padding: 3px 9px; border-radius: 7px;
+  background: var(--subtle); color: var(--muted); font-size: 12px; vertical-align: middle;
+}
 
 /* ---------------- 浅色主题（body.light） ---------------- */
 body.light {

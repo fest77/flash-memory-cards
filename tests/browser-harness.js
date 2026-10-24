@@ -135,6 +135,27 @@
         window.__zipError = String(err && err.message);
       });
 
+      window.__imgTest = { urls: null, html: null, missing: null, err: null };
+      window.addEventListener('unhandledrejection', function (ev) {
+        window.__imgTest.err = 'rej: ' + ((ev.reason && ev.reason.message) || ev.reason);
+      });
+      (function () {
+        var png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82]);
+        var f = new File([png], 'img/hello.png', { type: 'image/png' });
+        try { app.addQueueFiles([f]); } catch (e) { window.__imgTest.err = 'sync: ' + (e && e.message); }
+        setTimeout(function () {
+          try {
+            var ok = app.rememberImage('hello.png', new Blob([png], { type: 'image/png' }));
+            var urls = app.imgUrls();
+            window.__imgTest.urls = (ok ? 'ok:' : 'fail:') + Object.keys(urls).join(',');
+            window.__imgTest.html = app.resolveImgSrc('<img src="images/hello.png" alt="x" loading="lazy">');
+            window.__imgTest.missing = app.resolveImgSrc('<img src="images/nope.png" alt="y">');
+          } catch (e) {
+            window.__imgTest.err = String(e && e.message);
+          }
+        }, 400);
+      })();
+
       /* --- 复习 --- */
       q('[data-act="review"][data-deck="' + testDeckId + '"]').click();
       check('review active', q('#view-review').classList.contains('active'));
@@ -281,6 +302,15 @@
 
                   check('browser unzip works', !!window.__zipList && window.__zipList.length === 2,
                     window.__zipList ? window.__zipList.map(function (x) { return x.name; }).join(',') : (window.__zipError || 'pending'));
+
+                  check('img file input accepts images', (q('#fileInput').getAttribute('accept') || '').indexOf('image/*') >= 0,
+                    q('#fileInput').getAttribute('accept'));
+                  check('img stored and mapped', !!window.__imgTest && window.__imgTest.urls && window.__imgTest.urls.indexOf('ok:hello.png') === 0,
+                    window.__imgTest ? (window.__imgTest.urls || window.__imgTest.err || 'pending') : 'no-run');
+                  check('img src resolved to blob', !!window.__imgTest && window.__imgTest.html && window.__imgTest.html.indexOf('src="blob:') >= 0,
+                    window.__imgTest ? window.__imgTest.html : 'no-run');
+                  check('img missing placeholder', !!window.__imgTest && window.__imgTest.missing && window.__imgTest.missing.indexOf('img-missing') >= 0,
+                    window.__imgTest ? window.__imgTest.missing : 'no-run');
 
                   finish();
                 } catch (e) {

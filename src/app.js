@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.7.1';
+  var APP_VERSION = '1.7.2';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -83,11 +83,12 @@
       'toast.tooShort': '内容太短，没有导入', 'toast.noCards': '没有解析出卡片，试试换个「拆分方式」',
       'confirm.replaceDeck': '已存在同名笔记「{name}」，用新内容替换吗？（尽量保留已掌握进度）',
       'toast.cancelled': '已取消', 'toast.imported': '已导入「{name}」 {n} 张卡片',
-      'import.title': '导入笔记', 'import.pick': '📄 选择 .md 文件（可多选）', 'import.zip': '🗜️ 选择 .zip（一个包放多篇 md）', 'import.dir': '📁 导入整个文件夹（电脑端）',
-      'import.note': '手机端如果系统文件选择器只能单选：<b>分几次点「选择 .md 文件」</b>，把多篇笔记加进列表，最后点「导入全部」；或者把多个 md 压成一个 zip 再选。zip 只在浏览器本地解压，不上传。',
+      'import.title': '导入笔记', 'import.pick': '📄 选择文件（md 笔记 + 图片，可多选）', 'import.zip': '🗜️ 选择 .zip（多篇 md + 图片）', 'import.dir': '📁 导入整个文件夹（电脑端，含图片）',
+      'import.note': '图片按<b>文件名</b>匹配 md 里的引用（如 ![](images/a.png) 取 a.png），同名会覆盖。图片只存本机，<b>「备份全部」不含图片</b>，换机后重新导入即可。zip 只在本地解压，不上传。',
       'import.empty': '还没有选择文件', 'import.doAll': '导入全部', 'import.doAllCount': '导入全部（{n}）',
-      'toast.onlyMd': '只支持 .md / .markdown / .txt 文件', 'toast.noFile': '没有选择文件',
-      'toast.notZip': '请选择 .zip 文件', 'toast.unzipping': '正在解压…', 'toast.zipEmpty': 'zip 里没有找到 .md / .txt 文件',
+      'toast.onlyMd': '未识别的文件（支持 md / txt / 图片）', 'toast.noFile': '没有选择文件',
+      'toast.imgTaken': '已导入 {n} 张图片', 'toast.imgNoStore': '本机存储不可用，图片没有保存', 'img.missing': '图片未导入',
+      'toast.notZip': '请选择 .zip 文件', 'toast.unzipping': '正在解压…', 'toast.zipEmpty': 'zip 里没有找到 md / 图片文件',
       'toast.zipTaken': '已从 zip 中取出 {n} 篇笔记', 'toast.unzipFail': '解压失败：{msg}',
       'toast.queueEmpty': '先选择要导入的文件',
       'confirm.batchReplace': '有 {n} 个同名笔记，用新内容替换吗？（取消 = 跳过同名）',
@@ -190,11 +191,12 @@
       'toast.tooShort': '內容太短，沒有匯入', 'toast.noCards': '沒有解析出卡片，試試換個「拆分方式」',
       'confirm.replaceDeck': '已存在同名筆記「{name}」，用新內容替換嗎？（盡量保留已掌握進度）',
       'toast.cancelled': '已取消', 'toast.imported': '已匯入「{name}」 {n} 張卡片',
-      'import.title': '匯入筆記', 'import.pick': '📄 選擇 .md 檔案（可多選）', 'import.zip': '🗜️ 選擇 .zip（一個包放多篇 md）', 'import.dir': '📁 匯入整個資料夾（電腦端）',
-      'import.note': '手機端如果系統檔案選擇器只能單選：<b>分幾次點「選擇 .md 檔案」</b>，把多篇筆記加入清單，最後點「匯入全部」；或者把多個 md 壓成一個 zip 再選。zip 只在瀏覽器本機解壓，不上傳。',
+      'import.title': '匯入筆記', 'import.pick': '📄 選擇檔案（md 筆記 + 圖片，可多選）', 'import.zip': '🗜️ 選擇 .zip（多篇 md + 圖片）', 'import.dir': '📁 匯入整個資料夾（電腦端，含圖片）',
+      'import.note': '圖片按<b>檔名</b>匹配 md 裡的引用（如 ![](images/a.png) 取 a.png），同名會覆蓋。圖片只存本機，<b>「備份全部」不含圖片</b>，換機後重新匯入即可。zip 只在本機解壓，不上傳。',
       'import.empty': '還沒有選擇檔案', 'import.doAll': '匯入全部', 'import.doAllCount': '匯入全部（{n}）',
-      'toast.onlyMd': '只支援 .md / .markdown / .txt 檔案', 'toast.noFile': '沒有選擇檔案',
-      'toast.notZip': '請選擇 .zip 檔案', 'toast.unzipping': '正在解壓…', 'toast.zipEmpty': 'zip 裡沒有找到 .md / .txt 檔案',
+      'toast.onlyMd': '未識別的檔案（支援 md / txt / 圖片）', 'toast.noFile': '沒有選擇檔案',
+      'toast.imgTaken': '已匯入 {n} 張圖片', 'toast.imgNoStore': '本機儲存不可用，圖片沒有保存', 'img.missing': '圖片未匯入',
+      'toast.notZip': '請選擇 .zip 檔案', 'toast.unzipping': '正在解壓…', 'toast.zipEmpty': 'zip 裡沒有找到 md / 圖片檔案',
       'toast.zipTaken': '已從 zip 中取出 {n} 篇筆記', 'toast.unzipFail': '解壓失敗：{msg}',
       'toast.queueEmpty': '先選擇要匯入的檔案',
       'confirm.batchReplace': '有 {n} 個同名筆記，用新內容替換嗎？（取消 = 跳過同名）',
@@ -297,10 +299,11 @@
       'toast.tooShort': 'Content too short — not imported', 'toast.noCards': 'No cards parsed; try another split mode',
       'confirm.replaceDeck': 'A note named "{name}" already exists. Replace it with the new content? (mastered progress is kept where possible)',
       'toast.cancelled': 'Cancelled', 'toast.imported': 'Imported "{name}" — {n} cards',
-      'import.title': 'Import notes', 'import.pick': '📄 Pick .md files (multi-select)', 'import.zip': '🗜️ Pick a .zip (many md files inside)', 'import.dir': '📁 Import a whole folder (desktop)',
-      'import.note': 'If your phone\'s file picker only allows single select: tap "Pick .md files" several times to queue notes, then tap "Import all"; or zip the md files first. Zip files are unpacked locally, nothing is uploaded.',
+      'import.title': 'Import notes', 'import.pick': '📄 Pick files (md notes + images, multi-select)', 'import.zip': '🗜️ Pick a .zip (md files + images)', 'import.dir': '📁 Import a whole folder (desktop, images included)',
+      'import.note': 'Images are matched by <b>filename</b> against references in the md (e.g. ![](images/a.png) uses a.png); same-name images overwrite. Images stay on this device and are <b>not included in backups</b> — re-import after switching devices. Zip files are unpacked locally, nothing is uploaded.',
       'import.empty': 'No files selected yet', 'import.doAll': 'Import all', 'import.doAllCount': 'Import all ({n})',
-      'toast.onlyMd': 'Only .md / .markdown / .txt files are supported', 'toast.noFile': 'No file selected',
+      'toast.onlyMd': 'Unrecognized files (md / txt / images only)', 'toast.noFile': 'No file selected',
+      'toast.imgTaken': 'Imported {n} images', 'toast.imgNoStore': 'Local storage unavailable, images not saved', 'img.missing': 'Image not imported',
       'toast.notZip': 'Please choose a .zip file', 'toast.unzipping': 'Unpacking…', 'toast.zipEmpty': 'No .md / .txt files found in the zip',
       'toast.zipTaken': 'Extracted {n} notes from the zip', 'toast.unzipFail': 'Unpack failed: {msg}',
       'toast.queueEmpty': 'Select files to import first',
@@ -464,12 +467,12 @@
   var Store = (function () {
     var LS_KEY = 'mdreview.state.v1';
     var db = null;
-    var dbTried = false;
+    var dbPromise = null;
 
     function openDB() {
-      return new Promise(function (resolve) {
-        if (dbTried) return resolve(db);
-        dbTried = true;
+      // 缓存同一个连接 Promise：并发调用（boot 加载中又来写图片）不再拿到未就绪的 db
+      if (dbPromise) return dbPromise;
+      dbPromise = new Promise(function (resolve) {
         if (typeof indexedDB === 'undefined') return resolve(null);
         var settled = false;
         var finish = function (v) { if (!settled) { settled = true; db = v; resolve(v); } };
@@ -487,6 +490,7 @@
         req.onblocked = function () { finish(null); };
         setTimeout(function () { finish(null); }, 1200);
       });
+      return dbPromise;
     }
 
     function idbGet(key) {
@@ -540,7 +544,9 @@
           }
           return lsSet(json);
         }).catch(function () { return lsSet(json); });
-      }
+      },
+      rawGet: function (key) { return openDB().then(function () { return idbGet(key); }); },
+      rawPut: function (key, val) { return openDB().then(function () { return idbPut(key, val); }); }
     };
   })();
 
@@ -869,6 +875,84 @@
     });
   }
 
+  /* ---------- 用户导入的图片（md 里 ![](images/x.png) 按文件名匹配） ---------- */
+  var IMG_EXT_RE = /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic|heif)$/i;
+  var IMG_URLS = {}; // basename → objectURL
+
+  function imgBase(name) { return String(name || '').split('/').pop().split('\\').pop(); }
+  function isImageFile(name) { return IMG_EXT_RE.test(String(name || '')); }
+
+  function imgMime(name) {
+    var m = IMG_EXT_RE.exec(String(name || ''));
+    if (!m) return 'application/octet-stream';
+    var e = m[1].toLowerCase();
+    if (e === 'jpg' || e === 'jpeg') return 'image/jpeg';
+    if (e === 'svg') return 'image/svg+xml';
+    if (e === 'heic' || e === 'heif') return 'image/heic';
+    return 'image/' + e;
+  }
+
+  function loadStoredImages() {
+    Store.rawGet('imgIndex').then(function (list) {
+      (list || []).forEach(function (n) {
+        Store.rawGet('img/' + n).then(function (rec) {
+          if (rec && rec.blob) {
+            try { IMG_URLS[n] = URL.createObjectURL(rec.blob); } catch (e) { /* ignore */ }
+          }
+        });
+      });
+    });
+  }
+
+  function rememberImage(base, blob) {
+    if (IMG_URLS[base]) { try { URL.revokeObjectURL(IMG_URLS[base]); } catch (e) { /* ignore */ } }
+    try { IMG_URLS[base] = URL.createObjectURL(blob); return true; } catch (e) { return false; }
+  }
+
+  function storeImage(name, blob) {
+    var base = imgBase(name);
+    return Store.rawPut('img/' + base, { blob: blob, name: base, added: Date.now() }).then(function (ok) {
+      if (!ok) return false;
+      rememberImage(base, blob);
+      return Store.rawGet('imgIndex').then(function (list) {
+        list = list || [];
+        if (list.indexOf(base) >= 0) return true;
+        list.push(base);
+        return Store.rawPut('imgIndex', list).then(function () { return true; });
+      });
+    });
+  }
+
+  function importImageEntries(entries) { // [{name, bytes}]（zip 内）→ Promise(成功数)
+    var n = 0;
+    return Promise.all(entries.map(function (en) {
+      if (!en || !en.bytes) return Promise.resolve();
+      return storeImage(en.name, new Blob([en.bytes], { type: imgMime(en.name) })).then(function (ok) {
+        if (ok) n++;
+      });
+    })).then(function () { return n; });
+  }
+
+  function importImageFiles(files) { // File[] → Promise(成功数)
+    var n = 0;
+    return Promise.all(files.map(function (f) {
+      return storeImage(f.name, f).then(function (ok) { if (ok) n++; });
+    })).then(function () { return n; });
+  }
+
+  /* 渲染后替换 <img>：本地图库命中 → objectURL；未命中且非外链 → 未导入占位 */
+  function resolveImgSrc(html) {
+    if (!html || html.indexOf('<img') < 0) return html;
+    return html.replace(/<img\b[^>]*>/g, function (tag) {
+      var m = /src="([^"]*)"/.exec(tag);
+      if (!m) return tag;
+      if (/^(?:https?:|blob:|data:)/i.test(m[1])) return tag;
+      var base = imgBase(m[1]);
+      if (IMG_URLS[base]) return tag.replace(/src="[^"]*"/, 'src="' + IMG_URLS[base] + '"');
+      return '<span class="img-missing">🖼 ' + ESC(t('img.missing')) + '：' + ESC(base) + '</span>';
+    });
+  }
+
   /* ---------- 内置题库图片（（配图 xxx）→ 内嵌图） ---------- */
 
   var IMG_PLACEHOLDER = /（配图\s*([^）]+?)）/g;
@@ -890,7 +974,7 @@
         return '<img class="md-img" src="' + src + '" alt="' + ESC(key) + '" loading="lazy" decoding="async">';
       });
     }
-    return html;
+    return resolveImgSrc(html);
   }
 
   /* ============================== 首页 ============================== */
@@ -1058,16 +1142,23 @@
   function addQueueFiles(files) {
     var arr = Array.prototype.slice.call(files || []);
     var added = 0;
+    var imgs = [];
     arr.forEach(function (f) {
+      if (isImageFile(f.name)) { imgs.push(f); return; }
       if (!isTextNote(f.name)) return;
       importQueue.push({ name: String(f.name).replace(/\.[^.]+$/, ''), file: f, size: f.size, source: f.name });
       added++;
     });
-    if (!added) {
-      toast(arr.length ? t('toast.onlyMd') : t('toast.noFile'));
-      return;
-    }
-    renderImportQueue();
+    var p = imgs.length ? importImageFiles(imgs) : Promise.resolve(0);
+    p.then(function (nImg) {
+      if (nImg) toast(tf('toast.imgTaken', { n: nImg }), 2600);
+      else if (imgs.length) toast(t('toast.imgNoStore'), 4200);
+      if (!added && !imgs.length) {
+        toast(arr.length ? t('toast.onlyMd') : t('toast.noFile'));
+        return;
+      }
+      renderImportQueue();
+    });
   }
 
   function readFileBuffer(file) {
@@ -1085,15 +1176,28 @@
     if (!/\.zip$/i.test(file.name || '')) { toast(t('toast.notZip')); return; }
     toast(t('toast.unzipping'), 4000);
     readFileBuffer(file)
-      .then(function (buf) { return Core.unzipTextFiles(buf); })
+      .then(function (buf) { return Core.unzipFiles(buf); })
       .then(function (list) {
-        if (!list.length) { toast(t('toast.zipEmpty')); return; }
-        list.forEach(function (en) {
-          var base = en.name.split('/').pop();
-          importQueue.push({ name: base.replace(/\.[^.]+$/, ''), text: en.text, size: en.text.length, source: en.name });
+        var texts = [];
+        var imgs = [];
+        (list || []).forEach(function (en) {
+          var nm = en.name || '';
+          if (/(^|\/)__MACOSX(\/|$)/.test(nm) || /(^|\/)\._/.test(nm) || /\/$/.test(nm)) return;
+          if (isImageFile(nm)) imgs.push(en);
+          else if (isTextNote(nm)) texts.push(en);
         });
-        renderImportQueue();
-        toast(tf('toast.zipTaken', { n: list.length }), 2600);
+        return importImageEntries(imgs).then(function (nImg) {
+          if (!texts.length && !nImg) { toast(t('toast.zipEmpty')); return; }
+          texts.forEach(function (en) {
+            var base = en.name.split('/').pop();
+            importQueue.push({ name: base.replace(/\.[^.]+$/, ''), text: Core.decodeBytes(en.bytes), size: en.bytes.length, source: en.name });
+          });
+          renderImportQueue();
+          var msg = '';
+          if (texts.length) msg += tf('toast.zipTaken', { n: texts.length });
+          if (nImg) msg += (msg ? '，' : '') + tf('toast.imgTaken', { n: nImg });
+          if (msg) toast(msg, 3000);
+        });
       })
       .catch(function (err) {
         toast(tf('toast.unzipFail', { msg: (err && err.message) || '?' }), 4200);
@@ -1760,7 +1864,7 @@
     var qText = (card.question || '').trim();
     var qEl = $('#rvQuestion');
     if (qText) {
-      qEl.innerHTML = qText.indexOf('\n') >= 0 ? Core.renderMarkdown(qText) : Core.renderInline(qText);
+      qEl.innerHTML = qText.indexOf('\n') >= 0 ? resolveImgSrc(Core.renderMarkdown(qText)) : Core.renderInline(qText);
       qEl.classList.remove('hidden');
     } else {
       qEl.innerHTML = '';
@@ -2775,10 +2879,14 @@
     renderManage: renderManage,
     seedBundledDecks: seedBundledDecks,
     renderAiProviders: renderAiProviders,
+    imgUrls: function () { return IMG_URLS; },
+    rememberImage: rememberImage,
+    resolveImgSrc: resolveImgSrc,
     version: APP_VERSION
   };
 
   function boot() {
+    loadStoredImages();
     Store.load().then(function (raw) {
       var saved = null;
       if (raw) {
