@@ -1,0 +1,305 @@
+# MD Flashcards · 笔记闪卡
+
+> 把一份很长的 md 笔记拆成一张张卡片，手机上随机抽背 / 分类速记。
+> **纯本地、零安装、零后端、不需要服务器。**
+> 本版本（Gitee）**不含内置题库**：导入自己的 md / zip 即可使用；题库生成脚本保留在 `scripts/`，用自己的资料可自行生成。
+
+![首页](docs/images/home.png)
+
+---
+
+## 1. 它解决什么问题
+
+| 现成方案 | 卡在哪 |
+|---|---|
+| AnkiDroid | 只认 `.apkg`，`.md` 必须先转换 |
+| a-flash-deck | 只渲染卡内 Markdown，不吃 `.md` 文件 |
+| NeuraCache / Obsidian 插件 | 能导入 md，但要装 App/插件、要按它的语法改笔记，多数是闭源 |
+| Logseq / SiYuan | 开源，但 md 要"进库"、制卡要手工/换格式 |
+
+这个工具只做一件事：**把一份很长的 md 笔记，拆成一张张卡，随机抽给你背**。不建库、不联网、不改你的原文件。
+
+---
+
+## 2. 三种用起来的方式
+
+### 方式 0：本地验收（推荐 / 排查加载问题）
+
+同一个应用有三个体积版本（本版本均不含题库，功能一致）：
+
+| 文件 | 体积 | 说明 |
+|---|---|---|
+| `dist/md-flashcards.html` | ~138 KB | 标准版（推荐） |
+| `dist/md-flashcards-lite.html` | ~138 KB | 轻量版 |
+| `dist/md-flashcards-noimg.html` | ~138 KB | 无图版 |
+
+**如果双击/预览打不开**，多半是预览器对大文件或中文路径有限制，改用本地 HTTP 服务：
+
+```bash
+# 在项目根目录
+python -m http.server 8788 --directory dist
+```
+
+浏览器访问 **http://127.0.0.1:8788/** （单文件仅 138 KB，Chrome/Edge 打开秒加载）。
+
+### 方式 A：直接开网页（最简单）
+
+1. 把 [`dist/md-flashcards.html`](dist/md-flashcards.html)（或 `-lite` 版）传到手机：微信/QQ 文件传输助手、数据线、网盘都行。
+2. 用 **Chrome / Edge / 夸克** 打开（文件管理器里长按 → 打开方式 → 浏览器；如果看到源码，说明用错了打开方式）。
+3. 点「📥 导入 md / zip（批量）」→ 选择文件 → 「导入全部」。
+4. 浏览器菜单 → **添加到主屏幕**，以后像 App 一样打开。
+
+> **打不开/白屏先试无图版** `md-flashcards-noimg.html`：能开说明是文件体积/预览器限制，换 lite 版或本地服务即可；还开不了再反馈具体报错。
+
+> **手机端只能单选文件？** 这是部分系统文件选择器（如 ColorOS）的限制，不是网页坏了：
+> - 在导入弹层里**分几次**点「选择 .md 文件」，每次加一个，最后一起「导入全部」；
+> - 或者把多个 md **在电脑上压成一个 zip**，手机端选这个 zip，网页在本地解压后批量导入。
+>
+> 数据存在浏览器本地（IndexedDB，失败时退化为 localStorage）。**清理浏览器数据会清掉卡片和进度**，记得用「备份全部」定期导出 json。
+
+### 方式 B：手机访问电脑
+
+```bash
+# 项目根目录
+python -m http.server 8000
+```
+
+手机连同一个 Wi-Fi，打开 `http://<电脑IP>:8000/dist/md-flashcards.html`。
+
+### 方式 C：装 APK（Android）
+
+项目自带 WebView 壳（`android/`），打包后就是一个真正的 App：可离线、能调系统文件选择器、备份直接写进「下载」目录。
+
+- 有 Android Studio：打开 `android/` 目录，等 Gradle 同步完，`Build → Build APK(s)`；
+- 没有 Android Studio：推到 GitHub 后由 Actions 自动构建（见 [§9](#9-打包成-apk)），在 Actions 页面下载 artifact；
+- 或用任意机器（JDK 17 + Android SDK 34）执行：
+
+```bash
+python scripts/build.py            # 先把网页内联成 dist/md-flashcards.html
+cd android && gradle assembleDebug # 产物：app/build/outputs/apk/debug/app-debug.apk
+```
+
+---
+
+## 3. 它是怎么拆卡的
+
+先按标题切段，再决定「题面怎么问」——两步都可以调。
+
+### 3.1 拆分方式（切几段）
+
+| 模式 | 规则 |
+|---|---|
+| **自动（推荐）** | 按标题层级选最合适的一层：`##` 优先；标题少就退到 `###`；超长小节自动再降一层或按段落切；只有一个标题时整篇当一张卡 |
+| 按二级标题 `##` | 每个 `##` 小节 = 一张卡 |
+| 按三级标题 `###` | 每个 `###` 小节 = 一张卡 |
+| 按问答 `Q:/A:` | `Q: ...` + `A: ...` 拆成一张卡，支持 `问：/答：`、`**题目：**`、`Q1:` 等写法 |
+| 按分隔线 `---` | 每条分隔线之间 = 一张卡（第一行当题面） |
+| 按段落 | 没有标题的纯文本笔记，按段落合并成 ~800 字一张卡 |
+
+### 3.2 提问风格（题面怎么问）
+
+| 风格 | 效果 |
+|---|---|
+| **提问式（推荐）** | 标题不是疑问句时按内容套模板，例如「三次握手」→「不看答案，说说「三次握手」的核心内容？」；含列表 →「包含哪几个要点？」；含对比表 →「关键差异是什么？」 |
+| 标题式 | 标题当题面，不额外生成问题 |
+| 挖空式 | 把答案里的**加粗词 / 行内代码**挖成横线，题面变成填空题；挖不出来退回提问式 |
+
+规则细节：
+
+- 标题本身已是疑问句（含 `？`、为什么/如何/区别/原理…）时，不再重复生成问题。
+- 卡片粒度可调：**细 ≤800 字 / 中 ≤1600 字 / 粗 ≤3000 字**。
+- **代码块里的 `##` 不会被误判成标题**；YAML frontmatter 会被跳过。
+- 卡片 id 由「标题+题面+答案」内容哈希生成：**重新导入同一份笔记，已掌握进度会保留**。
+- 本版本不含内置题库与配图；`（配图 imgXXX.png）` 占位符的渲染逻辑保留，如自行生成题库配图可复用（见 `scripts/build_interview_images.py`）。
+
+### 3.3 让大模型来提问（可选，不需要服务器）
+
+| 方式 | 怎么用 | 成本 |
+|---|---|---|
+| **A. 电脑脚本 + 任意 OpenAI 兼容 API（推荐）** | `python scripts/ai_cards.py --input D:/notes --out ai-cards.json --base ... --model ...`，传到手机后点「导入 AI 卡片」 | 云端 API 按 token 计费；**Ollama 本地模型免费** |
+| **B. 网页里直接调 API** | 首页「AI 提炼设置」填地址/模型/key → 笔记卡片点「AI 提炼」 | 同上；浏览器直连常被 **CORS** 拦 |
+| **C. 什么都不用** | 用上面的「提问式 / 挖空式」模板 | 免费、离线 |
+
+**关于 CORS**：网页是纯前端，请求直接从手机发给所填 API。很多厂商（DeepSeek 等）不返回 CORS 头，浏览器会拒绝；这时用方式 A 的脚本即可（脚本在电脑跑，不受 CORS 限制）。本机 **Ollama** 也可给网页用：启动前设 `OLLAMA_ORIGINS=*`。
+
+网页 AI 只改**题面**，不改答案，避免模型篡改知识内容；失败会保留原题面并提示。
+
+---
+
+## 4. 复习方式
+
+- **随机洗牌**：每一轮打乱全部所选卡片（或多本笔记混合随机）。
+- 先看题面回忆 → 点卡片 / 「显示答案」/ 空格。
+- 自评：**😵 忘了 / 🤔 模糊 / 😎 记住了**（手机可左右滑动评价；键盘 `1 / 2 / 3`、`空格`、`Esc`）。
+- 忘了/模糊的卡在本轮结束后自动进 **第 2 轮**。
+- 「只看没掌握」过滤：只抽还没记住的卡。
+- 浏览/编辑：搜索卡片、改标题/题面/答案、删卡、重置进度。
+
+| 复习（未揭晓） | 揭晓答案 |
+|---|---|
+| ![复习](docs/images/review.png) | ![答案](docs/images/answer.png) |
+
+---
+
+## 4.5 分类速记（按章节看完整问答）
+
+不是考试，而是**按大纲读**：首页或管理页点「分类速记」→
+
+- 顶部章节大纲（第 1 章 / 第 2 章 …），点一下只看该章；
+- 右上角 **☷** 打开**题目目录**：两级「章 → 题」，一题一行，点哪题直接跳到那道题的完整问答（跳过去会高亮），长笔记不用翻；
+- 按章节分组，**题目 + 完整答案直接展开**；
+- 每组可折叠，右上角 ⇕ 一键展开/收起全部；
+- 搜索框按题目或答案过滤，目录也会跟着筛。
+
+![分类速记](docs/images/quick-toc.png)
+
+---
+
+## 4.6 笔记管理
+
+点右上角 **☰** 进入「笔记管理」，每个笔记都支持：
+
+- **分类速记**、**随机复习**
+- 重命名（只改显示名，进度不变）、重置进度、导出、删除。
+
+---
+
+## 5. 数据与备份
+
+- 全部数据只在本机浏览器：`IndexedDB`（不可用时 `localStorage`）。
+- 「备份全部」导出 json（含卡片 + 复习进度），到新手机「恢复备份」。
+- 在 APK 里，备份会通过原生桥直接写进系统「下载/MD Flashcards」目录。
+- 删除笔记/卡片只影响本机，**不会改你的原始 .md 文件**。
+- AI 的 API Key 也只存本机，不上传。
+
+---
+
+## 6. 已知限制
+
+- **没有 SM-2 / FSRS 记忆曲线**：这是"随机抽背 / 主动回忆"工具，不做间隔排期。要记忆曲线请用 AnkiDroid（配 mdankideck 转 apkg）或 Obsidian + Spaced Repetition。
+- 单文件、单机；不做云同步（用 json 备份换机）。
+- 没有标题、没有分段、一整段几千字的笔记只能按段落切，卡片质量一般 → 建议补 `##` 小标题。
+- 自己导入 md 里的本地图片不会自动打包（`![](...)` 会渲染为 alt 文本）。
+- 网页 AI 受浏览器 CORS 限制，不保证每个厂商都能直连（脚本方式不受限）。
+- 老安卓浏览器（不支持 IndexedDB / DecompressionStream）会退化：前者用 localStorage，后者 zip 导入不可用（可改选 md 文件）。
+
+---
+
+## 7. 项目结构
+
+```
+md-flashcards/
+├── README.md                 # 用户文档（本文件）
+├── DEVELOPER.md              # 开发者文档：架构 / 数据模型 / 扩展指南
+├── dist/
+│   └── md-flashcards.html    # 构建产物（单文件，~138 KB）
+├── src/
+│   ├── index.tpl.html        # 页面骨架 + 四个内联占位符
+│   ├── core.js               # 纯函数：拆卡 / 提问 / Markdown 渲染 / zip 解包
+│   ├── app.js                # 界面、存储、复习、速记、管理、AI
+│   └── styles.css            # 深色移动端样式
+├── scripts/
+│   ├── build.py              # 内联构建 → dist/md-flashcards.html
+│   ├── ai_cards.py           # 电脑端 md → AI 卡片 JSON
+│   ├── build_interview_decks.py   # 题库 md → bundled-decks.js（可选，本版未含数据）
+│   └── build_interview_images.py  # 题库配图 → bundled-images.js（可选，本版未含数据）
+├── tests/
+│   ├── core.test.cjs         # 32 项单元测试
+│   ├── run-browser-test.cjs  # 63 项 headless Edge 端到端
+│   ├── run-screenshots.cjs   # 生成 docs/images 截图
+│   └── fixtures/             # 测试用 zip
+├── docs/
+│   ├── images/               # 文档截图
+│   └── research/             # 同类方案调研
+├── android/                  # WebView APK 工程（Gradle）
+└── .github/workflows/build-apk.yml
+```
+
+```bash
+python scripts/build.py             # 构建单文件
+node tests/core.test.cjs            # 单元测试
+node tests/run-browser-test.cjs     # 浏览器冒烟测试（需要 Edge/Chrome）
+node tests/run-screenshots.cjs      # 重新截图
+python scripts/ai_cards.py --input <目录> --dry-run   # 只看切分，不调 API
+```
+
+> 架构、模块职责、数据模型与扩展指南见 **[DEVELOPER.md](DEVELOPER.md)**。
+
+---
+
+## 8. 和现成方案怎么选
+
+| 你的情况 | 建议 |
+|---|---|
+| 只想把 md 拆开、随机背，不想装东西 | **本工具**（单文件网页 / APK） |
+| 想要记忆曲线、长期复习 | **AnkiDroid** + [`mdankideck`](https://github.com/lukesmurray/markdown-anki-decks) 一次性转 `.apkg`（见 [docs/research/toolchain.md](docs/research/toolchain.md)） |
+| 笔记本来就在 Obsidian，要卡片 + 间隔重复 | Obsidian 安卓 + [Spaced Repetition 插件](https://github.com/st3v3nmw/obsidian-spaced-repetition) |
+| 想要完全开源、中文界面、笔记即 md | [Logseq](https://github.com/logseq/logseq)（`#card`）或 [SiYuan](https://github.com/siyuan-note/siyuan)（内置闪卡 + FSRS） |
+| 想要零折腾但接受闭源 | [NeuraCache](https://neuracache.com/markdown-flashcards)（App 内 Import Markdown File） |
+
+更完整的调研见 [docs/research/apps.md](docs/research/apps.md)。
+
+---
+
+## 9. 打包成 APK
+
+`android/` 是一个最小 **WebView 壳**（Java，无第三方 UI 依赖，仅 `androidx.webkit`）：
+
+- 用 `WebViewAssetLoader` 以 `https://appassets.androidplatform.net/` 提供网页，让 IndexedDB / localStorage 有稳定 origin；
+- 实现 `onShowFileChooser`，手机端可一次选多个 md / zip；
+- `AndroidSaver` 原生桥：备份 JSON 直接写进「下载/MD Flashcards」；
+- 返回键优先关弹层 / 回上一页，再退出。
+
+### 9.1 GitHub Actions（无需本地 SDK）
+
+1. `git init && git add . && git commit -m "init"`
+2. 在 GitHub 新建仓库并 push；
+3. Actions 跑 **Build Android APK**，完成后在 run 页面下载 `md-flashcards-debug-apk`；
+4. 手机安装 apk（debug 签名，安装时允许「未知来源」）。
+
+也可以手动触发：仓库 Actions → Build Android APK → Run workflow。
+
+### 9.2 本地构建
+
+需要 JDK 17 + Android SDK（platform 34 / build-tools 34）：
+
+```bash
+python scripts/build.py
+cd android
+gradle assembleDebug
+# 产物 android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+发布版需自备签名：
+
+```bash
+keytool -genkeypair -keystore release.jks -alias mdflashcards -keyalg RSA -keysize 2048 -validity 10000
+# 在 android/app/build.gradle.kts 里加 signingConfigs，然后 gradle assembleRelease
+```
+
+---
+
+## 10. 内置题库（本版本未包含）
+
+本仓库版本为了精简与版权考虑，**不包含任何内置题库数据**，打开即是空应用，导入自己的 md / zip 即可。
+
+应用本身完整保留了题库装载能力：只要把题库数据放回 `src/bundled-decks.js`（与可选的 `src/bundled-images.js`）再重新构建，即可恢复「打开自带题库」的行为。生成脚本也一并保留：
+
+```bash
+export INTERVIEW_DIR="D:/path/to/interview-md"   # 含题库 md 与 images/ 配图目录
+python scripts/build_interview_decks.py      # md → src/bundled-decks.js
+python scripts/build_interview_images.py     # images/ → src/bundled-images.js（WebP）
+python scripts/build.py                      # 内联 → dist/md-flashcards.html
+```
+
+题库 md 的预期排版：`# 第X章` 章节标题，题目用 `**（1）问题？**` 加粗疑问句标注，配图放 `images/` 对应子目录；具体规则见 `scripts/build_interview_decks.py` 头部注释。
+
+---
+
+## 11. 上传 GitHub 前
+
+- 目录与文件名已全部改为英文（内容仍可为中文）；
+- `.gitignore` 已排除 Android 构建产物、APK、签名文件、Python 缓存、测试临时文件；
+- `dist/md-flashcards.html` 是需要提交的（GitHub Pages 可直接用它）；
+- 想用 GitHub Pages：Settings → Pages → Source 选 `main` / `root`，访问 `https://<user>.github.io/<repo>/dist/md-flashcards.html`；
+- 许可证按需添加（MIT / Apache-2.0 等）。

@@ -1,0 +1,141 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Bundle the interview screenshots into src/bundled-images.js (base64 data URIs).
+
+The bundled decks' answers contain placeholders like `（配图 img001.png）`.
+This script maps each bundled deck to its screenshot folder and embeds a
+compressed copy of every referenced image, keyed by deck name.
+
+Usage:
+    INTERVIEW_DIR=<folder with .md + images/> python scripts/build_interview_images.py
+    python scripts/build_interview_images.py --input <folder> --max-side 900 --quality 78 --format webp
+
+Output:
+    src/bundled-images.js   → window.MDReviewBundledImages = { deckName: {file: dataURI} }
+"""
+import argparse
+import base64
+import io
+import json
+import os
+import re
+from pathlib import Path
+
+from PIL import Image
+
+PROJECT = Path(__file__).resolve().parent.parent
+DEFAULT_INPUT = os.environ.get("INTERVIEW_DIR", "")
+DEFAULT_OUT = PROJECT / "src" / "bundled-images.js"
+DEFAULT_DECKS = PROJECT / "src" / "bundled-decks.js"
+
+IMAGE_EXT = (".png", ".jpg", ".jpeg", ".gif", ".webp")
+PLACEHOLDER_RE = re.compile(r"（配图\s*([^）]+?)）")
+CHAPTER_RE = re.compile(r"第\s*(\d+)\s*[-–]\s*(\d+)\s*章|第\s*(\d+)\s*章")
+
+
+def chapter_key(name: str):
+    m = CHAPTER_RE.search(name)
+    if not m:
+        return ""
+    if m.group(1):
+        return f"{m.group(1)}-{m.group(2)}"
+    return m.group(3)
+
+
+def pick_folder(folders, key):
+    key_norm = key.replace("-", "").replace("–", "")
+    for folder in folders:
+        name = folder.name.replace("-", "").replace("–", "")
+        if key_norm and key_norm in name:
+            return folder
+    return None
+
+
+def encode_image(path: Path, max_side: int, quality: int, fmt: str):
+    """Return (mime, base64) for a compressed still image."""
+    with Image.open(path) as im:
+        im.seek(0)  # GIF: first frame
+        if im.mode in ("RGBA", "LA", "P"):
+            im = im.convert("RGBA")
+            bg = Image.new("RGB", im.size, (255, 255, 255))
+            bg.paste(im, mask=im.split()[-1])
+            im = bg
+        else:
+            im = im.convert("RGB")
+        w, h = im.size
+        scale = min(1.0, max_side / max(w, h))
+        if scale < 1.0:
+            im = im.resize((max(1, int(w * scale)), max(1, int(h * scale))), Image.LANCZOS)
+        buf = io.BytesIO()
+        if fmt == "webp":
+            im.save(buf, format="WEBP", quality=quality, method=6)
+            mime = "image/webp"
+        else:
+            im.save(buf, format="JPEG", quality=quality, optimize=True, progressive=True)
+            mime = "image/jpeg"
+        data = buf.getvalue()
+    return mime, base64.b64encode(data).decode("ascii")
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--input", default=DEFAULT_INPUT, help="interview folder containing images/ and md files")
+    ap.add_argument("--decks", default=str(DEFAULT_DECKS))
+    ap.add_argument("--out", default=str(DEFAULT_OUT))
+    ap.add_argument("--max-side", type=int, default=900)
+    ap.add_argument("--quality", type=int, default=78)
+    ap.add_argument("--format", choices=("webp", "jpeg"), default="webp",
+                    help="webp is ~35%% smaller than jpeg and supported by Android WebView / modern browsers")
+    args = ap.parse_args()
+
+    if not args.input:
+        raise SystemExit("missing --input (or set INTERVIEW_DIR)")
+
+    root = Path(args.input)
+    images_root = root / "images"
+    if not images_root.is_dir():
+        images_root = root  # allow passing the images folder directly
+    folders = [p for p in images_root.iterdir() if p.is_dir()]
+    if not folders:
+        raise SystemExit(f"no image sub-folders under {images_root}")
+
+    decks_src = Path(args.decks).read_text(encoding="utf-8")
+    decks = json.loads(decks_src[decks_src.index("{"):decks_src.rindex(";")])["decks"]
+
+    bundled = {}
+    total_raw = 0
+    total_out = 0
+    for deck in decks:
+        key = chapter_key(deck["name"])
+        folder = pick_folder(folders, key)
+        if not folder:
+            print(f"! skip {deck['name']}: no image folder")
+            continue
+        needed = []
+        for card in deck["cards"]:
+            for m in PLACEHOLDER_RE.finditer(card["answer"]):
+                name = m.group(1).strip()
+                if name not in needed:
+                    needed.append(name)
+        files = {p.name: p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in IMAGE_EXT}
+        mapping = {}
+        for name in needed:
+            path = files.get(name)
+            if not path:
+                continue
+            mime, b64 = encode_image(path, args.max_side, args.quality, args.format)
+            mapping[name] = f"data:{mime};base64,{b64}"
+            total_raw += path.stat().st_size
+            total_out += len(b64) * 3 // 4
+        bundled[deck["name"]] = mapping
+        print(f"{deck['name']}: {len(mapping)}/{len(needed)} images")
+
+    js = "/* generated by scripts/build_interview_images.py - do not edit */\nwindow.MDReviewBundledImages = " + json.dumps(bundled, ensure_ascii=False) + ";\n"
+    out = Path(args.out)
+    out.write_text(js, encoding="utf-8")
+    print(f"raw {total_raw / 1024 / 1024:.1f} MB -> {total_out / 1024 / 1024:.1f} MB, {out} ({out.stat().st_size / 1024 / 1024:.1f} MB)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0d14">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="笔记闪卡">
+<meta name="description" content="上传 markdown 笔记，自动拆成知识点卡片，在手机上随机复习。纯本地单文件，无需服务器。">
+<title>MD 笔记闪卡 · 随机复习</title>
+<style>/*STYLES*/</style>
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="brand">
+      <div class="logo">⚡</div>
+      <div>
+        <h1>MD 笔记闪卡</h1>
+        <p>md → 知识点卡片 → 随机复习</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" data-act="open-manage" aria-label="笔记管理" title="笔记管理">☰</button>
+      <button class="icon-btn" data-act="open-import" aria-label="导入 md 文件" title="导入 md 文件">＋</button>
+    </div>
+  </header>
+
+  <!-- ================= 首页 ================= -->
+  <main id="view-home" class="view active">
+    <section id="heroEmpty" class="hero hidden">
+      <div class="big-emoji">🧠</div>
+      <h2>把长笔记拆成一张张卡</h2>
+      <p>上传遇到不懂的，随时抽一张来复习。</p>
+      <div class="steps">
+        <div class="step"><span class="step-num">1</span><span>上传 <b>.md</b> 文件、多个文件打成的 <b>.zip</b>，或直接粘贴文本</span></div>
+        <div class="step"><span class="step-num">2</span><span>自动按标题 / Q&amp;A 拆卡，标题不像问题时自动生成提问</span></div>
+        <div class="step"><span class="step-num">3</span><span>打开就随机抽卡，自评「记住了 / 模糊 / 忘了」</span></div>
+      </div>
+      <div class="action-grid">
+        <button class="btn primary big" data-act="open-import">📥 导入 md / zip</button>
+        <button class="btn big" data-act="paste">✍️ 粘贴 Markdown 文本</button>
+        <button class="btn big ghost" data-act="demo">看看示例（10 张卡）</button>
+      </div>
+    </section>
+
+    <section id="homeBody" class="hidden">
+      <div id="statBar" class="statbar"></div>
+      <div class="action-grid">
+        <button class="btn primary big" data-act="open-import">📥 导入 md / zip（批量）</button>
+        <div class="row-3">
+          <button class="btn" data-act="paste">粘贴文本</button>
+          <button class="btn" data-act="export-all">备份全部</button>
+          <button class="btn" data-act="import-json">恢复备份</button>
+        </div>
+      </div>
+      <div id="deckList" class="deck-list"></div>
+
+      <details class="settings">
+        <summary>导入与提问设置</summary>
+        <div class="field">
+          <label for="setMode">拆分方式</label>
+          <select id="setMode">
+            <option value="auto">自动（推荐）</option>
+            <option value="h2">按二级标题 ##</option>
+            <option value="h3">按三级标题 ###</option>
+            <option value="qa">按问答 Q:/A:</option>
+            <option value="hr">按分隔线 ---</option>
+            <option value="para">按段落</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="setQstyle">提问风格</label>
+          <select id="setQstyle">
+            <option value="prompt">提问式（推荐）</option>
+            <option value="title">标题式（不生成提问）</option>
+            <option value="cloze">挖空式（填空）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="setGran">卡片粒度</label>
+          <select id="setGran">
+            <option value="fine">细（≤800 字/张）</option>
+            <option value="mid">中（≤1600 字/张）</option>
+            <option value="coarse">粗（≤3000 字/张）</option>
+          </select>
+        </div>
+        <p class="modal-note" style="padding-bottom:14px">改动后，<b>下次导入</b>的笔记按新设置拆分；已导入的可以删掉重导。</p>
+      </details>
+
+      <details class="settings">
+        <summary>AI 提炼设置（可选，需要你自己的 API）</summary>
+        <div class="field">
+          <label for="aiBase">API 地址</label>
+          <input id="aiBase" type="text" placeholder="https://api.deepseek.com/v1" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="aiModel">模型名</label>
+          <input id="aiModel" type="text" placeholder="deepseek-chat / qwen2.5 / llama3.1" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="aiKey">API Key</label>
+          <input id="aiKey" type="password" placeholder="sk-...（只存本机）" autocomplete="off">
+        </div>
+        <div class="row-2" style="padding:10px 0">
+          <button class="btn" data-act="ai-test">测试连接</button>
+          <button class="btn" data-act="import-cards-json">导入 AI 卡片</button>
+        </div>
+        <p class="modal-note" style="padding-bottom:14px">
+          不经过任何服务器，请求从本机直接发到你在上面填的地址。浏览器直连多数厂商 API 可能被跨域拦截（CORS）：
+          可以用本机 <b>Ollama</b>（启动前设 <code>OLLAMA_ORIGINS=*</code>），或改用电脑上的
+          <code>tools/ai_cards.py</code> 生成卡片 JSON，再用「导入 AI 卡片」。
+        </p>
+      </details>
+
+      <div class="foot-tips">
+        数据只保存在本机浏览器里，不上传任何服务器。<br>
+        换手机 / 清理浏览器前，记得用「备份」导出 json，再到新手机「恢复」。<br>
+        手机浏览器菜单里选「添加到主屏幕」，可以像 App 一样打开。
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= 复习 ================= -->
+  <main id="view-review" class="view">
+    <div class="rv-head">
+      <button class="icon-btn" data-act="back-home" aria-label="返回">←</button>
+      <div class="rv-info">
+        <div id="rvDeck" class="rv-deck"></div>
+        <div id="rvProg" class="rv-prog"></div>
+      </div>
+      <button class="icon-btn" data-act="reshuffle" aria-label="重新洗牌" title="重新洗牌">🔀</button>
+    </div>
+    <div class="bar"><i id="rvBar" style="width:0%"></i></div>
+
+    <div id="rvCard" class="rv-card">
+      <div id="rvPath" class="rv-path"></div>
+      <h2 id="rvTitle" class="rv-title"></h2>
+      <div id="rvQuestion" class="rv-q"></div>
+      <div id="rvAnswer" class="rv-answer hidden"></div>
+      <div class="rv-hint">轻点卡片显示答案</div>
+    </div>
+
+    <div id="rvSummary" class="rv-summary hidden"></div>
+
+    <div class="rv-actions">
+      <button id="btnShow" class="btn primary big" data-act="show-answer">显示答案</button>
+      <div id="rateRow" class="rate-row hidden">
+        <button class="btn rate bad" data-act="rate" data-rate="bad">😵<span>忘了</span></button>
+        <button class="btn rate fuzzy" data-act="rate" data-rate="fuzzy">🤔<span>模糊</span></button>
+        <button class="btn rate ok" data-act="rate" data-rate="ok">😎<span>记住了</span></button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= 浏览 ================= -->
+  <main id="view-browse" class="view">
+    <div class="rv-head">
+      <button class="icon-btn" data-act="back-home" aria-label="返回">←</button>
+      <div class="rv-info">
+        <div id="browseDeck" class="rv-deck"></div>
+        <div id="browseMeta" class="rv-prog"></div>
+      </div>
+      <button class="icon-btn" data-act="reset-progress" aria-label="重置进度" title="重置本笔记进度">↺</button>
+    </div>
+    <input id="searchInput" class="search" type="search" placeholder="搜索标题 / 内容…" autocomplete="off">
+    <div id="cardList" class="card-list"></div>
+  </main>
+
+  <!-- ================= 速记（分类：按章节看完整问答） ================= -->
+  <main id="view-quick" class="view">
+    <div class="rv-head">
+      <button class="icon-btn" data-act="back-home" aria-label="返回">←</button>
+      <div class="rv-info">
+        <div id="quickDeck" class="rv-deck"></div>
+        <div id="quickMeta" class="rv-prog"></div>
+      </div>
+      <button class="icon-btn" data-act="quick-toc" aria-label="题目目录" title="题目目录">☷</button>
+      <button class="icon-btn" data-act="quick-toggle-all" aria-label="展开/收起全部" title="展开/收起全部">⇕</button>
+    </div>
+    <input id="quickSearch" class="search" type="search" placeholder="搜索题目 / 答案…" autocomplete="off">
+    <div id="quickToc" class="quick-toc hidden"></div>
+    <div id="quickOutline" class="quick-outline"></div>
+    <div id="quickBody" class="quick-body"></div>
+  </main>
+
+  <!-- ================= 笔记管理 ================= -->
+  <main id="view-manage" class="view">
+    <div class="rv-head">
+      <button class="icon-btn" data-act="back-home" aria-label="返回">←</button>
+      <div class="rv-info">
+        <div class="rv-deck">笔记管理</div>
+        <div id="manageMeta" class="rv-prog"></div>
+      </div>
+      <button class="icon-btn" data-act="restore-bundled" aria-label="恢复内置题库" title="恢复内置题库">↻</button>
+    </div>
+    <div id="manageList" class="manage-list"></div>
+    <p class="modal-note" style="padding:12px 2px 0">删除只影响本机卡片与进度，不会改你的原始 md 文件；内置题库删掉后用右上角 ↻ 可恢复。</p>
+  </main>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<input type="file" id="fileInput" accept=".md,.markdown,.txt,text/markdown,text/plain" multiple hidden>
+<input type="file" id="zipInput" accept=".zip,application/zip,application/x-zip-compressed" hidden>
+<input type="file" id="dirInput" webkitdirectory directory multiple hidden>
+<input type="file" id="cardsJsonInput" accept=".json,application/json" hidden>
+<input type="file" id="jsonInput" accept=".json,application/json" hidden>
+
+<script>/*IMAGES*/</script>
+<script>/*BUNDLED*/</script>
+<script>/*CORE*/
+
+/*APP*/</script>
+</body>
+</html>

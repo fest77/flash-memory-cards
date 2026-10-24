@@ -1,0 +1,36 @@
+# Android build outputs
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/index.html
+android/app/src/main/assets/*.html
+
+# APK / signing material
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 本地生成的内置题库数据（由 md闪卡资料 通过 scripts/build_interview_*.py 生成，不入库）
+src/bundled-decks.js
+src/bundled-images.js
+src/bundled-images-lite.js
+
+# Test artifacts
+tests/_edge-profile*/
+tests/_dump*
+tests/_test.html
+dist/_*
+
+# Editors / OS / 本地工具状态
+.idea/
+.vscode/
+.mimosa/
+.DS_Store
+Thumbs.db

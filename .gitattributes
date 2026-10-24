@@ -1,0 +1,9 @@
+* text=auto eol=lf
+*.py text
+*.js text
+*.css text
+*.html text
+*.md text
+*.png binary
+*.jpg binary
+*.zip binary
