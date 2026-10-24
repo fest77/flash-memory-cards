@@ -68,6 +68,13 @@ python -m http.server 8000
 
 项目自带 WebView 壳（`android/`），打包后就是一个真正的 App：可离线、能调系统文件选择器、备份直接写进「下载」目录。
 
+**最简单：仓库根目录就有现成的 APK，直接下载安装**（debug 签名，安装时允许「未知来源」）：
+
+- GitHub：`https://raw.githubusercontent.com/fest77/flash-memory-cards/main/MDFlashCards-v1.7.1.apk`
+- Gitee：`https://gitee.com/festeel/flash-memory-cards/raw/main/MDFlashCards-v1.7.1.apk`
+
+自己打包的其他方式：
+
 - 有 Android Studio：打开 `android/` 目录，等 Gradle 同步完，`Build → Build APK(s)`；
 - 没有 Android Studio：推到 GitHub 后由 Actions 自动构建（见 [§9](#9-打包成-apk)），在 Actions 页面下载 artifact；
 - 或用任意机器（JDK 17 + Android SDK 34）执行：

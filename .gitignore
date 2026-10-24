@@ -8,6 +8,8 @@ android/app/src/main/assets/*.html
 
 # APK / signing material
 *.apk
+# ...except the ready-to-install APK shipped at the repo root
+!MDFlashCards-*.apk
 *.aab
 *.jks
 *.keystore
