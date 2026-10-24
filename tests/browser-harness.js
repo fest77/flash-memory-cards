@@ -270,7 +270,7 @@
                   check('home for quick pick', q('#view-home').classList.contains('active'));
                   q('#aiQuickBtn').click();
                   var rows = document.querySelectorAll('#modal .ai-q-row');
-                  check('quick model rows', rows.length >= 2, rows.length);
+                  check('quick model rows', rows.length >= 1, rows.length);
                   var target = q('#modal .ai-q-row.on') ? rows[rows.length - 1] : rows[0];
                   var expectModel = target.getAttribute('data-model');
                   target.click();

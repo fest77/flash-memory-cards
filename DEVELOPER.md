@@ -286,3 +286,4 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.5 | bundled 199 screenshots embedded as WebP (~7 MB single file); image placeholder rendering |
 | 1.6 | repo build ships without bundled deck data (gitignored, regenerable); settings view (theme dark/light, zh-Hans/zh-Hant/en i18n, about page); dist reduced to a single ~180 KB file |
 | 1.7 | multi-provider AI settings (presets added on demand from an "add provider" sheet + custom, enable/disable, multi-model, per-provider test), home quick model-switcher modal, native Anthropic protocol support, API keys excluded from backups |
+| 1.7.1 | preset model lists refreshed to each vendor's current APIs (2026-10): DeepSeek v4.1-Flash-1017 (`deepseek-flash`), Z.ai GLM-5.3, Kimi K3.1, Bailian Qwen3.8, OpenAI GPT-6.1, Claude 5.5; untouched legacy presets auto-upgraded on load (keyed/edited ones untouched) |

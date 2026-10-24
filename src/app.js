@@ -568,14 +568,31 @@
 
   /* ============================== AI 供应商 ============================== */
 
+  // 模型列表为各厂商开放平台 2026-10 现行版本（deepseek-flash = DeepSeek-V4.1-Flash-1017）
   var AI_PRESETS = [
-    { id: 'preset-deepseek', name: 'DeepSeek', base: 'https://api.deepseek.com/v1', models: ['deepseek-chat', 'deepseek-reasoner'], protocol: 'openai' },
-    { id: 'preset-zai', name: 'Z.ai', base: 'https://api.z.ai/api/paas/v4', models: ['glm-4.6', 'glm-4.5-air'], protocol: 'openai' },
-    { id: 'preset-kimi', name: 'Kimi', base: 'https://api.moonshot.cn/v1', models: ['kimi-k2-0905-preview', 'moonshot-v1-8k'], protocol: 'openai' },
-    { id: 'preset-bailian', name: 'Bailian', base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', models: ['qwen-max', 'qwen-plus', 'qwen-flash'], protocol: 'openai' },
-    { id: 'preset-openai', name: 'ChatGPT', base: 'https://api.openai.com/v1', models: ['gpt-4o', 'gpt-4o-mini'], protocol: 'openai' },
-    { id: 'preset-claude', name: 'Claude', base: 'https://api.anthropic.com', models: ['claude-sonnet-4-5', 'claude-haiku-4-5'], protocol: 'anthropic' }
+    { id: 'preset-deepseek', name: 'DeepSeek', base: 'https://api.deepseek.com', models: ['deepseek-flash'], protocol: 'openai' },
+    { id: 'preset-zai', name: 'Z.ai', base: 'https://api.z.ai/api/paas/v4', models: ['glm-5.3', 'glm-5.3-flash'], protocol: 'openai' },
+    { id: 'preset-kimi', name: 'Kimi', base: 'https://api.moonshot.cn/v1', models: ['kimi-k3.1-pro', 'kimi-k3'], protocol: 'openai' },
+    { id: 'preset-bailian', name: 'Bailian', base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', models: ['qwen3.8-max', 'qwen3.7-plus', 'qwen3.8-flash'], protocol: 'openai' },
+    { id: 'preset-openai', name: 'ChatGPT', base: 'https://api.openai.com/v1', models: ['gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-luna'], protocol: 'openai' },
+    { id: 'preset-claude', name: 'Claude', base: 'https://api.anthropic.com', models: ['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5'], protocol: 'anthropic' }
   ];
+
+  // 历史预置默认值：用于识别「用户从未改过」的旧预置，自动升级到现行模型
+  var AI_LEGACY_DEFAULTS = {
+    'preset-deepseek': { base: 'https://api.deepseek.com/v1', models: ['deepseek-chat', 'deepseek-reasoner'] },
+    'preset-zai': { base: 'https://api.z.ai/api/paas/v4', models: ['glm-4.6', 'glm-4.5-air'] },
+    'preset-kimi': { base: 'https://api.moonshot.cn/v1', models: ['kimi-k2-0905-preview', 'moonshot-v1-8k'] },
+    'preset-bailian': { base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', models: ['qwen-max', 'qwen-plus', 'qwen-flash'] },
+    'preset-openai': { base: 'https://api.openai.com/v1', models: ['gpt-4o', 'gpt-4o-mini'] },
+    'preset-claude': { base: 'https://api.anthropic.com', models: ['claude-sonnet-4-5', 'claude-haiku-4-5'] }
+  };
+
+  function sameList(a, b) {
+    if (!a || !b || a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
 
   function emptyAi() {
     return { activeId: '', providers: [], removed: [] };
@@ -615,7 +632,18 @@
     // 预置供应商不再自动播种：由用户在设置页「添加供应商」时按需加入
     AI_PRESETS.forEach(function (ps) {
       for (var i = 0; i < ai.providers.length; i++) {
-        if (ai.providers[i].id === ps.id) { ai.providers[i].preset = true; break; }
+        if (ai.providers[i].id === ps.id) {
+          var p = ai.providers[i];
+          p.preset = true;
+          // 未填 Key 且模型列表仍是历史默认值的预置 → 自动升级到现行模型
+          var legacy = AI_LEGACY_DEFAULTS[ps.id];
+          if (legacy && !p.key && p.base === legacy.base && sameList(p.models, legacy.models)) {
+            p.base = ps.base;
+            p.models = ps.models.slice();
+            p.model = ps.models[0] || p.model;
+          }
+          break;
+        }
       }
     });
     // 当前使用兜底：优先已启用的供应商
