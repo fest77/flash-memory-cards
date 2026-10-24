@@ -25,31 +25,29 @@
 
 ### 方式 0：本地验收（推荐 / 排查加载问题）
 
-同一个应用有三个体积版本（本版本均不含题库，功能一致）：
+应用是单文件网页（本版本不含题库）：
 
 | 文件 | 体积 | 说明 |
 |---|---|---|
-| `dist/md-flashcards.html` | ~138 KB | 标准版（推荐） |
-| `dist/md-flashcards-lite.html` | ~138 KB | 轻量版 |
-| `dist/md-flashcards-noimg.html` | ~138 KB | 无图版 |
+| `dist/md-flashcards.html` | ~180 KB | 唯一的构建产物，功能完整 |
 
-**如果双击/预览打不开**，多半是预览器对大文件或中文路径有限制，改用本地 HTTP 服务：
+**如果双击/预览打不开**，多半是预览器对中文路径有限制，改用本地 HTTP 服务：
 
 ```bash
 # 在项目根目录
 python -m http.server 8788 --directory dist
 ```
 
-浏览器访问 **http://127.0.0.1:8788/** （单文件仅 138 KB，Chrome/Edge 打开秒加载）。
+浏览器访问 **http://127.0.0.1:8788/** （单文件仅 180 KB，Chrome/Edge 打开秒加载）。
 
 ### 方式 A：直接开网页（最简单）
 
-1. 把 [`dist/md-flashcards.html`](dist/md-flashcards.html)（或 `-lite` 版）传到手机：微信/QQ 文件传输助手、数据线、网盘都行。
+1. 把 [`dist/md-flashcards.html`](dist/md-flashcards.html) 传到手机：微信/QQ 文件传输助手、数据线、网盘都行。
 2. 用 **Chrome / Edge / 夸克** 打开（文件管理器里长按 → 打开方式 → 浏览器；如果看到源码，说明用错了打开方式）。
 3. 点「📥 导入 md / zip（批量）」→ 选择文件 → 「导入全部」。
 4. 浏览器菜单 → **添加到主屏幕**，以后像 App 一样打开。
 
-> **打不开/白屏先试无图版** `md-flashcards-noimg.html`：能开说明是文件体积/预览器限制，换 lite 版或本地服务即可；还开不了再反馈具体报错。
+> **打不开/白屏**：先换本地 HTTP 服务方式（方式 0）；文件很小（180 KB），基本不可能是体积问题。
 
 > **手机端只能单选文件？** 这是部分系统文件选择器（如 ColorOS）的限制，不是网页坏了：
 > - 在导入弹层里**分几次**点「选择 .md 文件」，每次加一个，最后一起「导入全部」；
@@ -164,6 +162,19 @@ cd android && gradle assembleDebug # 产物：app/build/outputs/apk/debug/app-de
 
 ---
 
+## 4.7 设置（主题 / 语言 / 关于）
+
+点右上角 **⚙** 进入「设置」：
+
+- **通用设置**
+  - **主题**：深色（默认）/ 浅色；
+  - **语言**：简体中文 / 繁體中文 / English，全界面即时切换（含提示语和确认框）。
+- **关于**：应用图标与名称（MD闪记卡 / MD FlashCards）、版本号、作者、Gitee / GitHub 仓库地址。
+
+主题与语言保存在本机设置里，重启后保持。
+
+---
+
 ## 5. 数据与备份
 
 - 全部数据只在本机浏览器：`IndexedDB`（不可用时 `localStorage`）。
@@ -192,12 +203,12 @@ md-flashcards/
 ├── README.md                 # 用户文档（本文件）
 ├── DEVELOPER.md              # 开发者文档：架构 / 数据模型 / 扩展指南
 ├── dist/
-│   └── md-flashcards.html    # 构建产物（单文件，~138 KB）
+│   └── md-flashcards.html    # 构建产物（单文件，~180 KB）
 ├── src/
-│   ├── index.tpl.html        # 页面骨架 + 四个内联占位符
+│   ├── index.tpl.html        # 页面骨架 + 五个内联占位符
 │   ├── core.js               # 纯函数：拆卡 / 提问 / Markdown 渲染 / zip 解包
-│   ├── app.js                # 界面、存储、复习、速记、管理、AI
-│   └── styles.css            # 深色移动端样式
+│   ├── app.js               # 界面、存储、复习、速记、管理、AI、设置、多语言
+│   └── styles.css            # 主题样式（深色默认 + 浅色，CSS 变量驱动）
 ├── scripts/
 │   ├── build.py              # 内联构建 → dist/md-flashcards.html
 │   ├── ai_cards.py           # 电脑端 md → AI 卡片 JSON
@@ -205,7 +216,7 @@ md-flashcards/
 │   └── build_interview_images.py  # 题库配图 → bundled-images.js（可选，本版未含数据）
 ├── tests/
 │   ├── core.test.cjs         # 32 项单元测试
-│   ├── run-browser-test.cjs  # 63 项 headless Edge 端到端
+│   ├── run-browser-test.cjs  # 71 项 headless Edge 端到端
 │   ├── run-screenshots.cjs   # 生成 docs/images 截图
 │   └── fixtures/             # 测试用 zip
 ├── docs/
@@ -303,3 +314,12 @@ python scripts/build.py                      # 内联 → dist/md-flashcards.htm
 - `dist/md-flashcards.html` 是需要提交的（GitHub Pages 可直接用它）；
 - 想用 GitHub Pages：Settings → Pages → Source 选 `main` / `root`，访问 `https://<user>.github.io/<repo>/dist/md-flashcards.html`；
 - 许可证按需添加（MIT / Apache-2.0 等）。
+
+---
+
+## 12. 版本历史
+
+| 版本 | 变更 |
+|---|---|
+| 1.5 | 首个发布版：拆卡 / 随机复习 / 分类速记 / 管理 / 备份 / AI 提炼（BYO-key）/ Android 壳 |
+| 1.6 | 设置视图（右上角 ⚙）：浅色主题（默认深色）、简繁英三语切换、关于页；dist 精简为单文件 |

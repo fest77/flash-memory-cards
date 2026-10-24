@@ -1,13 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Inline src/* into a single self-contained HTML file.
+"""Inline src/* into a single self-contained HTML file (dist/md-flashcards.html).
 
-Usage:
-    python scripts/build.py
-    python scripts/build.py --images src/bundled-images-lite.js --out dist/md-flashcards-lite.html
-    python scripts/build.py --images none --out dist/md-flashcards-noimg.html
-
-Default output: dist/md-flashcards.html
+--images / --out 仍可用于本地生成带题库/自定义输出的变体（变体文件不入库）。
 """
 import argparse
 import pathlib

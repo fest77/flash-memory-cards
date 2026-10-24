@@ -11,8 +11,8 @@ A **zero-backend, dependency-free, single-file** markdown flashcard app:
 
 - Input: `.md` / `.txt` / `.zip`, or the bundled deck;
 - Process: split into Q/A cards by heading / `Q:`/`A:` / bold questions; generate a question when the heading is not one;
-- Output: random recall (3-way self-rating), "quick read" by chapter + question outline, deck management, JSON backup;
-- Ship forms: one HTML (~860 KB, bundled decks included) or an Android WebView APK.
+- Output: random recall (3-way self-rating), "quick read" by chapter + question outline, deck management, JSON backup, settings (theme / language / about);
+- Ship forms: one HTML (~180 KB, no bundled data) or an Android WebView APK.
 
 **Non-goals**: accounts, cloud sync, SM-2/FSRS scheduling, any framework or CDN.
 
@@ -42,7 +42,7 @@ md-flashcards/
 ├── tests/
 │   ├── core.test.cjs          # 32 unit tests (Node, no browser)
 │   ├── browser-harness.js     # injected into the built page
-│   ├── run-browser-test.cjs   # static checks + 67 headless-Edge assertions
+│   ├── run-browser-test.cjs   # static checks + 71 headless-Edge assertions
 │   ├── run-screenshots.cjs    # writes docs/images/*
 │   ├── persist-test.cjs       # file:// persistence check
 │   └── fixtures/notes.zip     # zip-parsing fixture
@@ -137,6 +137,8 @@ state = {
   settings: {
     mode, gran: 'fine|mid|coarse', qstyle,
     filter: 'all|todo',
+    theme: 'dark|light',        // v1.6
+    lang: 'zh-Hans|zh-Hant|en', // v1.6
     bundledVersion: '2026-10-23.1',
     ai: { base, model, key }   // local only
   }
@@ -182,6 +184,8 @@ Notes:
 | manage | `openManage`/`renderManage`/`openRenameModal`/`doRename`/`resetDeckProgress` |
 | backup | `backupJson`/`showExport`/`downloadFile` (AndroidSaver bridge first)/`importBackup` |
 | AI | `aiChat` (fetch + timeout + error mapping)/`testAi`/`startAiRefine` (batched, question-only)/`parseAiQuestions` |
+| settings | `openSettings`/`onThemeChange`/`applyTheme` (body.light + meta theme-color) |
+| i18n | `I18N` dict (zh-Hans/zh-Hant/en)/`t`/`tf`/`applyI18nStatic` (`data-i18n`, `data-i18n-ph`, `data-i18n-aria`, `data-i18n-title`) |
 | events | `bindEvents` (single `data-act` delegate) + `onAction` switch |
 
 ### scripts
@@ -227,6 +231,10 @@ Notes:
 
 **Change AI protocol** — `aiChat` is the single egress point.
 
+**Add UI strings** — never hard-code user-facing text in `app.js`/`index.tpl.html`; add a key to all three `I18N` dicts (`zh-Hans` is the fallback), use `t(key)` in JS and `data-i18n` / `data-i18n-ph` / `data-i18n-aria` / `data-i18n-title` in the template.
+
+**Add a theme** — themes are CSS-variable sets; `:root` holds dark values, `body.light` overrides them. Wire the select in `view-settings` + `applyTheme`.
+
 **Caution**: state changes must stay backward-compatible via `normalizeState`, otherwise existing users lose data.
 
 ---
@@ -235,7 +243,7 @@ Notes:
 
 ```bash
 node tests/core.test.cjs            # 32 assertions, Node 18+ (DecompressionStream)
-node tests/run-browser-test.cjs     # static checks + 67 headless Edge assertions
+node tests/run-browser-test.cjs     # static checks + 71 headless Edge assertions
 node tests/run-screenshots.cjs      # docs/images screenshots
 node tests/persist-test.cjs         # file:// persistence
 ```
@@ -269,3 +277,4 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.3 | chapter→question TOC with jump & highlight; developer docs |
 | 1.4 | repo renamed to English paths; Android WebView APK project + GitHub Actions |
 | 1.5 | bundled 199 screenshots embedded as WebP (~7 MB single file); image placeholder rendering |
+| 1.6 | repo build ships without bundled deck data (gitignored, regenerable); settings view (theme dark/light, zh-Hans/zh-Hant/en i18n, about page); dist reduced to a single ~180 KB file |

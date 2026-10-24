@@ -57,10 +57,9 @@
       check('boot', !!app);
       check('home active', q('#view-home').classList.contains('active'));
       check('statbar rendered', q('#statBar').innerHTML.indexOf('全部卡片') >= 0);
-      check('bundled decks seeded', app.state().decks.filter(function (x) { return x.bundled; }).length >= 3, app.state().decks.length);
-      check('bundled cards > 500', app.state().decks.reduce(function (n, d) { return n + (d.bundled ? d.cards.length : 0); }, 0) > 500);
+      check('no bundled decks in repo build', app.state().decks.filter(function (x) { return x.bundled; }).length === 0, app.state().decks.length);
       var baseDecks = app.state().decks.length;
-      check('hero hidden when seeded', q('#heroEmpty').classList.contains('hidden'));
+      check('hero visible when empty', !q('#heroEmpty').classList.contains('hidden'));
 
       /* --- 导入 --- */
       var md = [
@@ -197,21 +196,13 @@
               q('[data-act="close-modal"]').click();
               check('modal closed', q('#modal').classList.contains('hidden'));
 
-              /* --- 分类速记 --- */
-              var bd = app.state().decks.filter(function (x) { return x.bundled; })[0];
-              app.openQuick(bd.id);
+              /* --- 分类速记（用导入的测试笔记） --- */
+              var qd = app.state().decks.filter(function (x) { return x.name === '改名前的测试笔记' || x.name === '自动化测试'; })[0];
+              app.openQuick(qd.id);
               check('quick view active', q('#view-quick').classList.contains('active'));
-              check('quick cards rendered', document.querySelectorAll('#quickBody .quick-card').length > 10, document.querySelectorAll('#quickBody .quick-card').length);
-              check('quick answer rendered', !!q('#quickBody .quick-a') && q('#quickBody .quick-a').innerHTML.length > 20);
-              check('bundled images map', !!window.MDReviewBundledImages && Object.keys(window.MDReviewBundledImages).length >= 3,
-                window.MDReviewBundledImages ? Object.keys(window.MDReviewBundledImages).length : 0);
-              var imgCount = document.querySelectorAll('#quickBody img.md-img').length;
-              check('quick images rendered', imgCount > 10, imgCount);
-              var firstImg = q('#quickBody img.md-img');
-              check('image is embedded data uri', !!firstImg && String(firstImg.getAttribute('src')).indexOf('data:image/') === 0,
-                firstImg ? String(firstImg.getAttribute('src')).slice(0, 24) : 'none');
-              check('placeholder replaced', q('#quickBody').innerHTML.indexOf('（配图 ') < 0);
-              check('quick outline chips', document.querySelectorAll('#quickOutline .chip').length > 2, document.querySelectorAll('#quickOutline .chip').length);
+              check('quick cards rendered', document.querySelectorAll('#quickBody .quick-card').length >= 3, document.querySelectorAll('#quickBody .quick-card').length);
+              check('quick answer rendered', !!q('#quickBody .quick-a') && q('#quickBody .quick-a').innerHTML.length > 10);
+              check('quick outline chips', document.querySelectorAll('#quickOutline .chip').length >= 2, document.querySelectorAll('#quickOutline .chip').length);
               var firstFold = q('[data-act="quick-fold"]');
               if (firstFold) firstFold.click();
               check('quick fold works', !!q('#quickBody .quick-group.collapsed'));
@@ -219,14 +210,35 @@
               /* --- 题目目录（章 → 题） --- */
               q('[data-act="quick-toc"]').click();
               check('quick toc opened', !!q('#quickToc') && !q('#quickToc').classList.contains('hidden'));
-              check('quick toc items', document.querySelectorAll('#quickToc .toc-item').length > 50, document.querySelectorAll('#quickToc .toc-item').length);
+              check('quick toc items', document.querySelectorAll('#quickToc .toc-item').length >= 3, document.querySelectorAll('#quickToc .toc-item').length);
               var firstTocItem = q('#quickToc .toc-item');
               if (firstTocItem) firstTocItem.click();
               check('quick jump rendered', document.querySelectorAll('#quickBody .quick-card').length > 0, document.querySelectorAll('#quickBody .quick-card').length);
               check('quick jump closed toc', !!q('#quickToc') && q('#quickToc').classList.contains('hidden'));
 
+              /* --- 设置视图：主题 / 语言 --- */
+              q('[data-act="open-settings"]').click();
+              check('settings view active', q('#view-settings').classList.contains('active'));
+              check('theme select exists', !!q('#setTheme') && !!q('#setLang'));
+              check('about version shown', q('#aboutVersion').textContent.indexOf('v') === 0, q('#aboutVersion').textContent);
+              q('#setLang').value = 'en';
+              q('#setLang').dispatchEvent(new Event('change', { bubbles: true }));
+              check('lang switched to en', document.title.indexOf('FlashCards') >= 0, document.title);
+              check('statbar translated', q('#statBar').textContent.indexOf('All cards') >= 0, q('#statBar').textContent.slice(0, 40));
+              q('#setTheme').value = 'light';
+              q('#setTheme').dispatchEvent(new Event('change', { bubbles: true }));
+              check('light theme applied', document.body.classList.contains('light'));
+              q('#setTheme').value = 'dark';
+              q('#setTheme').dispatchEvent(new Event('change', { bubbles: true }));
+              check('dark theme restored', !document.body.classList.contains('light'));
+              q('#setLang').value = 'zh-Hans';
+              q('#setLang').dispatchEvent(new Event('change', { bubbles: true }));
+              check('lang restored', document.title.indexOf('闪卡') >= 0, document.title);
+              app.state().settings.theme = 'dark';
+
               /* --- 笔记管理 --- */
               app.openManage();
+              check('back from settings to manage', q('#view-manage').classList.contains('active'));
               check('manage active', q('#view-manage').classList.contains('active'));
               check('manage lists decks', document.querySelectorAll('#manageList .mdeck').length === app.state().decks.length,
                 document.querySelectorAll('#manageList .mdeck').length);
