@@ -658,3 +658,18 @@ body.light {
 .ai-p .field input[type="text"], .ai-p .field input[type="password"] { max-width: 62%; }
 .ai-p-actions { display: flex; gap: 8px; padding-top: 10px; }
 .ai-p-actions .btn { flex: 1; }
+
+/* 主页 AI 快捷切换 + 选择/添加弹窗 */
+.ai-quick { width: 100%; margin-bottom: 12px; justify-content: flex-start; text-align: left; }
+.ai-q-list { display: grid; gap: 6px; margin: 10px 0 2px; max-height: 46vh; overflow: auto; }
+.ai-q-row {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  background: var(--hover); border: 1px solid var(--line); border-radius: 10px;
+  padding: 11px 12px; color: var(--fg); font-size: 14px;
+}
+.ai-q-row:active { background: var(--active); }
+.ai-q-row.on { border-color: rgba(91,156,255,.5); background: rgba(91,156,255,.12); }
+.ai-q-dot { flex: none; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--muted); }
+.ai-q-row.on .ai-q-dot { border-color: var(--accent); background: var(--accent); }
+.ai-q-name { font-weight: 700; font-size: 14px; flex: none; }
+.ai-q-model { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

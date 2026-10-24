@@ -170,10 +170,13 @@ cd android && gradle assembleDebug # 产物：app/build/outputs/apk/debug/app-de
   - **主题**：深色（默认）/ 浅色；
   - **语言**：简体中文 / 繁體中文 / English，全界面即时切换（含提示语和确认框）。
 - **AI 供应商**：支持同时配置多个供应商，随时启用 / 停用、切换「当前使用」。
-  - 内置 6 家预置（填自己的 Key 即可用）：**DeepSeek、Z.ai、Kimi、Bailian（阿里云百炼）、ChatGPT、Claude**；
-  - 也可**添加任意自定义供应商**（任何 OpenAI 兼容接口，如本机 Ollama）；Claude 走 Anthropic 原生协议，应用自动适配；
+  - 预置 **DeepSeek、Z.ai、Kimi、Bailian（阿里云百炼）、ChatGPT、Claude** 六家，在「＋ 添加供应商」里按需加入（地址和常用模型已预填，填上自己的 Key 即可用），不用的一直不占地方；
+  - 也可添加**自定义供应商**（任何 OpenAI 兼容接口，如本机 Ollama）；Claude 走 Anthropic 原生协议，应用自动适配；
   - 每个供应商可维护**多个模型**（逗号分隔），并单独选择「当前模型」；
   - 每张卡有独立的「测试连接」。
+
+**主页快捷切换**：首页的「🤖 AI 提炼 · 当前供应商 ▾」按钮点开即弹窗选择「供应商 · 模型」组合，不用进设置页；未配置时点它会引导去设置。
+
 - **关于**：应用图标与名称（MD闪记卡 / MD FlashCards）、版本号、作者、Gitee / GitHub 仓库地址。
 
 主题与语言保存在本机设置里，重启后保持。
@@ -330,4 +333,4 @@ python scripts/build.py                      # 内联 → dist/md-flashcards.htm
 |---|---|
 | 1.5 | 首个发布版：拆卡 / 随机复习 / 分类速记 / 管理 / 备份 / AI 提炼（BYO-key）/ Android 壳 |
 | 1.6 | 设置视图（右上角 ⚙）：浅色主题（默认深色）、简繁英三语切换、关于页；dist 精简为单文件 |
-| 1.7 | AI 多供应商管理（预置 DeepSeek/Z.ai/Kimi/Bailian/ChatGPT/Claude + 自定义，启停/多模型/测试连接），Claude 原生协议适配，备份文件不再包含 API Key |
+| 1.7 | AI 多供应商管理（预置 DeepSeek/Z.ai/Kimi/Bailian/ChatGPT/Claude 按需添加 + 自定义，启停/多模型/测试连接），主页模型快捷切换弹窗，Claude 原生协议适配，备份文件不再包含 API Key |

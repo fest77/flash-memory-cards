@@ -106,6 +106,11 @@
       q('[data-act="close-modal"]').click();
       check('import modal closed', q('#modal').classList.contains('hidden'));
       check('qstyle select exists', !!q('#setQstyle'));
+      check('ai quick button exists', !!q('#aiQuickBtn'));
+      q('#aiQuickBtn').click();
+      check('ai quick none-configured', !!q('#modal [data-act="ai-manage"]'), q('#modalBox').textContent.slice(0, 40));
+      q('[data-act="close-modal"]').click();
+      check('ai quick modal closed', q('#modal').classList.contains('hidden'));
 
       var okCloze = app.importText('提问测试', '## 三次握手\n\n客户端发送 **SYN**，服务端回复 **SYN+ACK**，最后 **ACK**。', { mode: 'auto', gran: 'mid', qstyle: 'cloze' });
       check('cloze import returns true', okCloze === true);
@@ -220,15 +225,17 @@
               check('settings view active', q('#view-settings').classList.contains('active'));
               check('theme select exists', !!q('#setTheme') && !!q('#setLang'));
               check('about version shown', q('#aboutVersion').textContent.indexOf('v') === 0, q('#aboutVersion').textContent);
-              check('ai providers rendered', document.querySelectorAll('#aiProviderList .ai-p').length >= 6,
+              check('ai providers empty by default', document.querySelectorAll('#aiProviderList .ai-p').length === 0,
                 document.querySelectorAll('#aiProviderList .ai-p').length);
               check('ai active select exists', !!q('#aiActive'));
-              var aiSwitch = q('#aiProviderList .switch input');
-              if (aiSwitch) {
-                aiSwitch.checked = true;
-                aiSwitch.dispatchEvent(new Event('change', { bubbles: true }));
-              }
-              check('ai provider toggle works', app.state().settings.ai.providers.some(function (p) { return p.enabled; }));
+              q('[data-act="ai-add"]').click();
+              check('add modal lists presets', document.querySelectorAll('#modal .ai-q-row').length >= 7,
+                document.querySelectorAll('#modal .ai-q-row').length);
+              q('[data-act="ai-add-preset"]').click();
+              check('preset added', app.state().settings.ai.providers.length === 1, app.state().settings.ai.providers.length);
+              check('provider card rendered', document.querySelectorAll('#aiProviderList .ai-p').length === 1);
+              check('preset added enabled', app.state().settings.ai.providers[0].enabled === true);
+              check('active follows first added', app.state().settings.ai.activeId === 'preset-deepseek');
               q('#setLang').value = 'en';
               q('#setLang').dispatchEvent(new Event('change', { bubbles: true }));
               check('lang switched to en', document.title.indexOf('FlashCards') >= 0, document.title);
@@ -256,10 +263,31 @@
               q('[data-act="do-rename"]').click();
               check('rename applied', app.state().decks.filter(function (x) { return x.name === '改名后的笔记'; }).length === 1);
 
-              check('browser unzip works', !!window.__zipList && window.__zipList.length === 2,
-                window.__zipList ? window.__zipList.map(function (x) { return x.name; }).join(',') : (window.__zipError || 'pending'));
+              /* --- 主页 AI 快捷切换（已有启用的供应商） --- */
+              q('[data-act="back-home"]').click();
+              setTimeout(function () {
+                try {
+                  check('home for quick pick', q('#view-home').classList.contains('active'));
+                  q('#aiQuickBtn').click();
+                  var rows = document.querySelectorAll('#modal .ai-q-row');
+                  check('quick model rows', rows.length >= 2, rows.length);
+                  var target = q('#modal .ai-q-row.on') ? rows[rows.length - 1] : rows[0];
+                  var expectModel = target.getAttribute('data-model');
+                  target.click();
+                  var ap = app.state().settings.ai.providers.filter(function (p) { return p.id === app.state().settings.ai.activeId; })[0];
+                  check('quick pick applied', ap && ap.model === expectModel, ap && ap.model);
+                  check('quick modal closed', q('#modal').classList.contains('hidden'));
+                  check('quick button label updated', q('#aiQuickBtn').textContent.indexOf(ap.model) >= 0, q('#aiQuickBtn').textContent);
 
-              finish();
+                  check('browser unzip works', !!window.__zipList && window.__zipList.length === 2,
+                    window.__zipList ? window.__zipList.map(function (x) { return x.name; }).join(',') : (window.__zipError || 'pending'));
+
+                  finish();
+                } catch (e) {
+                  check('final-step-error', false, e && e.message);
+                  finish();
+                }
+              }, 300);
             } catch (e) {
               check('late-step-error', false, e && e.message);
               finish();

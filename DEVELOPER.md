@@ -189,7 +189,8 @@ Notes:
 | manage | `openManage`/`renderManage`/`openRenameModal`/`doRename`/`resetDeckProgress` |
 | backup | `backupJson` (via `stripAiKeys` — backups never contain API keys)/`showExport`/`downloadFile` (AndroidSaver bridge first)/`importBackup` |
 | AI | `aiChat` (openai + native anthropic `/v1/messages` protocols, fetch + timeout + error mapping)/`startAiRefine` (batched, question-only)/`parseAiQuestions` |
-| ai providers | `AI_PRESETS` (DeepSeek/Z.ai/Kimi/Bailian/ChatGPT/Claude)/`normalizeAi` (preset seeding + v1.6 single-config migration)/`renderAiProviders`/`onProviderField`/`addCustomProvider`/`deleteProvider`/`testProviderModal` |
+| ai providers | `AI_PRESETS` (DeepSeek/Z.ai/Kimi/Bailian/ChatGPT/Claude, added on demand — not auto-seeded)/`normalizeAi` (migration)/`renderAiProviders`/`onProviderField`/`openAddProviderModal`/`addPreset`/`addCustomProvider`/`deleteProvider`/`testProviderModal` |
+| ai quick | `openAiQuick`/`pickAiQuick` — home modal to switch provider · model without opening settings |
 | settings | `openSettings`/`onThemeChange`/`applyTheme` (body.light + meta theme-color) |
 | i18n | `I18N` dict (zh-Hans/zh-Hant/en)/`t`/`tf`/`applyI18nStatic` (`data-i18n`, `data-i18n-ph`, `data-i18n-aria`, `data-i18n-title`) |
 | events | `bindEvents` (single `data-act` delegate) + `onAction` switch |
@@ -284,4 +285,4 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.4 | repo renamed to English paths; Android WebView APK project + GitHub Actions |
 | 1.5 | bundled 199 screenshots embedded as WebP (~7 MB single file); image placeholder rendering |
 | 1.6 | repo build ships without bundled deck data (gitignored, regenerable); settings view (theme dark/light, zh-Hans/zh-Hant/en i18n, about page); dist reduced to a single ~180 KB file |
-| 1.7 | multi-provider AI settings (6 presets + custom, enable/disable, multi-model, per-provider test), native Anthropic protocol support, API keys excluded from backups |
+| 1.7 | multi-provider AI settings (presets added on demand from an "add provider" sheet + custom, enable/disable, multi-model, per-provider test), home quick model-switcher modal, native Anthropic protocol support, API keys excluded from backups |

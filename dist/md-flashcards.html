@@ -671,6 +671,21 @@ body.light {
 .ai-p .field input[type="text"], .ai-p .field input[type="password"] { max-width: 62%; }
 .ai-p-actions { display: flex; gap: 8px; padding-top: 10px; }
 .ai-p-actions .btn { flex: 1; }
+
+/* 主页 AI 快捷切换 + 选择/添加弹窗 */
+.ai-quick { width: 100%; margin-bottom: 12px; justify-content: flex-start; text-align: left; }
+.ai-q-list { display: grid; gap: 6px; margin: 10px 0 2px; max-height: 46vh; overflow: auto; }
+.ai-q-row {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  background: var(--hover); border: 1px solid var(--line); border-radius: 10px;
+  padding: 11px 12px; color: var(--fg); font-size: 14px;
+}
+.ai-q-row:active { background: var(--active); }
+.ai-q-row.on { border-color: rgba(91,156,255,.5); background: rgba(91,156,255,.12); }
+.ai-q-dot { flex: none; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--muted); }
+.ai-q-row.on .ai-q-dot { border-color: var(--accent); background: var(--accent); }
+.ai-q-name { font-weight: 700; font-size: 14px; flex: none; }
+.ai-q-model { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -712,6 +727,7 @@ body.light {
           <button class="btn" data-act="import-json" data-i18n="btn.restoreBackup">恢复备份</button>
         </div>
       </div>
+      <button class="btn ai-quick" id="aiQuickBtn" data-act="ai-quick">🤖 AI 提炼</button>
       <div id="deckList" class="deck-list"></div>
 
       <details class="settings">
@@ -867,7 +883,7 @@ body.light {
       </div>
       <div id="aiProviderList" class="ai-providers"></div>
       <div class="row-2" style="padding:6px 0 2px">
-        <button class="btn" data-act="ai-add-custom" data-i18n="ai.addCustom">＋ 添加自定义供应商</button>
+        <button class="btn" data-act="ai-add" data-i18n="ai.add">＋ 添加供应商</button>
         <button class="btn" data-act="import-cards-json" data-i18n="btn.aiImport">导入 AI 卡片</button>
       </div>
       <p class="modal-note" style="padding-bottom:6px" data-i18n="ai.keyLocalNote">API Key 只保存在本机浏览器（IndexedDB），不经任何服务器、不上传云端；「备份全部」导出的文件也不包含 Key。</p>
@@ -1873,7 +1889,7 @@ body.light {
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.7.0';
+  var APP_VERSION = '1.7.1';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -1889,7 +1905,10 @@ body.light {
       'btn.import': '📥 导入 md / zip', 'btn.paste': '✍️ 粘贴 Markdown 文本', 'btn.demo': '看看示例（10 张卡）',
       'btn.importBatch': '📥 导入 md / zip（批量）', 'btn.pasteShort': '粘贴文本', 'btn.backup': '备份全部', 'btn.restoreBackup': '恢复备份',
       'set.importTitle': '导入与提问设置', 'set.aiTitle': 'AI 提炼设置（可选，需要你自己的 API）',
-      'settings.ai': 'AI 供应商', 'ai.active': '当前使用', 'ai.addCustom': '＋ 添加自定义供应商',
+      'settings.ai': 'AI 供应商', 'ai.active': '当前使用', 'ai.addCustom': '＋ 自定义供应商（OpenAI 兼容）',
+      'ai.add': '＋ 添加供应商', 'ai.addTitle': '添加供应商',
+      'ai.quickTitle': '选择模型', 'ai.manage': '管理供应商', 'ai.goSettings': '去设置',
+      'home.aiBtn': '🤖 AI 提炼 · {name} ▾', 'home.aiNone': '🤖 AI 提炼 · 未配置（点击去设置）',
       'ai.customName': '自定义供应商', 'ai.models': '模型列表（逗号分隔）', 'ai.model': '当前模型',
       'ai.presetTag': '内置',
       'ai.noneEnabled': '没有已启用的供应商：请在下方启用一个并填写 API 地址与模型。',
@@ -1993,7 +2012,10 @@ body.light {
       'btn.import': '📥 匯入 md / zip', 'btn.paste': '✍️ 貼上 Markdown 文字', 'btn.demo': '看看範例（10 張卡）',
       'btn.importBatch': '📥 匯入 md / zip（批次）', 'btn.pasteShort': '貼上文字', 'btn.backup': '備份全部', 'btn.restoreBackup': '還原備份',
       'set.importTitle': '匯入與提問設定', 'set.aiTitle': 'AI 提煉設定（可選，需要你自己的 API）',
-      'settings.ai': 'AI 供應商', 'ai.active': '當前使用', 'ai.addCustom': '＋ 新增自訂供應商',
+      'settings.ai': 'AI 供應商', 'ai.active': '當前使用', 'ai.addCustom': '＋ 自訂供應商（OpenAI 相容）',
+      'ai.add': '＋ 新增供應商', 'ai.addTitle': '新增供應商',
+      'ai.quickTitle': '選擇模型', 'ai.manage': '管理供應商', 'ai.goSettings': '去設定',
+      'home.aiBtn': '🤖 AI 提煉 · {name} ▾', 'home.aiNone': '🤖 AI 提煉 · 未設定（點擊去設定）',
       'ai.customName': '自訂供應商', 'ai.models': '模型清單（逗號分隔）', 'ai.model': '當前模型',
       'ai.presetTag': '內建',
       'ai.noneEnabled': '沒有已啟用的供應商：請在下方啟用一個並填寫 API 位址與模型。',
@@ -2097,7 +2119,10 @@ body.light {
       'btn.import': '📥 Import md / zip', 'btn.paste': '✍️ Paste Markdown text', 'btn.demo': 'Try the sample (10 cards)',
       'btn.importBatch': '📥 Import md / zip (batch)', 'btn.pasteShort': 'Paste text', 'btn.backup': 'Backup all', 'btn.restoreBackup': 'Restore backup',
       'set.importTitle': 'Import & question settings', 'set.aiTitle': 'AI refine settings (optional, your own API)',
-      'settings.ai': 'AI providers', 'ai.active': 'Active provider', 'ai.addCustom': '＋ Add custom provider',
+      'settings.ai': 'AI providers', 'ai.active': 'Active provider', 'ai.addCustom': '＋ Custom provider (OpenAI-compatible)',
+      'ai.add': '＋ Add provider', 'ai.addTitle': 'Add provider',
+      'ai.quickTitle': 'Choose model', 'ai.manage': 'Manage providers', 'ai.goSettings': 'Open settings',
+      'home.aiBtn': '🤖 AI refine · {name} ▾', 'home.aiNone': '🤖 AI refine · not set (tap to configure)',
       'ai.customName': 'Custom provider', 'ai.models': 'Models (comma separated)', 'ai.model': 'Active model',
       'ai.presetTag': 'Built-in',
       'ai.noneEnabled': 'No provider is enabled — enable one below and fill in its API URL and model.',
@@ -2447,19 +2472,10 @@ body.light {
       });
       ai.activeId = 'p-migrated';
     }
-    // 补齐未被删除的预置供应商
+    // 预置供应商不再自动播种：由用户在设置页「添加供应商」时按需加入
     AI_PRESETS.forEach(function (ps) {
-      if (ai.removed.indexOf(ps.id) >= 0) return;
-      var exist = null;
-      for (var i = 0; i < ai.providers.length; i++) if (ai.providers[i].id === ps.id) { exist = ai.providers[i]; break; }
-      if (!exist) {
-        ai.providers.push({
-          id: ps.id, name: ps.name, base: ps.base, key: '',
-          models: ps.models.slice(), model: ps.models[0] || '',
-          enabled: false, protocol: ps.protocol, preset: true
-        });
-      } else {
-        exist.preset = true;
+      for (var i = 0; i < ai.providers.length; i++) {
+        if (ai.providers[i].id === ps.id) { ai.providers[i].preset = true; break; }
       }
     });
     // 当前使用兜底：优先已启用的供应商
@@ -2764,6 +2780,13 @@ body.light {
     }
     $('#deckList').innerHTML = html;
 
+    var qb = $('#aiQuickBtn');
+    if (qb) {
+      var ap = activeProvider();
+      qb.innerHTML = ap
+        ? tf('home.aiBtn', { name: ap.name + ' · ' + (ap.model || '-') })
+        : t('home.aiNone');
+    }
     $('#setMode').value = state.settings.mode || 'auto';
     $('#setGran').value = state.settings.gran || 'mid';
     if ($('#setQstyle')) $('#setQstyle').value = state.settings.qstyle || 'prompt';
@@ -3164,6 +3187,84 @@ body.light {
     wrap.innerHTML = ai.providers.map(providerCardHtml).join('');
   }
 
+  function openAiQuick() {
+    var ai = aiState();
+    var enabled = ai.providers.filter(function (p) { return p.enabled && p.model; });
+    var body;
+    if (!enabled.length) {
+      body = '<p class="modal-note">' + t('ai.noneEnabled') + '</p>' +
+        '<div class="modal-actions">' +
+          '<button class="btn primary" data-act="ai-manage">' + t('ai.goSettings') + '</button>' +
+          '<button class="btn" data-act="close-modal">' + t('btn.close') + '</button>' +
+        '</div>';
+    } else {
+      var rows = enabled.map(function (p) {
+        return p.models.map(function (m) {
+          var isCur = p.id === ai.activeId && m === p.model;
+          return '<button class="ai-q-row' + (isCur ? ' on' : '') + '" data-act="ai-quick-pick"' +
+            ' data-pid="' + ESC(p.id) + '" data-model="' + ESC(m) + '">' +
+            '<span class="ai-q-dot"></span><span class="ai-q-name">' + ESC(p.name) + '</span>' +
+            '<span class="ai-q-model">' + ESC(m) + '</span></button>';
+        }).join('');
+      }).join('');
+      body = '<div class="ai-q-list">' + rows + '</div>' +
+        '<div class="modal-actions">' +
+          '<button class="btn" data-act="ai-manage">' + t('ai.manage') + '</button>' +
+          '<button class="btn" data-act="close-modal">' + t('btn.close') + '</button>' +
+        '</div>';
+    }
+    openModal('<h3>' + t('ai.quickTitle') + '</h3>' + body);
+  }
+
+  function pickAiQuick(pid, model) {
+    var p = findProvider(pid);
+    if (!p || !p.enabled) return;
+    var ai = aiState();
+    ai.activeId = pid;
+    if (p.models.indexOf(model) >= 0) p.model = model;
+    scheduleSave();
+    closeModal();
+    renderHome();
+    toast(tf('ai.using', { name: p.name, model: p.model }));
+  }
+
+  function openAddProviderModal() {
+    var ai = aiState();
+    var added = {};
+    ai.providers.forEach(function (p) { added[p.id] = true; });
+    var avail = AI_PRESETS.filter(function (ps) { return !added[ps.id]; });
+    var rows = avail.map(function (ps) {
+      return '<button class="ai-q-row" data-act="ai-add-preset" data-pid="' + ESC(ps.id) + '">' +
+        '<span class="ai-q-name">' + ESC(ps.name) + '</span>' +
+        '<span class="ai-q-model">' + ESC(String(ps.base).replace(/^https?:\/\//, '')) + '</span></button>';
+    }).join('');
+    openModal(
+      '<h3>' + t('ai.addTitle') + '</h3>' +
+      '<div class="ai-q-list">' + rows +
+        '<button class="ai-q-row" data-act="ai-add-custom">' +
+          '<span class="ai-q-name">' + t('ai.addCustom') + '</span></button>' +
+      '</div>' +
+      '<div class="modal-actions"><button class="btn" data-act="close-modal">' + t('btn.close') + '</button></div>'
+    );
+  }
+
+  function addPreset(presetId) {
+    var ps = null;
+    AI_PRESETS.forEach(function (x) { if (x.id === presetId) ps = x; });
+    if (!ps || findProvider(ps.id)) return;
+    var ai = aiState();
+    var hadEnabled = ai.providers.some(function (p) { return p.enabled; });
+    ai.providers.push({
+      id: ps.id, name: ps.name, base: ps.base, key: '',
+      models: ps.models.slice(), model: ps.models[0] || '',
+      enabled: true, protocol: ps.protocol, preset: true
+    });
+    if (!hadEnabled) ai.activeId = ps.id;
+    scheduleSave();
+    closeModal();
+    renderAiProviders();
+  }
+
   function addCustomProvider() {
     var ai = aiState();
     var p = {
@@ -3173,9 +3274,8 @@ body.light {
     ai.providers.push(p);
     ai.activeId = p.id;
     scheduleSave();
+    closeModal();
     renderAiProviders();
-    var cards = document.querySelectorAll('#aiProviderList .ai-p');
-    if (cards.length) cards[cards.length - 1].scrollIntoView({ block: 'center' });
   }
 
   function deleteProvider(providerId) {
@@ -4142,8 +4242,24 @@ body.light {
       case 'ai-start':
         startAiRefine();
         break;
+      case 'ai-quick':
+        openAiQuick();
+        break;
+      case 'ai-quick-pick':
+        pickAiQuick(el.getAttribute('data-pid'), el.getAttribute('data-model'));
+        break;
+      case 'ai-add':
+        openAddProviderModal();
+        break;
+      case 'ai-add-preset':
+        addPreset(el.getAttribute('data-pid'));
+        break;
       case 'ai-add-custom':
         addCustomProvider();
+        break;
+      case 'ai-manage':
+        closeModal();
+        openSettings();
         break;
       case 'ai-test-provider':
         testProviderModal(el.getAttribute('data-pid'));

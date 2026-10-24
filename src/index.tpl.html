@@ -52,6 +52,7 @@
           <button class="btn" data-act="import-json" data-i18n="btn.restoreBackup">恢复备份</button>
         </div>
       </div>
+      <button class="btn ai-quick" id="aiQuickBtn" data-act="ai-quick">🤖 AI 提炼</button>
       <div id="deckList" class="deck-list"></div>
 
       <details class="settings">
@@ -207,7 +208,7 @@
       </div>
       <div id="aiProviderList" class="ai-providers"></div>
       <div class="row-2" style="padding:6px 0 2px">
-        <button class="btn" data-act="ai-add-custom" data-i18n="ai.addCustom">＋ 添加自定义供应商</button>
+        <button class="btn" data-act="ai-add" data-i18n="ai.add">＋ 添加供应商</button>
         <button class="btn" data-act="import-cards-json" data-i18n="btn.aiImport">导入 AI 卡片</button>
       </div>
       <p class="modal-note" style="padding-bottom:6px" data-i18n="ai.keyLocalNote">API Key 只保存在本机浏览器（IndexedDB），不经任何服务器、不上传云端；「备份全部」导出的文件也不包含 Key。</p>
