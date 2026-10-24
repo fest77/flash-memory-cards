@@ -106,7 +106,6 @@
       q('[data-act="close-modal"]').click();
       check('import modal closed', q('#modal').classList.contains('hidden'));
       check('qstyle select exists', !!q('#setQstyle'));
-      check('ai settings exist', !!q('#aiBase') && !!q('#aiModel') && !!q('#aiKey'));
 
       var okCloze = app.importText('提问测试', '## 三次握手\n\n客户端发送 **SYN**，服务端回复 **SYN+ACK**，最后 **ACK**。', { mode: 'auto', gran: 'mid', qstyle: 'cloze' });
       check('cloze import returns true', okCloze === true);
@@ -221,6 +220,15 @@
               check('settings view active', q('#view-settings').classList.contains('active'));
               check('theme select exists', !!q('#setTheme') && !!q('#setLang'));
               check('about version shown', q('#aboutVersion').textContent.indexOf('v') === 0, q('#aboutVersion').textContent);
+              check('ai providers rendered', document.querySelectorAll('#aiProviderList .ai-p').length >= 6,
+                document.querySelectorAll('#aiProviderList .ai-p').length);
+              check('ai active select exists', !!q('#aiActive'));
+              var aiSwitch = q('#aiProviderList .switch input');
+              if (aiSwitch) {
+                aiSwitch.checked = true;
+                aiSwitch.dispatchEvent(new Event('change', { bubbles: true }));
+              }
+              check('ai provider toggle works', app.state().settings.ai.providers.some(function (p) { return p.enabled; }));
               q('#setLang').value = 'en';
               q('#setLang').dispatchEvent(new Event('change', { bubbles: true }));
               check('lang switched to en', document.title.indexOf('FlashCards') >= 0, document.title);

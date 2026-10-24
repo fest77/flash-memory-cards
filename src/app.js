@@ -27,10 +27,9 @@
     title: 'qstyle.title',
     cloze: 'qstyle.cloze'
   };
-  var AI_DEFAULT = { base: '', model: '', key: '' };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.6.0';
+  var APP_VERSION = '1.7.0';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -42,10 +41,17 @@
       'brand.name': 'MD 笔记闪卡',
       'brand.tag': 'md → 知识点卡片 → 随机复习',
       'nav.manage': '笔记管理', 'nav.settings': '设置',
-      'hero.title': '把长笔记拆成一张张卡', 'hero.sub': '上传遇到不懂的，随时抽一张来复习。',
+      'hero.title': '导入长篇笔记，拆成多张闪记卡', 'hero.sub': '随时复习，闪速记忆',
       'btn.import': '📥 导入 md / zip', 'btn.paste': '✍️ 粘贴 Markdown 文本', 'btn.demo': '看看示例（10 张卡）',
       'btn.importBatch': '📥 导入 md / zip（批量）', 'btn.pasteShort': '粘贴文本', 'btn.backup': '备份全部', 'btn.restoreBackup': '恢复备份',
       'set.importTitle': '导入与提问设置', 'set.aiTitle': 'AI 提炼设置（可选，需要你自己的 API）',
+      'settings.ai': 'AI 供应商', 'ai.active': '当前使用', 'ai.addCustom': '＋ 添加自定义供应商',
+      'ai.customName': '自定义供应商', 'ai.models': '模型列表（逗号分隔）', 'ai.model': '当前模型',
+      'ai.presetTag': '内置',
+      'ai.noneEnabled': '没有已启用的供应商：请在下方启用一个并填写 API 地址与模型。',
+      'ai.using': '使用 {name} · {model}',
+      'confirm.deleteProvider': '删除供应商「{name}」？（其 API Key 将一并清除）',
+      'ai.keyLocalNote': 'API Key 只保存在本机浏览器（IndexedDB），请求直接从本机发往对应厂商，不经任何服务器、不上传云端；「备份全部」导出的文件也不包含 Key。',
       'label.mode': '拆分方式', 'label.qstyle': '提问风格', 'label.gran': '卡片粒度',
       'label.aiBase': 'API 地址', 'label.aiModel': '模型名', 'label.aiKey': 'API Key',
       'mode.auto': '自动（推荐）', 'mode.h2': '按二级标题 ##', 'mode.h3': '按三级标题 ###',
@@ -139,10 +145,17 @@
       'brand.name': 'MD 筆記閃卡',
       'brand.tag': 'md → 知識點卡片 → 隨機複習',
       'nav.manage': '筆記管理', 'nav.settings': '設定',
-      'hero.title': '把長筆記拆成一張張卡', 'hero.sub': '上傳遇到不懂的，隨時抽一張來複習。',
+      'hero.title': '匯入長篇筆記，拆成多張閃記卡', 'hero.sub': '隨時複習，閃速記憶',
       'btn.import': '📥 匯入 md / zip', 'btn.paste': '✍️ 貼上 Markdown 文字', 'btn.demo': '看看範例（10 張卡）',
       'btn.importBatch': '📥 匯入 md / zip（批次）', 'btn.pasteShort': '貼上文字', 'btn.backup': '備份全部', 'btn.restoreBackup': '還原備份',
       'set.importTitle': '匯入與提問設定', 'set.aiTitle': 'AI 提煉設定（可選，需要你自己的 API）',
+      'settings.ai': 'AI 供應商', 'ai.active': '當前使用', 'ai.addCustom': '＋ 新增自訂供應商',
+      'ai.customName': '自訂供應商', 'ai.models': '模型清單（逗號分隔）', 'ai.model': '當前模型',
+      'ai.presetTag': '內建',
+      'ai.noneEnabled': '沒有已啟用的供應商：請在下方啟用一個並填寫 API 位址與模型。',
+      'ai.using': '使用 {name} · {model}',
+      'confirm.deleteProvider': '刪除供應商「{name}」？（其 API Key 將一併清除）',
+      'ai.keyLocalNote': 'API Key 只保存在本機瀏覽器（IndexedDB），請求直接從本機發往對應廠商，不經任何伺服器、不上傳雲端；「備份全部」匯出的檔案也不包含 Key。',
       'label.mode': '拆分方式', 'label.qstyle': '提問風格', 'label.gran': '卡片粒度',
       'label.aiBase': 'API 位址', 'label.aiModel': '模型名稱', 'label.aiKey': 'API Key',
       'mode.auto': '自動（推薦）', 'mode.h2': '按二級標題 ##', 'mode.h3': '按三級標題 ###',
@@ -236,10 +249,17 @@
       'brand.name': 'MD FlashCards',
       'brand.tag': 'md → cards → random review',
       'nav.manage': 'Notes', 'nav.settings': 'Settings',
-      'hero.title': 'Turn long notes into flashcards', 'hero.sub': 'Import your notes, then drill them anytime.',
+      'hero.title': 'Import long notes, split into flashcards', 'hero.sub': 'Review anytime, remember fast',
       'btn.import': '📥 Import md / zip', 'btn.paste': '✍️ Paste Markdown text', 'btn.demo': 'Try the sample (10 cards)',
       'btn.importBatch': '📥 Import md / zip (batch)', 'btn.pasteShort': 'Paste text', 'btn.backup': 'Backup all', 'btn.restoreBackup': 'Restore backup',
       'set.importTitle': 'Import & question settings', 'set.aiTitle': 'AI refine settings (optional, your own API)',
+      'settings.ai': 'AI providers', 'ai.active': 'Active provider', 'ai.addCustom': '＋ Add custom provider',
+      'ai.customName': 'Custom provider', 'ai.models': 'Models (comma separated)', 'ai.model': 'Active model',
+      'ai.presetTag': 'Built-in',
+      'ai.noneEnabled': 'No provider is enabled — enable one below and fill in its API URL and model.',
+      'ai.using': 'Using {name} · {model}',
+      'confirm.deleteProvider': 'Delete provider "{name}"? Its API key will be removed too.',
+      'ai.keyLocalNote': 'API keys are stored only in this browser (IndexedDB); requests go straight from this device to the provider and never touch a server. Backup files contain no keys.',
       'label.mode': 'Split mode', 'label.qstyle': 'Question style', 'label.gran': 'Card size',
       'label.aiBase': 'API URL', 'label.aiModel': 'Model', 'label.aiKey': 'API Key',
       'mode.auto': 'Auto (recommended)', 'mode.h2': 'By heading level 2 (##)', 'mode.h3': 'By heading level 3 (###)',
@@ -537,6 +557,102 @@
     return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
   }
 
+  /* ============================== AI 供应商 ============================== */
+
+  var AI_PRESETS = [
+    { id: 'preset-deepseek', name: 'DeepSeek', base: 'https://api.deepseek.com/v1', models: ['deepseek-chat', 'deepseek-reasoner'], protocol: 'openai' },
+    { id: 'preset-zai', name: 'Z.ai', base: 'https://api.z.ai/api/paas/v4', models: ['glm-4.6', 'glm-4.5-air'], protocol: 'openai' },
+    { id: 'preset-kimi', name: 'Kimi', base: 'https://api.moonshot.cn/v1', models: ['kimi-k2-0905-preview', 'moonshot-v1-8k'], protocol: 'openai' },
+    { id: 'preset-bailian', name: 'Bailian', base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', models: ['qwen-max', 'qwen-plus', 'qwen-flash'], protocol: 'openai' },
+    { id: 'preset-openai', name: 'ChatGPT', base: 'https://api.openai.com/v1', models: ['gpt-4o', 'gpt-4o-mini'], protocol: 'openai' },
+    { id: 'preset-claude', name: 'Claude', base: 'https://api.anthropic.com', models: ['claude-sonnet-4-5', 'claude-haiku-4-5'], protocol: 'anthropic' }
+  ];
+
+  function emptyAi() {
+    return { activeId: '', providers: [], removed: [] };
+  }
+
+  function normalizeAi(raw) {
+    var ai = emptyAi();
+    if (raw && Array.isArray(raw.providers)) {
+      raw.providers.forEach(function (p) {
+        if (!p || typeof p !== 'object') return;
+        ai.providers.push({
+          id: String(p.id || uid('p')),
+          name: String(p.name || '').slice(0, 40),
+          base: typeof p.base === 'string' ? p.base : '',
+          key: typeof p.key === 'string' ? p.key : '',
+          models: Array.isArray(p.models) ? p.models.filter(function (m) { return typeof m === 'string' && m.trim(); }).map(function (m) { return m.trim(); }).slice(0, 20) : [],
+          model: typeof p.model === 'string' ? p.model : '',
+          enabled: !!p.enabled,
+          protocol: p.protocol === 'anthropic' ? 'anthropic' : 'openai',
+          preset: !!p.preset
+        });
+      });
+      if (typeof raw.activeId === 'string') ai.activeId = raw.activeId;
+      if (Array.isArray(raw.removed)) ai.removed = raw.removed.filter(function (x) { return typeof x === 'string'; });
+    } else if (raw && typeof raw === 'object' && (raw.base || raw.model || raw.key)) {
+      // v1.6 及更早的单供应商配置 → 迁移为一个自定义供应商
+      var model = typeof raw.model === 'string' ? raw.model.trim() : '';
+      ai.providers.push({
+        id: 'p-migrated', name: t('ai.customName'),
+        base: typeof raw.base === 'string' ? raw.base : '',
+        key: typeof raw.key === 'string' ? raw.key : '',
+        models: model ? [model] : [], model: model,
+        enabled: !!(raw.base && model), protocol: 'openai', preset: false
+      });
+      ai.activeId = 'p-migrated';
+    }
+    // 补齐未被删除的预置供应商
+    AI_PRESETS.forEach(function (ps) {
+      if (ai.removed.indexOf(ps.id) >= 0) return;
+      var exist = null;
+      for (var i = 0; i < ai.providers.length; i++) if (ai.providers[i].id === ps.id) { exist = ai.providers[i]; break; }
+      if (!exist) {
+        ai.providers.push({
+          id: ps.id, name: ps.name, base: ps.base, key: '',
+          models: ps.models.slice(), model: ps.models[0] || '',
+          enabled: false, protocol: ps.protocol, preset: true
+        });
+      } else {
+        exist.preset = true;
+      }
+    });
+    // 当前使用兜底：优先已启用的供应商
+    var byId = {};
+    ai.providers.forEach(function (p) { byId[p.id] = p; });
+    var active = byId[ai.activeId];
+    if (!active || !active.enabled) {
+      var firstEnabled = '';
+      ai.providers.forEach(function (p) { if (!firstEnabled && p.enabled) firstEnabled = p.id; });
+      ai.activeId = firstEnabled || (ai.providers[0] ? ai.providers[0].id : '');
+    }
+    return ai;
+  }
+
+  function aiState() {
+    return (state && state.settings && state.settings.ai) || emptyAi();
+  }
+
+  function findProvider(id) {
+    var list = aiState().providers;
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+
+  function activeProvider() {
+    var ai = aiState();
+    var p = findProvider(ai.activeId);
+    if (p && p.enabled) return p;
+    for (var i = 0; i < ai.providers.length; i++) if (ai.providers[i].enabled) return ai.providers[i];
+    return null;
+  }
+
+  function aiReady() {
+    var p = activeProvider();
+    return !!(p && p.base && p.model);
+  }
+
   function emptyState() {
     return {
       version: 1,
@@ -551,14 +667,17 @@
         theme: 'dark',
         lang: 'zh-Hans',
         bundledVersion: '',
-        ai: { base: '', model: '', key: '' }
+        ai: emptyAi()
       }
     };
   }
 
   function normalizeState(raw) {
     var s = emptyState();
-    if (!raw || typeof raw !== 'object') return s;
+    if (!raw || typeof raw !== 'object') {
+      s.settings.ai = normalizeAi(null);
+      return s;
+    }
     if (Array.isArray(raw.decks)) {
       raw.decks.forEach(function (d) {
         if (!d || !Array.isArray(d.cards)) return;
@@ -601,15 +720,7 @@
     if (s.settings.filter !== 'todo') s.settings.filter = 'all';
     if (THEMES.indexOf(s.settings.theme) < 0) s.settings.theme = 'dark';
     if (LANGS.indexOf(s.settings.lang) < 0) s.settings.lang = 'zh-Hans';
-    var ai = s.settings.ai;
-    if (!ai || typeof ai !== 'object') s.settings.ai = { base: '', model: '', key: '' };
-    else {
-      s.settings.ai = {
-        base: typeof ai.base === 'string' ? ai.base : '',
-        model: typeof ai.model === 'string' ? ai.model : '',
-        key: typeof ai.key === 'string' ? ai.key : ''
-      };
-    }
+    s.settings.ai = normalizeAi(raw.settings && raw.settings.ai);
     return s;
   }
 
@@ -812,12 +923,6 @@
     $('#setMode').value = state.settings.mode || 'auto';
     $('#setGran').value = state.settings.gran || 'mid';
     if ($('#setQstyle')) $('#setQstyle').value = state.settings.qstyle || 'prompt';
-    if ($('#aiBase')) {
-      var ai = state.settings.ai || AI_DEFAULT;
-      $('#aiBase').value = ai.base || '';
-      $('#aiModel').value = ai.model || '';
-      $('#aiKey').value = ai.key || '';
-    }
   }
 
   /* ============================== 导入 ============================== */
@@ -1055,21 +1160,6 @@
 
   /* ---------- AI 提炼（可选；无服务器，用户自己填 API） ---------- */
 
-  function aiConfig() {
-    return state.settings.ai || AI_DEFAULT;
-  }
-
-  function aiEndpoint() {
-    var base = (aiConfig().base || '').trim().replace(/\/+$/, '');
-    if (!base) return '';
-    if (/\/chat\/completions$/i.test(base)) return base;
-    return base + '/chat/completions';
-  }
-
-  function aiReady() {
-    return !!(aiEndpoint() && aiConfig().model);
-  }
-
   function aiErrorHelp(err) {
     var msg = String((err && err.message) || err || 'Error');
     if (/CORS|跨域|网络|Failed to fetch/i.test(msg)) {
@@ -1078,25 +1168,53 @@
     return msg;
   }
 
+  function providerEndpoint(p) {
+    var base = (p.base || '').trim().replace(/\/+$/, '');
+    if (p.protocol === 'anthropic') {
+      // Anthropic Messages API：base 为 https://api.anthropic.com，或已含 /v1
+      if (/\/v1$/.test(base)) return base + '/messages';
+      return base + '/v1/messages';
+    }
+    if (/\/chat\/completions$/i.test(base)) return base;
+    return base + '/chat/completions';
+  }
+
   function aiChat(messages, maxTokens) {
-    var cfg = aiConfig();
-    var url = aiEndpoint();
-    if (!url) return Promise.reject(new Error(t('ai.noBase')));
-    if (!cfg.model) return Promise.reject(new Error(t('ai.noModel')));
+    var p = activeProvider();
+    if (!p) return Promise.reject(new Error(t('ai.noneEnabled')));
+    if (!p.base) return Promise.reject(new Error(t('ai.noBase')));
+    if (!p.model) return Promise.reject(new Error(t('ai.noModel')));
     var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
     var timer = null;
     if (controller) timer = setTimeout(function () { controller.abort(); }, AI_TIMEOUT);
+    var url = providerEndpoint(p);
     var headers = { 'Content-Type': 'application/json' };
-    if (cfg.key) headers.Authorization = 'Bearer ' + cfg.key;
-    return fetch(url, {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify({
-        model: cfg.model,
+    var body;
+    if (p.protocol === 'anthropic') {
+      headers['x-api-key'] = p.key || '';
+      headers['anthropic-version'] = '2023-06-01';
+      // 允许浏览器直连 Anthropic API（CORS）
+      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+      var sys = '';
+      var msgs = [];
+      messages.forEach(function (m) {
+        if (m.role === 'system') sys += (sys ? '\n' : '') + m.content;
+        else msgs.push({ role: m.role, content: m.content });
+      });
+      body = JSON.stringify({ model: p.model, max_tokens: maxTokens || 1500, system: sys || undefined, messages: msgs });
+    } else {
+      if (p.key) headers.Authorization = 'Bearer ' + p.key;
+      body = JSON.stringify({
+        model: p.model,
         temperature: 0.2,
         max_tokens: maxTokens || 1500,
         messages: messages
-      }),
+      });
+    }
+    return fetch(url, {
+      method: 'POST',
+      headers: headers,
+      body: body,
       signal: controller ? controller.signal : undefined
     }).then(function (res) {
       return res.text().then(function (text) {
@@ -1104,10 +1222,16 @@
         try { data = JSON.parse(text); } catch (e) { data = null; }
         if (!res.ok) {
           var msg = (data && data.error && (data.error.message || data.error)) || String(text).slice(0, 200);
-          throw new Error('HTTP ' + res.status + '：' + msg);
+          throw new Error('HTTP ' + res.status + ': ' + msg);
         }
         if (!data) throw new Error(t('ai.notJson') + String(text).slice(0, 120));
-        var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+        var content = '';
+        if (p.protocol === 'anthropic') {
+          content = (data.content || []).filter(function (c) { return c && c.type === 'text'; })
+            .map(function (c) { return c.text || ''; }).join('\n');
+        } else {
+          content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+        }
         if (!content) throw new Error(t('ai.noContent'));
         return content;
       });
@@ -1124,31 +1248,133 @@
     });
   }
 
-  function saveAiForm() {
-    if (!$('#aiBase')) return;
-    state.settings.ai = {
-      base: $('#aiBase').value.trim(),
-      model: $('#aiModel').value.trim(),
-      key: $('#aiKey').value.trim()
-    };
-    scheduleSave();
-  }
-
-  function testAi() {
-    saveAiForm();
-    if (!aiEndpoint()) { toast(t('ai.testNeedBase')); return; }
+  function testProviderModal(providerId) {
+    var p = findProvider(providerId);
+    if (!p) return;
+    if (!p.base || !p.model) { toast(t('ai.needConfig')); return; }
     openModal(
-      '<h3>' + t('ai.testTitle') + '</h3>' +
+      '<h3>' + t('ai.testTitle') + ' · ' + ESC(p.name) + '</h3>' +
       '<div class="ai-out" id="aiTestOut">' + tf('ai.testing', { s: AI_TIMEOUT / 1000 }) + '</div>' +
       '<div class="modal-actions"><button class="btn" data-act="close-modal">' + t('btn.close') + '</button></div>'
     );
+    // 临时以该供应商发起一次最小请求（不影响「当前使用」选择）
+    var prev = aiState().activeId;
+    aiState().activeId = p.id;
     aiChat([{ role: 'user', content: '只回复两个字：可用' }], 32).then(function (text) {
+      aiState().activeId = prev;
       var out = $('#aiTestOut');
       if (out) out.innerHTML = '<b class="ok">' + t('ai.testOk') + '</b><br>' + ESC(t('ai.modelReply')) + ESC(String(text).slice(0, 120));
     }).catch(function (err) {
+      aiState().activeId = prev;
       var out = $('#aiTestOut');
       if (out) out.innerHTML = '<b class="todo">' + t('ai.testFail') + '</b><br>' + ESC(aiErrorHelp(err)).replace(/\n/g, '<br>');
     });
+  }
+
+  /* ---------- 供应商管理 UI（设置页） ---------- */
+
+  function providerCardHtml(p) {
+    var modelOpts = (p.models.length ? p.models : [p.model || '']).map(function (m) {
+      return '<option value="' + ESC(m) + '"' + (m === p.model ? ' selected' : '') + '>' + ESC(m) + '</option>';
+    }).join('');
+    return '<div class="ai-p' + (p.enabled ? '' : ' disabled') + '" data-pid="' + ESC(p.id) + '">' +
+      '<div class="ai-p-head">' +
+        '<input class="ai-p-name" data-field="name" value="' + ESC(p.name) + '" maxlength="40">' +
+        (p.preset ? '<span class="ai-p-tag">' + t('ai.presetTag') + '</span>' : '') +
+        '<label class="switch"><input type="checkbox" data-field="enabled"' + (p.enabled ? ' checked' : '') + '><i></i></label>' +
+      '</div>' +
+      '<div class="field"><label>' + t('label.aiBase') + '</label>' +
+        '<input type="text" data-field="base" value="' + ESC(p.base) + '" placeholder="https://..." autocomplete="off"></div>' +
+      '<div class="field"><label>' + t('label.aiKey') + '</label>' +
+        '<input type="password" data-field="key" value="' + ESC(p.key) + '" placeholder="sk-..." autocomplete="off"></div>' +
+      '<div class="field"><label>' + t('ai.models') + '</label>' +
+        '<input type="text" data-field="models" value="' + ESC(p.models.join(', ')) + '" placeholder="model-a, model-b" autocomplete="off"></div>' +
+      '<div class="field"><label>' + t('ai.model') + '</label>' +
+        '<select data-field="model">' + modelOpts + '</select></div>' +
+      '<div class="ai-p-actions">' +
+        '<button class="btn sm" data-act="ai-test-provider" data-pid="' + ESC(p.id) + '">' + t('btn.aiTest') + '</button>' +
+        '<button class="btn sm danger" data-act="ai-del-provider" data-pid="' + ESC(p.id) + '">' + t('btn.delete') + '</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderAiProviders() {
+    var wrap = $('#aiProviderList');
+    if (!wrap) return;
+    var ai = aiState();
+    var sel = $('#aiActive');
+    var enabled = ai.providers.filter(function (p) { return p.enabled; });
+    if (sel) {
+      var opts;
+      if (enabled.length) {
+        opts = enabled.map(function (p) {
+          return '<option value="' + ESC(p.id) + '"' + (p.id === ai.activeId ? ' selected' : '') + '>' +
+            ESC(p.name + ' · ' + (p.model || '-')) + '</option>';
+        }).join('');
+      } else {
+        opts = '<option value="">' + t('ai.noneEnabled') + '</option>';
+      }
+      sel.innerHTML = opts;
+      sel.disabled = !enabled.length;
+    }
+    wrap.innerHTML = ai.providers.map(providerCardHtml).join('');
+  }
+
+  function addCustomProvider() {
+    var ai = aiState();
+    var p = {
+      id: uid('p'), name: t('ai.customName'), base: '', key: '',
+      models: [], model: '', enabled: true, protocol: 'openai', preset: false
+    };
+    ai.providers.push(p);
+    ai.activeId = p.id;
+    scheduleSave();
+    renderAiProviders();
+    var cards = document.querySelectorAll('#aiProviderList .ai-p');
+    if (cards.length) cards[cards.length - 1].scrollIntoView({ block: 'center' });
+  }
+
+  function deleteProvider(providerId) {
+    var ai = aiState();
+    var p = findProvider(providerId);
+    if (!p) return;
+    if (!window.confirm(tf('confirm.deleteProvider', { name: p.name }))) return;
+    ai.providers = ai.providers.filter(function (x) { return x.id !== providerId; });
+    if (p.preset && ai.removed.indexOf(providerId) < 0) ai.removed.push(providerId);
+    scheduleSave();
+    renderAiProviders();
+  }
+
+  function onProviderField(providerId, field, el) {
+    var p = findProvider(providerId);
+    if (!p) return;
+    if (field === 'enabled') {
+      p.enabled = el.checked;
+      // 重新计算「当前使用」并刷新整块 UI
+      var ai = aiState();
+      var active = findProvider(ai.activeId);
+      if (!active || (!active.enabled && p.enabled)) ai.activeId = p.id;
+      scheduleSave();
+      renderAiProviders();
+      return;
+    }
+    if (field === 'models') {
+      p.models = el.value.split(/[,，]/).map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 20);
+      if (p.models.indexOf(p.model) < 0) p.model = p.models[0] || '';
+      scheduleSave();
+      renderAiProviders();
+      return;
+    }
+    if (field === 'model') {
+      p.model = el.value;
+      scheduleSave();
+      renderAiProviders();
+      return;
+    }
+    if (field === 'base') p.base = el.value.trim();
+    else if (field === 'key') p.key = el.value;
+    else if (field === 'name') p.name = el.value.trim().slice(0, 40) || t('ai.customName');
+    scheduleSave();
   }
 
   var aiRun = { active: false, cancel: false };
@@ -1161,7 +1387,9 @@
       '<p class="modal-note">' + t('ai.desc') + '</p>' +
       (aiReady() ? '' : '<p class="modal-note warn">' + t('ai.notConfigured') + '</p>') +
       '<div class="ai-out" id="aiOut">' + ESC(d.name) + ' · ' + tf('ai.cardCount', { n: d.cards.length }) + ' · '
-        + (aiReady() ? t('ai.ready') : t('ai.notReady')) + '</div>' +
+        + (aiReady()
+          ? ESC(tf('ai.using', { name: (activeProvider() || {}).name || '-', model: (activeProvider() || {}).model || '-' }))
+          : t('ai.noneEnabled')) + '</div>' +
       '<div class="modal-actions">' +
         '<button class="btn" data-act="close-modal">' + t('btn.close') + '</button>' +
         '<button class="btn primary" data-act="ai-start" data-deck="' + d.id + '"' + (aiReady() ? '' : ' disabled') + '>' + t('ai.start') + '</button>' +
@@ -1883,6 +2111,20 @@
 
   /* ============================== 备份 ============================== */
 
+  // 备份文件不含 API Key（隐私：Key 只留在本机）
+  function stripAiKeys(settings) {
+    var c = JSON.parse(JSON.stringify(settings));
+    if (c.ai && Array.isArray(c.ai.providers)) {
+      c.ai.providers = c.ai.providers.map(function (p) {
+        var o = {};
+        for (var k in p) o[k] = p[k];
+        o.key = '';
+        return o;
+      });
+    }
+    return c;
+  }
+
   function backupJson(deckIds) {
     var payload = {
       app: 'md-review',
@@ -1893,7 +2135,7 @@
         : state.decks,
       stats: state.stats,
       daily: state.daily,
-      settings: state.settings
+      settings: stripAiKeys(state.settings)
     };
     return JSON.stringify(payload, null, 2);
   }
@@ -2056,8 +2298,14 @@
       case 'ai-start':
         startAiRefine();
         break;
-      case 'ai-test':
-        testAi();
+      case 'ai-add-custom':
+        addCustomProvider();
+        break;
+      case 'ai-test-provider':
+        testProviderModal(el.getAttribute('data-pid'));
+        break;
+      case 'ai-del-provider':
+        deleteProvider(el.getAttribute('data-pid'));
         break;
       case 'import-cards-json':
         $('#cardsJsonInput').value = '';
@@ -2185,6 +2433,7 @@
     showView('settings');
     if ($('#setTheme')) $('#setTheme').value = state.settings.theme || 'dark';
     if ($('#setLang')) $('#setLang').value = state.settings.lang || 'zh-Hans';
+    renderAiProviders();
   }
 
   function onThemeChange(v) {
@@ -2199,6 +2448,7 @@
     applyI18nStatic();
     scheduleSave();
     renderHome();
+    renderAiProviders();
     if (review) renderCard();
     toast(t('toast.langChanged'));
   }
@@ -2302,10 +2552,33 @@
         onThemeChange(e.target.value);
       } else if (e.target.id === 'setLang') {
         onLangChange(e.target.value);
-      } else if (e.target.id === 'aiBase' || e.target.id === 'aiModel' || e.target.id === 'aiKey') {
-        saveAiForm();
       }
     });
+
+    // AI 供应商：字段修改（事件委托，重渲染后依然有效）
+    var aiList = $('#aiProviderList');
+    if (aiList) {
+      aiList.addEventListener('change', function (e) {
+        var el = e.target;
+        var card = el.closest ? el.closest('[data-pid]') : null;
+        if (!card) return;
+        var field = el.getAttribute('data-field');
+        if (!field) return;
+        onProviderField(card.getAttribute('data-pid'), field, el);
+      });
+    }
+
+    // AI 供应商：当前使用切换
+    var aiActive = $('#aiActive');
+    if (aiActive) {
+      aiActive.addEventListener('change', function (e) {
+        var ai = aiState();
+        if (findProvider(e.target.value)) {
+          ai.activeId = e.target.value;
+          scheduleSave();
+        }
+      });
+    }
 
     // 复习卡片：点按显示答案 / 左右滑动评价
     var cardEl = $('#rvCard');
@@ -2373,6 +2646,7 @@
     openManage: openManage,
     renderManage: renderManage,
     seedBundledDecks: seedBundledDecks,
+    renderAiProviders: renderAiProviders,
     version: APP_VERSION
   };
 

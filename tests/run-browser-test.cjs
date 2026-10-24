@@ -36,9 +36,10 @@ const REQUIRED_IDS = [
   'deckList', 'rvCard', 'rvTitle', 'rvAnswer', 'rvQuestion', 'rateRow', 'rvSummary',
   'cardList', 'modal', 'modalBox', 'toast', 'fileInput', 'jsonInput', 'searchInput',
   'setMode', 'setGran', 'setQstyle', 'rvBar', 'rvDeck', 'rvProg', 'btnShow',
-  'zipInput', 'dirInput', 'cardsJsonInput', 'aiBase', 'aiModel', 'aiKey',
+  'zipInput', 'dirInput', 'cardsJsonInput',
   'view-quick', 'view-manage', 'quickDeck', 'quickMeta', 'quickBody', 'quickOutline',
   'quickSearch', 'manageList', 'manageMeta',
+  'view-settings', 'setTheme', 'setLang', 'aiActive', 'aiProviderList', 'aboutVersion',
 ];
 const missingIds = REQUIRED_IDS.filter((id) => !new RegExp('id="' + id + '"').test(html));
 if (missingIds.length) fail('缺少必需元素 id: ' + missingIds.join(', '));

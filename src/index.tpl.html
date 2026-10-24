@@ -33,13 +33,8 @@
   <main id="view-home" class="view active">
     <section id="heroEmpty" class="hero hidden">
       <div class="big-emoji">🧠</div>
-      <h2 data-i18n="hero.title">把长笔记拆成一张张卡</h2>
-      <p data-i18n="hero.sub">上传遇到不懂的，随时抽一张来复习。</p>
-      <div class="steps">
-        <div class="step"><span class="step-num">1</span><span data-i18n="hero.step1">上传 <b>.md</b> 文件、多个文件打成的 <b>.zip</b>，或直接粘贴文本</span></div>
-        <div class="step"><span class="step-num">2</span><span data-i18n="hero.step2">自动按标题 / Q&amp;A 拆卡，标题不像问题时自动生成提问</span></div>
-        <div class="step"><span class="step-num">3</span><span data-i18n="hero.step3">打开就随机抽卡，自评「记住了 / 模糊 / 忘了」</span></div>
-      </div>
+      <h2 data-i18n="hero.title">导入长篇笔记，拆成多张闪记卡</h2>
+      <p data-i18n="hero.sub">随时复习，闪速记忆</p>
       <div class="action-grid">
         <button class="btn primary big" data-act="open-import" data-i18n="btn.import">📥 导入 md / zip</button>
         <button class="btn big" data-act="paste" data-i18n="btn.paste">✍️ 粘贴 Markdown 文本</button>
@@ -89,31 +84,6 @@
           </select>
         </div>
         <p class="modal-note" style="padding-bottom:14px" data-i18n="set.importNote">改动后，<b>下次导入</b>的笔记按新设置拆分；已导入的可以删掉重导。</p>
-      </details>
-
-      <details class="settings">
-        <summary data-i18n="set.aiTitle">AI 提炼设置（可选，需要你自己的 API）</summary>
-        <div class="field">
-          <label for="aiBase" data-i18n="label.aiBase">API 地址</label>
-          <input id="aiBase" type="text" placeholder="https://api.deepseek.com/v1" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="aiModel" data-i18n="label.aiModel">模型名</label>
-          <input id="aiModel" type="text" placeholder="deepseek-chat / qwen2.5 / llama3.1" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="aiKey" data-i18n="label.aiKey">API Key</label>
-          <input id="aiKey" type="password" placeholder="sk-...（只存本机）" autocomplete="off">
-        </div>
-        <div class="row-2" style="padding:10px 0">
-          <button class="btn" data-act="ai-test" data-i18n="btn.aiTest">测试连接</button>
-          <button class="btn" data-act="import-cards-json" data-i18n="btn.aiImport">导入 AI 卡片</button>
-        </div>
-        <p class="modal-note" style="padding-bottom:14px" data-i18n="set.aiNote">
-          不经过任何服务器，请求从本机直接发到你在上面填的地址。浏览器直连多数厂商 API 可能被跨域拦截（CORS）：
-          可以用本机 <b>Ollama</b>（启动前设 <code>OLLAMA_ORIGINS=*</code>），或改用电脑上的
-          <code>tools/ai_cards.py</code> 生成卡片 JSON，再用「导入 AI 卡片」。
-        </p>
       </details>
 
       <div class="foot-tips" data-i18n="foot.tips">
@@ -227,6 +197,20 @@
           <option value="en" data-i18n="lang.en">English</option>
         </select>
       </div>
+    </details>
+
+    <details class="settings" open>
+      <summary data-i18n="settings.ai">AI 供应商</summary>
+      <div class="field" style="border-top:none">
+        <label for="aiActive" data-i18n="ai.active">当前使用</label>
+        <select id="aiActive"></select>
+      </div>
+      <div id="aiProviderList" class="ai-providers"></div>
+      <div class="row-2" style="padding:6px 0 2px">
+        <button class="btn" data-act="ai-add-custom" data-i18n="ai.addCustom">＋ 添加自定义供应商</button>
+        <button class="btn" data-act="import-cards-json" data-i18n="btn.aiImport">导入 AI 卡片</button>
+      </div>
+      <p class="modal-note" style="padding-bottom:6px" data-i18n="ai.keyLocalNote">API Key 只保存在本机浏览器（IndexedDB），不经任何服务器、不上传云端；「备份全部」导出的文件也不包含 Key。</p>
     </details>
 
     <details class="settings" open>
