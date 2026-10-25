@@ -351,6 +351,20 @@ const zipAB = zipBytes.buffer.slice(zipBytes.byteOffset, zipBytes.byteOffset + z
     assert.strictEqual(Core.isDue({ box: 1, dueAt: eot + 1 }, eot), false); // 明天
     assert.strictEqual(Core.isDue({ box: 1, dueAt: eot }, eot), true); // 今天
   });
+  test('isMathCandidate：货币/纯数字/中文内容不当公式', () => {
+    assert.strictEqual(Core.isMathCandidate('100'), false);
+    assert.strictEqual(Core.isMathCandidate('100 和 200'), false);   // 含中文
+    assert.strictEqual(Core.isMathCandidate('3.14'), false);          // 纯数字
+    assert.strictEqual(Core.isMathCandidate('a+b=c'), true);
+    assert.strictEqual(Core.isMathCandidate('\frac{1}{2}'), true);
+    assert.strictEqual(Core.isMathCandidate('  '), false);
+  });
+  test('代码块渲染带复制按钮容器', () => {
+    const F = String.fromCharCode(96, 96, 96);
+    const html = Core.renderMarkdown(F + '\nvar x = 1;\n' + F);
+    assert.ok(html.indexOf('data-act="code-copy"') >= 0);
+    assert.ok(html.indexOf('md-code-wrap') >= 0);
+  });
   test('zipStore/unzipFiles roundtrip（含中文与二进制）', async () => {
     const enc = new TextEncoder();
     const zip = C_zipStore([

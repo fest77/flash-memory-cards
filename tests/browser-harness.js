@@ -9,6 +9,40 @@
   }
   function q(sel) { return document.querySelector(sel); }
   function finish() {
+    try {
+      var _app = window.MDReviewApp;
+      check('v1121 api present', !!(window.katex && _app._normalize && _app.applyBackupRenames && _app.renderAnswerHtml && _app.cardOps),
+        typeof window.katex + ',' + !!_app._normalize + ',' + !!_app.renderAnswerHtml);
+    } catch (e) { check('v1121 api probe error', false, e && e.message); }
+    try {
+      var A = window.MDReviewApp;
+      var st = A.state();
+      var d0 = st.decks[0];
+      if (d0) { d0.tags = ['t1']; d0.cards[0].tags = ['c1']; d0.cards[0].modified = true; }
+      st.settings.reading = { fs: 'l', lh: 3, cw: 1 };
+      st.settings.tagFilter = 't1';
+      st.settings.deckSort = 'name';
+      var nrm = A._normalize(JSON.parse(JSON.stringify(st)));
+      var rd0 = nrm.decks.filter(function (x) { return d0 && x.id === d0.id; })[0];
+      check('v1121 normalize keeps deck.tags', !!(rd0 && rd0.tags && rd0.tags[0] === 't1'), rd0 && JSON.stringify(rd0.tags));
+      check('v1121 normalize keeps card tags+modified', !!(rd0 && rd0.cards[0].tags[0] === 'c1' && rd0.cards[0].modified === true), 'card');
+      check('v1121 normalize keeps reading/tagFilter/deckSort',
+        !!nrm.settings.reading && nrm.settings.reading.fs === 'l' && nrm.settings.reading.lh === 3 &&
+        nrm.settings.reading.cw === 1 && nrm.settings.tagFilter === 't1' && nrm.settings.deckSort === 'name',
+        JSON.stringify(nrm.settings.reading));
+    } catch (e) { check('v1121 normalize block error', false, e && e.message); }
+    try {
+      var A2 = window.MDReviewApp;
+      var C2 = window.MDReviewCore;
+      check('v1121 math guard currency', !C2.isMathCandidate('100') && !C2.isMathCandidate('100 和 200'), 'guard');
+      check('v1121 math guard formula', C2.isMathCandidate('a+b=c'), 'formula');
+      // 代码块/围栏断言在 core 单测覆盖（页面内 renderMarkdown 会触达高亮钩子，headless 不稳）
+      var bobj = { decks: [{ name: 'n', raw: '![](x.png)', cards: [{ title: 't', question: '', answer: '![](x.png)', path: [] }] }] };
+      A2.applyBackupRenames(bobj, { 'x.png': 'x-2.png' });
+      check('v1121 backup rename writes back', bobj.decks[0].raw.indexOf('x-2.png') >= 0 && bobj.decks[0].cards[0].answer.indexOf('x-2.png') >= 0, bobj.decks[0].raw);
+
+    } catch (e) { check('v1121 fixes block error', false, e && e.message); }
+
     var pre = document.createElement('pre');
     pre.id = 'testResult';
     pre.textContent = results.join('\n');

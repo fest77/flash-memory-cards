@@ -40,9 +40,9 @@ md-flashcards/
 │   ├── build_interview_decks.py  # interview md → bundled-decks.js
 │   └── build_interview_images.py # interview images/ → bundled-images.js
 ├── tests/
-│   ├── core.test.cjs          # 58 unit tests (Node, no browser)
+│   ├── core.test.cjs          # 62 unit tests (Node, no browser)
 │   ├── browser-harness.js     # injected into the built page
-│   ├── run-browser-test.cjs   # static checks + 121 headless-Edge assertions
+│   ├── run-browser-test.cjs   # static checks + 141 headless-Edge assertions
 │   ├── run-screenshots.cjs    # writes docs/images/*
 │   ├── persist-test.cjs       # file:// persistence check
 │   └── fixtures/notes.zip     # zip-parsing fixture
@@ -255,7 +255,7 @@ Notes:
 ## 9. Tests
 
 ```bash
-node tests/core.test.cjs            # 58 tests, Node 18+ (DecompressionStream)
+node tests/core.test.cjs            # 62 tests, Node 18+ (DecompressionStream)
 node tests/run-browser-test.cjs     # static checks + 121 headless Edge assertions
 node tests/run-screenshots.cjs      # docs/images screenshots
 node tests/persist-test.cjs         # file:// persistence

@@ -62,9 +62,11 @@ def read_katex() -> str:
         face = face.replace(m.group(0), "url(data:font/woff2;base64," + b64 + ")")
         keep.append(face)
     css = "@font-face".join(keep)
-    return ("(function(){var d=document;var st=d.createElement('style');"
-            "st.textContent=" + json_js_string(css) + ";d.head.appendChild(st);\n"
-            + js + "\n})();")
+    # 注释包裹：即使 font CSS 极大也不影响解析；head 尚未就绪时回退到 documentElement
+    return ("/*KaTeX inline*/(function(){try{var d=document;var st=d.createElement('style');"
+            "st.textContent=" + json_js_string(css) + ";"
+            "(d.head||d.documentElement).appendChild(st);}catch(e){}\n"
+            + js + "\n})();/*end KaTeX*/")
 
 
 def json_js_string(text: str) -> str:

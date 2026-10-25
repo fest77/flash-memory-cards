@@ -829,3 +829,8 @@ body.light .hl-kw { color: #1a5fb4; }
 .callout-danger, .callout-bug { border-color: #f85149; }
 .callout-example { border-color: #a371f7; }
 .wikilink { color: var(--link); text-decoration: none; border-bottom: 1px dashed var(--link); }
+
+.md-code-wrap { position: relative; margin: 6px 0; }
+.md-code-bar { position: absolute; top: 4px; right: 6px; z-index: 2; }
+.code-copy { background: var(--subtle); border: 1px solid var(--dashed); border-radius: 6px; color: var(--muted); font-size: 13px; line-height: 1; padding: 4px 7px; cursor: pointer; }
+.code-copy:active { color: var(--text-head); }

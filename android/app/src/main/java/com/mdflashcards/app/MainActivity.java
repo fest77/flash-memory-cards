@@ -67,8 +67,6 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> pendingFileCallback;
     private long pausedAt = 0; // 后台时间戳：>5 分钟回前台要求解锁
     private static final long LOCK_AFTER_MS = 5 * 60 * 1000;
-    private long pausedAt = 0; // 后台时间戳：>5 分钟回前台要求解锁
-    private static final long LOCK_AFTER_MS = 5 * 60 * 1000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -172,6 +170,7 @@ public class MainActivity extends Activity {
 
         webView.addJavascriptInterface(new SaverBridge(), "AndroidSaver");
         ensureNotificationChannel();
+        requestNotificationPermissionIfNeeded();
         webView.loadUrl(START_URL);
         // PIN 已设置则先锁
         if (pinIsSet()) showPinLock();
@@ -182,6 +181,15 @@ public class MainActivity extends Activity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         handleExternalIntent(intent);
+    }
+
+    /** Android 13+ 需要运行时申请 POST_NOTIFICATIONS（每日提醒依赖它）。 */
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (checkSelfPermission("android.permission.POST_NOTIFICATIONS") != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 3301);
+            }
+        }
     }
 
     /** ACTION_SEND / ACTION_VIEW：读出 .md/.zip 内容，base64 交给 Web 端导入预览。 */
@@ -218,9 +226,26 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void pushExternalImport(String b64, String name) {
-        final String call = "window.__externalImport && window.__externalImport('" + name + "','" + b64 + "')";
-        new Handler(Looper.getMainLooper()).postDelayed(() -> webView.evaluateJavascript(call, null), 1200);
+    private void pushExternalImport(final String b64, final String name) {
+        // 冷启动时 Web 端可能还没挂上 __externalImport：最多重试 10 次（约 6 秒）
+        pushExternalImportRetry(b64, name, 0);
+    }
+
+    private void pushExternalImportRetry(final String b64, final String name, final int attempt) {
+        if (webView == null) return;
+        // 文件名走 JSON 转义，避免引号/反斜杠注入
+        final String jsName = org.json.JSONObject.quote(name == null ? "import.md" : name);
+        final String call = "(function(){return typeof window.__externalImport==='function';})()";
+        new Handler(Looper.getMainLooper()).postDelayed(() -> webView.evaluateJavascript(call, value -> {
+            boolean ready = value != null && value.contains("true");
+            if (ready) {
+                webView.evaluateJavascript("window.__externalImport(" + jsName + ",'" + b64 + "')", null);
+            } else if (attempt < 10) {
+                pushExternalImportRetry(b64, name, attempt + 1);
+            } else {
+                Toast.makeText(MainActivity.this, "导入准备超时，请在应用内手动导入", Toast.LENGTH_LONG).show();
+            }
+        }), attempt == 0 ? 600 : 400);
     }
 
     /* ---------- PIN 应用锁（本地盐+SHA，Web 端存哈希；原生只做门帘） ---------- */
@@ -246,10 +271,17 @@ public class MainActivity extends Activity {
             new android.app.AlertDialog.Builder(this)
                 .setMessage("忘记 PIN 将清除应用全部数据（含笔记与进度），确定？")
                 .setPositiveButton("清除", (d, w) -> {
-                    webView.evaluateJavascript("indexedDB.deleteDatabase('md-review');localStorage.clear();", null);
-                    prefs().edit().clear().apply();
-                    dlg.dismiss();
-                    recreate();
+                    // 等 Web 端清库回调完成后才重建，否则可能读到旧数据
+                    webView.evaluateJavascript(
+                        "(function(){try{localStorage.clear();}catch(e){}" +
+                        "return new Promise(function(res){try{var rq=indexedDB.deleteDatabase('md-review');" +
+                        "rq.onsuccess=function(){res('ok')};rq.onerror=function(){res('err')};" +
+                        "rq.onblocked=function(){res('blocked')};}catch(e){res('err')}});})()",
+                        value -> {
+                            prefs().edit().clear().apply();
+                            dlg.dismiss();
+                            recreate();
+                        });
                 })
                 .setNegativeButton("取消", null).show();
         });
@@ -425,30 +457,6 @@ public class MainActivity extends Activity {
                 return false;
             }
         }
-
-        /** Web 端设置/移除 PIN（原生侧存哈希用于门帘校验）。 */
-        @JavascriptInterface
-        public boolean pinSet(String pin) {
-            if (pin == null || !pin.matches("\\d{4}")) return false;
-            String salt = Long.toHexString(System.currentTimeMillis());
-            prefs().edit()
-                .putString("pinSalt", salt)
-                .putString("pinHash", MainActivity.pinHash(pin, salt))
-                .apply();
-            return true;
-        }
-
-        @JavascriptInterface
-        public void pinRemove() { prefs().edit().remove("pinHash").remove("pinSalt").apply(); }
-
-        @JavascriptInterface
-        public boolean reminderSet(int hour, int minute) {
-            scheduleReminder(hour, minute);
-            return true;
-        }
-
-        @JavascriptInterface
-        public void reminderCancel() { cancelReminder(); }
 
         /** Web 端设置/移除 PIN（原生侧存哈希用于门帘校验）。 */
         @JavascriptInterface

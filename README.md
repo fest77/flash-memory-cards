@@ -29,7 +29,7 @@
 
 | 文件 | 体积 | 说明 |
 |---|---|---|
-| `dist/md-flashcards.html` | ~230 KB | 唯一的构建产物，功能完整 |
+| `dist/md-flashcards.html` | ~818 KB（含内联 KaTeX 与子集字体） | 唯一的构建产物，功能完整 |
 
 **如果双击/预览打不开**，多半是预览器对中文路径有限制，改用本地 HTTP 服务：
 
@@ -264,8 +264,8 @@ md-flashcards/
 │   ├── build_interview_decks.py   # 题库 md → bundled-decks.js（可选，本版未含数据）
 │   └── build_interview_images.py  # 题库配图 → bundled-images.js（可选，本版未含数据）
 ├── tests/
-│   ├── core.test.cjs         # 58 项单元测试
-│   ├── run-browser-test.cjs  # 121 项 headless Edge 端到端
+│   ├── core.test.cjs         # 62 项单元测试
+│   ├── run-browser-test.cjs  # 141 项 headless Edge 端到端
 │   ├── run-screenshots.cjs   # 生成 docs/images 截图
 │   └── fixtures/             # 测试用 zip
 ├── docs/
@@ -386,5 +386,6 @@ python scripts/build.py                      # 内联 → dist/md-flashcards.htm
 | 1.10.0 | 轻量间隔复习（三盒排期、今日到期、20/50/全部、薄弱卡与章节筛选、继续上次复习、撤销上一张评分）；分类速记按完整路径分组（同名小节不合并）；按问答模式保留标题层级；关于页邮箱移到最下 |
 | 1.10.1 | 复习链路小修：「待复习」口径不再吞到期卡（已掌握但今日到期仍计入）；多本「复习全部」也走设置弹窗；薄弱卡改为严格过滤（答错过或已学且在盒 1，新卡不算）；开新复习前对未完成会话先确认；空会话自动清理 |
 | 1.11.0 | 数据安全与本地备份：zip 备份（含图片）+ 导入预览/覆盖/合并（进度不覆盖）+ 回滚安全；图片同名不覆盖与引用重写；无引用图片清理；删笔记不误伤共享卡进度；7 天备份提醒 + 备份文件夹一键写入；安卓 saveBinary/分享桥 |
+| 1.12.1 | 修复：去除 MainActivity 重复成员、normalizeState 保留 tags/modified/阅读设置、公式不误判代码与货币、设置页重复存储段合并、备份改名写回引用、卡片操作迁移进度、通知权限与导入重试 |
 | 1.12.0 | 内容体验与平台能力：KaTeX 公式（本地内联子集字体）、代码高亮/复制、图片点击缩放、阅读设置（字号/行距/卡宽）；全局搜索、卡片编辑/拆分/合并/移动+撤销、标签与排序；Obsidian callout 与 wikilink 跳转、题目语言跟随界面；安卓接收分享导入、PIN 应用锁、每日本地提醒 |
 

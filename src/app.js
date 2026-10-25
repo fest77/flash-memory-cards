@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.0';
+  var APP_VERSION = '1.12.1';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -769,6 +769,9 @@
         lang: 'zh-Hans',
         statsView: 'heat',
         bundledVersion: '',
+        reading: { fs: 'm', lh: 2, cw: 2 },
+        tagFilter: '',
+        deckSort: 'recent',
         ai: emptyAi()
       }
     };
@@ -792,7 +795,9 @@
             question: c.question || '',
             answer: c.answer,
             path: Array.isArray(c.path) ? c.path : [],
-            chapter: typeof c.chapter === 'string' ? c.chapter : ''
+            chapter: typeof c.chapter === 'string' ? c.chapter : '',
+            tags: Array.isArray(c.tags) ? c.tags.map(function (x) { return String(x); }).filter(Boolean) : [],
+            modified: !!c.modified
           };
         });
         if (!cards.length) return;
@@ -804,6 +809,7 @@
           mode: d.mode || 'auto',
           qstyle: d.qstyle || 'prompt',
           raw: typeof d.raw === 'string' ? d.raw : '',
+          tags: Array.isArray(d.tags) ? d.tags.map(function (x) { return String(x); }).filter(Boolean) : [],
           source: typeof d.source === 'string' ? d.source : '',
           bundled: !!d.bundled,
           cards: cards
@@ -1471,7 +1477,7 @@
   function saveCardEdit(deckId, cardId) {
     var d = findDeck(deckId);
     var c = d && d.cards.filter(function (x) { return x.id === cardId; })[0];
-    if (!c) return;
+    if (!c) { closeModal(); toast(t('card.noUndo')); return; } // 陈旧 id：卡片已不存在
     var nt = ($('#ceTitle') || {}).value || '';
     var nq = ($('#ceQ') || {}).value || '';
     var na = ($('#ceA') || {}).value || '';
@@ -1484,9 +1490,12 @@
       d.raw = d.raw.split(c.answer).join(na);
       wroteRaw = true;
     }
+    var newId = 'c' + Core.hash32(nt + '|' + nq + '|' + na);
+    if (state.stats[cardId] && !state.stats[newId]) state.stats[newId] = state.stats[cardId]; // 进度随内容迁移
+    if (newId !== cardId) delete state.stats[cardId];
     c.title = nt; c.question = nq; c.answer = na;
     c.modified = true; // 卡片上标「已修改」
-    c.id = 'c' + Core.hash32(c.title + '|' + c.question + '|' + c.answer);
+    c.id = newId;
     closeModal();
     flushSave();
     renderBrowse();
@@ -1520,7 +1529,7 @@
   function doCardSplit(deckId, cardId) {
     var d = findDeck(deckId);
     var ci = d ? d.cards.findIndex(function (x) { return x.id === cardId; }) : -1;
-    if (ci < 0) return;
+    if (ci < 0) { closeModal(); toast(t('card.noUndo')); return; }
     var c = d.cards[ci];
     var ta = $('#csA');
     var pos = ta ? (ta.selectionStart || Math.floor(ta.value.length / 2)) : Math.floor(c.answer.length / 2);
@@ -1529,8 +1538,11 @@
     if (!a1 || !a2) { toast(t('card.splitFail')); return; }
     if (!window.confirm(t('card.splitConfirm'))) return;
     snapshotForUndo();
+    var id1 = 'c' + Core.hash32(c.title + '|' + c.question + '|' + a1);
+    if (state.stats[cardId] && !state.stats[id1]) state.stats[id1] = state.stats[cardId]; // 进度留在前半张
+    if (id1 !== cardId) delete state.stats[cardId];
     c.answer = a1;
-    c.id = 'c' + Core.hash32(c.title + '|' + c.question + '|' + a1);
+    c.id = id1;
     d.cards.splice(ci + 1, 0, {
       id: 'c' + Core.hash32((c.title + '·2') + '|' + c.question + '|' + a2),
       title: c.title, question: c.question, answer: a2, path: c.path.slice(), chapter: c.chapter, modified: true
@@ -1544,14 +1556,22 @@
   function doCardMerge(deckId, cardId) {
     var d = findDeck(deckId);
     var ci = d ? d.cards.findIndex(function (x) { return x.id === cardId; }) : -1;
-    if (ci < 0 || ci + 1 >= d.cards.length) { toast(t('card.mergeFail')); return; }
+    if (ci < 0) { toast(t('card.noUndo')); return; }
+    if (ci + 1 >= d.cards.length) { toast(t('card.mergeFail')); return; }
     var c = d.cards[ci], nx = d.cards[ci + 1];
     if (!window.confirm(t('card.mergeConfirm'))) return;
     snapshotForUndo();
+    var newId = 'c' + Core.hash32(c.title + '|' + c.question + '|' + c.answer + '\n\n' + nx.answer);
+    if (state.stats[cardId] && !state.stats[newId]) state.stats[newId] = state.stats[cardId];
+    if (newId !== cardId) delete state.stats[cardId];
     c.answer = c.answer + '\n\n' + nx.answer;
     c.modified = true;
-    c.id = 'c' + Core.hash32(c.title + '|' + c.question + '|' + c.answer);
-    delete state.stats[nx.id];
+    c.id = newId;
+    // 下一张的进度：被其他笔记共享时保留，本笔记独有时清掉
+    var shared = state.decks.some(function (x) {
+      return x.id !== d.id && x.cards.some(function (cc) { return cc.id === nx.id; });
+    });
+    if (!shared) delete state.stats[nx.id];
     d.cards.splice(ci + 1, 1);
     flushSave();
     renderBrowse();
@@ -1714,7 +1734,15 @@
     var segs = [];
     if (!window.katex || String(md || '').indexOf('$') < 0) return { text: md, segs: segs };
     var text = String(md);
-    // 先 $$...$$（display），再 $...$（inline，单行内、非 \$ 转义）
+    // 1) 先保护代码（围栏与行内代码里的 $ 不是公式）
+    var codeSegs = [];
+    var protect = function (code) {
+      codeSegs.push(code);
+      return '\u0003C' + (codeSegs.length - 1) + '\u0004';
+    };
+    text = text.replace(/```[\s\S]*?```/g, function (m) { return protect(m); });
+    text = text.replace(/`[^`\n]+`/g, function (m) { return protect(m); });
+    // 2) 公式提取：$$...$$（display），然后 $...$（inline）
     text = text.replace(/\$\$([\s\S]+?)\$\$/g, function (m, tex) {
       var html = null;
       try { html = window.katex.renderToString(tex, { displayMode: true, throwOnError: false }); } catch (e) { html = null; }
@@ -1722,10 +1750,16 @@
       return '\u0001M' + (segs.length - 1) + '\u0002';
     });
     text = text.replace(/(^|[^\\$])\$([^$\n]+?)\$/g, function (m, pre, tex) {
+      // 货币/中文内容不当公式（判定逻辑在 core.isMathCandidate，可单测）
+      if (!Core.isMathCandidate(tex)) return m;
       var html = null;
       try { html = window.katex.renderToString(tex, { displayMode: false, throwOnError: false }); } catch (e) { html = null; }
       segs.push(html || ('<code>' + ESC(tex) + '</code>'));
       return pre + '\u0001M' + (segs.length - 1) + '\u0002';
+    });
+    // 3) 还原代码（renderMarkdown 自己处理代码块与高亮）
+    text = text.replace(/\u0003C(\d+)\u0004/g, function (m, i) {
+      return codeSegs[+i] != null ? codeSegs[+i] : m;
     });
     return { text: text, segs: segs };
   }
@@ -1936,6 +1970,7 @@
   }
 
   function importText(name, text, override, behavior) {
+    lastOpSnapshot = null; // 导入后撤销快照失效
     var b = behavior || {};
     if (!text || text.trim().length < 10) {
       if (!b.silent) toast(t('toast.tooShort'));
@@ -2726,6 +2761,7 @@
     var o = (typeof opts === 'string') ? { filter: opts } : (opts || {});
     var startCardId = o.startCard || null;
     var hadSession = !!state.reviewSession;
+    lastOpSnapshot = null; // 复习/导入后卡片操作快照失效
     pruneEmptySession();
     if (state.reviewSession === null && hadSession) flushSave(); // 清空残会话也落盘
     var remain = sessionRemaining();
@@ -3819,8 +3855,8 @@
         '</p>' +
         '<div class="modal-actions">' +
           '<button class="btn" data-act="close-modal">' + t('btn.cancel') + '</button>' +
-          '<button class="btn" data-act="backup-merge">' + t('import.merge') + '</button>' +
-          '<button class="btn primary" data-act="backup-overwrite">' + t('import.overwrite') + '</button>' +
+          '<button class="btn primary" data-act="backup-merge">' + t('import.merge') + '</button>' +
+          (obj.kind === 'deck' ? '' : '<button class="btn" data-act="backup-overwrite">' + t('import.overwrite') + '</button>') +
         '</div>'
       );
       modalPayload = { backupObj: obj, backupImages: r.images };
@@ -3830,19 +3866,45 @@
   }
 
   function storeBackupImages(images) {
-    // 图片写入是纯增量（名字→blob），失败不影响笔记数据
+    // 图片写入是纯增量（名字→blob），失败不影响笔记数据；返回 同名冲突改名映射
+    var renames = {};
     return Promise.all((images || []).map(function (im) {
-      return storeImage(im.name, new Blob([im.bytes], { type: imgMime(im.name) }));
-    }));
+      return storeImage(im.name, new Blob([im.bytes], { type: imgMime(im.name) }), renames);
+    })).then(function () { return renames; });
+  }
+
+  /** 备份导入时：同名冲突被改名的图片 → 重写备份里卡片引用（纯函数，供测试） */
+  function applyBackupRenames(obj, renames) {
+    if (!obj || !renames) return obj;
+    var keys = Object.keys(renames);
+    if (!keys.length) return obj;
+    (obj.decks || []).forEach(function (d) {
+      (d.cards || []).forEach(function (c) {
+        keys.forEach(function (oldN) {
+          [c.title, c.question, c.answer].forEach(function (f, fi) {
+            if (typeof f === 'string' && f.indexOf(oldN) >= 0) {
+              var nv = f.split(oldN).join(renames[oldN]);
+              if (fi === 0) c.title = nv; else if (fi === 1) c.question = nv; else c.answer = nv;
+            }
+          });
+          if (typeof d.raw === 'string' && d.raw.indexOf(oldN) >= 0) {
+            d.raw = d.raw.split(oldN).join(renames[oldN]);
+          }
+        });
+      });
+    });
+    return obj;
   }
 
   function applyBackupOverwrite() {
     var obj = modalPayload && modalPayload.backupObj;
     var images = (modalPayload && modalPayload.backupImages) || [];
     if (!obj) return;
+    if (obj.kind === 'deck') return; // 单笔记备份不提供覆盖
     if (!window.confirm(t('confirm.overwriteBackup'))) return;
-    // 回滚安全：图片先写（增量），状态整体替换是单次赋值
-    storeBackupImages(images).then(function () {
+    // 回滚安全：图片先写（增量，冲突改名写回引用），状态整体替换是单次赋值
+    storeBackupImages(images).then(function (renames) {
+      applyBackupRenames(obj, renames);
       var prevSettings = state.settings;
       var prevSession = null;
       state = normalizeState(obj);
@@ -3865,7 +3927,8 @@
     var obj = modalPayload && modalPayload.backupObj;
     var images = (modalPayload && modalPayload.backupImages) || [];
     if (!obj) return;
-    storeBackupImages(images).then(function () {
+    storeBackupImages(images).then(function (renames) {
+      applyBackupRenames(obj, renames);
       var nextRaw = mergeBackupState(state, obj); // 在副本上合并
       var prevSettings = state.settings;
       state = normalizeState(nextRaw); // 任何解析异常在赋值前抛出，本地数据不动
@@ -4591,6 +4654,11 @@
     parseBackupBuffer: parseBackupBuffer,
     referencedImageNames: referencedImageNames,
     unreferencedImages: unreferencedImages,
+    applyBackupRenames: applyBackupRenames,
+    cardOps: { edit: saveCardEdit, split: doCardSplit, merge: doCardMerge, undo: undoLastCardOp },
+    importBackupBuffer: importBackupBuffer,
+    _normalize: normalizeState,
+    renderAnswerHtml: renderAnswerHtml,
     mergeBackupState: mergeBackupState,
     buildBackupFiles: function () { return backupPayload(null); },
     renderStats: renderStats,
