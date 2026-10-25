@@ -872,8 +872,9 @@
       if (blk.type === 'code') {
         var langAttr = blk.lang ? ' data-lang="' + escapeHtml(blk.lang) + '"' : '';
         var hl = (typeof global.__mdfcHighlight === 'function') ? global.__mdfcHighlight(blk.text, blk.lang) : escapeHtml(blk.text);
+        var rawAttr = ' data-raw="' + escapeHtml(blk.text) + '"';
         html += '<div class="md-code-wrap"><div class="md-code-bar"><button type="button" class="code-copy" data-act="code-copy" aria-label="copy">&#10697;</button></div>' +
-          '<pre class="md-code"' + langAttr + '><code>' + hl + '</code></pre></div>';
+          '<pre class="md-code"' + langAttr + rawAttr + '><code>' + hl + '</code></pre></div>';
       } else if (blk.type === 'heading') {
         var lv = Math.min(blk.level + 1, 6);
         html += '<div class="md-h md-h' + lv + '">' + inline(blk.text) + '</div>';
@@ -1056,10 +1057,16 @@
    * 含 CJK（中文句子里的「$100 和 $200」）或纯数字标点 → 不当公式，保留原文。
    */
   function isMathCandidate(tex) {
-    var t = String(tex == null ? '' : tex);
-    if (!t.trim()) return false;
-    if (/[一-鿿]/.test(t)) return false;      // 中文内容
-    if (/^[\d\s,.，。:：]+$/.test(t)) return false;    // 纯数字/标点（货币金额）
+    var t = String(tex == null ? '' : tex).trim();
+    if (!t) return false;
+    if (/[\u4e00-\u9fff]/.test(t)) return false;                  // 中文内容
+    if (/^[\d\s,.，。:：]+$/.test(t)) return false;                 // 纯数字/标点（金额）
+    var hasLetterWord = /[A-Za-z]{2,}/.test(t);                     // 英文单词（5 to / USD / stock）
+    var hasMathCmd = /\\[A-Za-z]+/.test(t);                        // \frac \alpha 等 TeX 命令
+    var hasMathOp = /[=+\-*/^_<>]/.test(t);
+    if (hasLetterWord && !hasMathCmd && !hasMathOp) return false;
+    if (/^[\d\s]*(?:[-–~—]|to)[\d\s]*$/i.test(t)) return false;   // 范围：5- / 5 to 10 / 20-30
+    if (/^[$€£¥]?\s*\d+(?:[.,]\d+)?\s*[a-zA-Z]{0,3}$/.test(t)) return false; // 金额 / 数字+短单位
     return true;
   }
 

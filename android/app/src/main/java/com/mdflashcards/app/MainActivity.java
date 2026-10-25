@@ -252,6 +252,21 @@ public class MainActivity extends Activity {
     private SharedPreferences prefs() { return getSharedPreferences("mdfc", MODE_PRIVATE); }
     private boolean pinIsSet() { return prefs().getString("pinHash", null) != null; }
 
+    /** 轮询 JS 侧清理完成标志（最多约 8 秒），完成后再清 PIN 并重建。 */
+    private void pollWipeThenRecreate(final android.app.Dialog dlg, final int attempt) {
+        if (webView == null) return;
+        webView.evaluateJavascript("window.__wipeDone||'pending'", value -> {
+            boolean done = value != null && (value.contains("ok") || value.contains("err") || value.contains("blocked"));
+            if (done || attempt >= 40) {
+                prefs().edit().clear().apply();
+                dlg.dismiss();
+                recreate();
+            } else {
+                new Handler(Looper.getMainLooper()).postDelayed(() -> pollWipeThenRecreate(dlg, attempt + 1), 200);
+            }
+        });
+    }
+
     private void showPinLock() {
         // 极简锁屏：WebView 上盖系统对话框输入 PIN，正确才放行（哈希校验走 Web 端同一份存储不可行——原生侧独立存）
         android.app.Dialog dlg = new android.app.Dialog(this);
@@ -271,17 +286,16 @@ public class MainActivity extends Activity {
             new android.app.AlertDialog.Builder(this)
                 .setMessage("忘记 PIN 将清除应用全部数据（含笔记与进度），确定？")
                 .setPositiveButton("清除", (d, w) -> {
-                    // 等 Web 端清库回调完成后才重建，否则可能读到旧数据
-                    webView.evaluateJavascript(
-                        "(function(){try{localStorage.clear();}catch(e){}" +
-                        "return new Promise(function(res){try{var rq=indexedDB.deleteDatabase('md-review');" +
-                        "rq.onsuccess=function(){res('ok')};rq.onerror=function(){res('err')};" +
-                        "rq.onblocked=function(){res('blocked')};}catch(e){res('err')}});})()",
-                        value -> {
-                            prefs().edit().clear().apply();
-                            dlg.dismiss();
-                            recreate();
-                        });
+                    // evaluateJavascript 不会 await Promise：改为 JS 侧完成后置标志，原生轮询该标志
+                    final String clearJs =
+                        "(function(){window.__wipeDone='pending';try{localStorage.clear();}catch(e){}" +
+                        "try{var rq=indexedDB.deleteDatabase('md-review');" +
+                        "rq.onsuccess=function(){window.__wipeDone='ok'};" +
+                        "rq.onerror=function(){window.__wipeDone='err'};" +
+                        "rq.onblocked=function(){window.__wipeDone='blocked'};" +
+                        "}catch(e){window.__wipeDone='err'}})()";
+                    webView.evaluateJavascript(clearJs, null);
+                    pollWipeThenRecreate(dlg, 0);
                 })
                 .setNegativeButton("取消", null).show();
         });

@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.1';
+  var APP_VERSION = '1.12.2';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -1183,19 +1183,35 @@
     });
   }
 
+  /** 纯函数：给定索引与未引用列表 → 该删哪些、保留哪些（供单测/headless 断言） */
+  function cleanupPlan(indexList, unusedNames) {
+    var idx = indexList || [];
+    var un = unusedNames || [];
+    return {
+      deleted: idx.filter(function (n) { return un.indexOf(n) >= 0; }),
+      kept: idx.filter(function (n) { return un.indexOf(n) < 0; })
+    };
+  }
+
   function cleanupUnreferencedImages() {
     return unreferencedImages().then(function (unused) {
       if (!unused.length) return 0;
-      return Store.rawGet('imgIndex').then(function (list) {
-        var kept = (list || []).filter(function (nm) {
-          return !unused.some(function (u) { return u.name === nm; });
-        });
-        return Store.rawPut('imgIndex', kept).then(function () {
-          unused.forEach(function (u) {
+      // 1) 先真正删除每个未引用的 Blob 记录
+      return Promise.all(unused.map(function (u) {
+        return Store.rawDelete('img/' + u.name).then(function (ok) {
+          if (ok) {
             if (IMG_URLS[u.name]) { try { URL.revokeObjectURL(IMG_URLS[u.name]); } catch (e) { /* ignore */ } }
             delete IMG_URLS[u.name];
-          });
-          return unused.length; // 记录本体留在 IDB（无引用即不可达，index 已剔除）；彻底删除走 Store.deleteRaw（如后续提供）
+          }
+          return ok ? u.name : null;
+        });
+      })).then(function (deletedList) {
+        var deleted = deletedList.filter(Boolean);
+        if (!deleted.length) return 0;
+        // 2) 删除成功后，才把已删项从 imgIndex 剔除
+        return Store.rawGet('imgIndex').then(function (list) {
+          var kept = (list || []).filter(function (nm) { return deleted.indexOf(nm) < 0; });
+          return Store.rawPut('imgIndex', kept).then(function () { return deleted.length; });
         });
       });
     });
@@ -3237,10 +3253,38 @@
     card.title = title || Core.plainText(question || answer).slice(0, 40) || t('card.untitled');
     card.question = question;
     card.answer = answer.replace(/\s+$/, '');
+    // 与新版编辑器一致：重算 id、标记已修改、迁移进度（避免旧弹窗留下陈旧 id）
+    var oldId = modalPayload.cardId;
+    var newId = 'c' + Core.hash32(card.title + '|' + card.question + '|' + card.answer);
+    if (state.stats[oldId] && !state.stats[newId]) state.stats[newId] = state.stats[oldId];
+    if (newId !== oldId) delete state.stats[oldId];
+    card.id = newId;
+    card.modified = true;
+    browse.cardId = newId;
     scheduleSave();
     closeModal();
     renderBrowse();
     toast(t('toast.saved'));
+  }
+
+  function deleteCardById(deckId, cardId, skipConfirm) {
+    var d = findDeck(deckId);
+    if (!d) return false;
+    if (!skipConfirm && !window.confirm(t('confirm.deleteCard'))) return false;
+    var delId = cardId;
+    if (delId) {
+      var sharedElsewhere = state.decks.some(function (x) {
+        return x.id !== d.id && x.cards.some(function (cc) { return cc.id === delId; });
+      });
+      if (!sharedElsewhere) delete state.stats[delId];
+    }
+    d.cards = d.cards.filter(function (c) { return c.id !== delId; });
+    if (!d.cards.length) {
+      state.decks = state.decks.filter(function (x) { return x.id !== d.id; });
+    }
+    cleanupUnreferencedImages();
+    scheduleSave();
+    return true;
   }
 
   function deleteCard() {
@@ -3248,11 +3292,19 @@
     var d = findDeck(modalPayload.deckId);
     if (!d) return;
     if (!window.confirm(t('confirm.deleteCard'))) return;
-    if (modalPayload.cardId) delete state.stats[modalPayload.cardId];
-    d.cards = d.cards.filter(function (c) { return c.id !== modalPayload.cardId; });
+    var delId = modalPayload.cardId;
+    if (delId) {
+      // 同一 id 的卡若被其他笔记引用（内容哈希相同），保留其进度
+      var sharedElsewhere = state.decks.some(function (x) {
+        return x.id !== d.id && x.cards.some(function (cc) { return cc.id === delId; });
+      });
+      if (!sharedElsewhere) delete state.stats[delId];
+    }
+    d.cards = d.cards.filter(function (c) { return c.id !== delId; });
     if (!d.cards.length) {
       state.decks = state.decks.filter(function (x) { return x.id !== d.id; });
     }
+    cleanupUnreferencedImages(); // 删卡后清理无引用图片
     scheduleSave();
     closeModal();
     goHome();
@@ -3897,6 +3949,7 @@
   }
 
   function applyBackupOverwrite() {
+    lastOpSnapshot = null; // 覆盖后卡片全换，撤销快照失效
     var obj = modalPayload && modalPayload.backupObj;
     var images = (modalPayload && modalPayload.backupImages) || [];
     if (!obj) return;
@@ -3924,6 +3977,7 @@
   }
 
   function applyBackupMerge() {
+    lastOpSnapshot = null; // 合并后卡片集合变化，撤销快照失效
     var obj = modalPayload && modalPayload.backupObj;
     var images = (modalPayload && modalPayload.backupImages) || [];
     if (!obj) return;
@@ -3951,6 +4005,7 @@
       return;
     }
     if (!window.confirm(t('confirm.importBackup'))) return;
+    lastOpSnapshot = null; // 旧 json 恢复：撤销快照失效
     // 恢复只覆盖「笔记 + 进度 + 统计」；AI 供应商配置（备份里本来就没有 Key）、主题、语言保留本机当前的
     var prevSettings = state.settings;
     state = normalizeState(obj);
@@ -4433,8 +4488,26 @@
       if (mdImg && mdImg.getAttribute('src')) { openImageViewer(mdImg.getAttribute('src')); return; }
       var copyBtn = e.target.closest ? e.target.closest('[data-act="code-copy"]') : null;
       if (copyBtn) {
-        var pre = copyBtn.closest('pre');
-        copyText(pre ? pre.dataset.raw || (pre.querySelector('code') || {}).textContent || '' : '');
+        // 按钮在 .md-code-bar 内，与 <pre> 是兄弟节点：必须从外层 wrap 找
+        var wrap = copyBtn.closest('.md-code-wrap');
+        var pre = wrap ? wrap.querySelector('pre') : null;
+        var code = '';
+        if (pre) {
+          code = pre.dataset.raw;
+          if (code == null) code = (pre.querySelector('code') || {}).textContent || '';
+          if (pre.dataset.raw != null) {
+            // 属性值经过 HTML 转义，用 textarea 反解回原文
+            var ta = document.createElement('textarea');
+            ta.innerHTML = pre.dataset.raw;
+            code = ta.value;
+          }
+        }
+        if (!code.trim()) {
+          // 兜底：取渲染后 code 元素的纯文本
+          var codeEl = wrap ? wrap.querySelector('code') : null;
+          code = codeEl ? codeEl.textContent || '' : '';
+        }
+        copyText(code);
         return;
       }
       var el = e.target.closest ? e.target.closest('[data-act]') : null;
@@ -4659,6 +4732,23 @@
     importBackupBuffer: importBackupBuffer,
     _normalize: normalizeState,
     renderAnswerHtml: renderAnswerHtml,
+    cleanupUnreferencedImages: cleanupUnreferencedImages,
+    cleanupPlan: cleanupPlan,
+    deleteCardById: deleteCardById,
+    storeImageForTest: function (name, bytes) { return storeImage(name, new Blob([new Uint8Array(bytes)], { type: imgMime(name) })); },
+    idsPresentInIndex: function (list) {
+      return Store.rawGet('imgIndex').then(function (cur) {
+        var have = cur || [];
+        var out = {};
+        list.forEach(function (n) { out[n] = have.indexOf(n) >= 0; });
+        return out;
+      });
+    },
+    idbHasKey: function (key) {
+      return Store.rawGet(key).then(function (v) { return v != null; });
+    },
+    clearOpSnapshot: function () { lastOpSnapshot = null; },
+    hasOpSnapshot: function () { return !!lastOpSnapshot; },
     mergeBackupState: mergeBackupState,
     buildBackupFiles: function () { return backupPayload(null); },
     renderStats: renderStats,

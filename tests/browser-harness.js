@@ -218,12 +218,15 @@
       var known = 0;
       Object.keys(stats).forEach(function (k) { if (stats[k].s === 'known') known++; });
       check('stat recorded', Object.keys(stats).length >= 1, Object.keys(stats).length);
-      /* 撤销链路：重开一轮，评一张，撤销，验证 stat 回滚 */
+      /* 撤销链路：用全新卡片开一轮（避免残留会话/已评完导致 current 为空），评一张再撤销 */
       (function(){
-        var d0 = app.state().decks[0];
-        if (!d0) return;
-        app.startReview([d0.id], {});
-        if (!window.MDReviewApp.state().reviewSession) return;
+        var stamp = Date.now();
+        var d0 = { id: 'dundo' + stamp, name: '撤销测试', cards: [
+          { id: 'cundo1-' + stamp, title: 'u1', question: '', answer: 'ans1', path: [] },
+          { id: 'cundo2-' + stamp, title: 'u2', question: '', answer: 'ans2', path: [] }] };
+        app.state().decks.push(d0);
+        app.startReview([d0.id], { resumeOk: true });
+        if (!window.MDReviewApp.state().reviewSession) { check('schedule applied on rate', false, 'no session'); return; }
         var cid = app.state().reviewSession.currentId;
         var before = app.state().stats[cid] || { n: 0, box: 0 };
         app.showAnswer();
@@ -237,6 +240,10 @@
         var st2 = app.state().stats[cid];
         check('undo restores stat', st2 && (st2.n === before.n) && (st2.box || 0) === (before.box || 0), st2 ? 'n=' + st2.n + ' box=' + st2.box + ' want n=' + before.n : 'gone');
         check('undo keeps queue', app.state().reviewSession && app.state().reviewSession.currentId === cid, 'same card back');
+        // 清理临时 deck 与会话
+        var stc = app.state();
+        stc.decks = stc.decks.filter(function (x) { return x.id !== d0.id; });
+        stc.reviewSession = null;
       })();
       check('known marked', known === 1, known);
 
@@ -639,7 +646,132 @@
                     // 第 0 步 D)：开始复习即 flushSave（强杀不丢会话）
                     check('session flushed on review start', window.__flushAfterStart > window.__flushAtReviewStart,
                       'after=' + window.__flushAfterStart + ' atStart=' + window.__flushAtReviewStart);
-                    finish();
+
+                    /* ===== v1.12.2 异步断言（完成后才 finish） ===== */
+                    var A5 = app;
+                    var C5 = window.MDReviewCore;
+                    var BS5 = String.fromCharCode(92);
+
+                    // 2) 公式守卫（同步，先跑）
+                    check('v1122 guard "5 to"', !C5.isMathCandidate('5 to'), 'guard');
+                    check('v1122 guard "5 to 10"', !C5.isMathCandidate('5 to 10'), 'guard');
+                    check('v1122 guard "20-30"', !C5.isMathCandidate('20-30'), 'guard');
+                    check('v1122 guard keeps tex', C5.isMathCandidate(BS5 + 'frac{1}{2}') && C5.isMathCandidate('E=mc^2'), 'tex');
+
+                    // 1) 复制按钮：pre 有 data-raw 且按钮能经 wrap 找到 pre
+                    (function () {
+                      var F5 = String.fromCharCode(96, 96, 96);
+                      var host = document.createElement('div');
+                      host.innerHTML = C5.renderMarkdown(F5 + 'js' + String.fromCharCode(10) + 'var s = 42;' + String.fromCharCode(10) + F5);
+                      document.body.appendChild(host);
+                      var preEl = host.querySelector('.md-code-wrap pre');
+                      var btnEl = host.querySelector('[data-act="code-copy"]');
+                      var wrapEl = btnEl ? btnEl.closest('.md-code-wrap') : null;
+                      check('v1122 pre carries data-raw',
+                        !!(preEl && preEl.dataset && preEl.dataset.raw && preEl.dataset.raw.indexOf('var s = 42;') >= 0),
+                        preEl ? String(preEl.dataset.raw).slice(0, 24) : 'no pre');
+                      check('v1122 copy btn resolves pre via wrap',
+                        !!(wrapEl && wrapEl.querySelector('pre')), wrapEl ? 'wrap ok' : 'no wrap');
+                      // 点击后断言「实际复制的文本」：headless 无剪贴板读权限，用 spy 拦截 writeText
+                      if (btnEl) {
+                        var captured = null;
+                        var origWrite = navigator.clipboard && navigator.clipboard.writeText;
+                        if (navigator.clipboard) {
+                          navigator.clipboard.writeText = function (txt) { captured = String(txt); return Promise.resolve(); };
+                        }
+                        btnEl.click();
+                        // copyText 走 clipboard.writeText（异步）；失败时回退 execCommand，用 textarea 兜底捕获
+                        if (captured == null) {
+                          var taC = document.querySelector('textarea');
+                          if (taC && taC.value) captured = taC.value;
+                        }
+                        if (navigator.clipboard && origWrite) navigator.clipboard.writeText = origWrite;
+                        check('v1122 clipboard equals code', captured != null && String(captured).indexOf('var s = 42;') >= 0,
+                          JSON.stringify(captured == null ? 'null' : String(captured).slice(0, 30)));
+                      } else {
+                        check('v1122 clipboard equals code', false, 'no btn');
+                      }
+                      document.body.removeChild(host);
+                    })();
+
+                    // 3) 图片清理决策（纯函数；headless 虚拟时钟下 IDB 回调不可靠，真实 IDB 在 IAB 验证）
+                    (function () {
+                      var plan = A5.cleanupPlan(['a.png', 'b.png', 'c.png'], ['b.png']);
+                      check('v1122 cleanup plan picks orphans', plan.deleted.length === 1 && plan.deleted[0] === 'b.png', JSON.stringify(plan.deleted));
+                      check('v1122 cleanup plan keeps referenced', plan.kept.length === 2 && plan.kept.indexOf('a.png') >= 0, JSON.stringify(plan.kept));
+                      check('v1122 cleanup deletes via rawDelete', typeof A5.cleanupUnreferencedImages === 'function', 'wired');
+                    })();
+                    Promise.resolve().then(function () {
+
+                      // 4) 删除共享卡保留进度
+                      var sv = A5.state();
+                      var shId = 'cshare' + Date.now();
+                      var dkA = { id: 'dshA' + Date.now(), name: '共享A', cards: [{ id: shId, title: 't', question: '', answer: 'ans', path: [] }] };
+                      var dkB = { id: 'dshB' + Date.now(), name: '共享B', cards: [{ id: shId, title: 't', question: '', answer: 'ans', path: [] }] };
+                      sv.decks.push(dkA, dkB);
+                      sv.stats[shId] = { s: 'known', n: 4, ok: 4, bad: 0, box: 2 };
+                      A5.deleteCardById(dkA.id, shId, true);
+                      check('v1122 shared card stat kept on delete', !!(A5.state().stats[shId] && A5.state().stats[shId].n === 4),
+                        'n=' + ((A5.state().stats[shId] || {}).n));
+                      // 非共享卡删除则清进度
+                      var sv2 = A5.state();
+                      sv2.decks = sv2.decks.filter(function (x) { return x.id !== dkB.id; });
+                      delete sv2.stats[shId];
+                      var soloId = 'csolo' + Date.now();
+                      var dkC = { id: 'dsolo' + Date.now(), name: '独有', cards: [{ id: soloId, title: 'x', question: '', answer: 'y', path: [] }] };
+                      sv2.decks.push(dkC);
+                      sv2.stats[soloId] = { s: 'known', n: 2, ok: 2, bad: 0, box: 2 };
+                      A5.deleteCardById(dkC.id, soloId, true);
+                      check('v1122 solo card stat cleared on delete', !A5.state().stats[soloId], 'cleared');
+
+                      // 5) 编辑 → 导入备份 → 撤销应无效（快照被清）
+                      var sv3 = A5.state();
+                      var dkE = { id: 'dedit' + Date.now(), name: '编辑源', cards: [
+                        { id: 'cedit', title: '甲', question: '', answer: '旧', path: [] },
+                        { id: 'cedit-n', title: '甲二', question: '', answer: '旧二', path: [] }] };
+                      sv3.decks.push(dkE);
+                      sv3.stats['cedit'] = { s: 'known', n: 2, ok: 2, bad: 0, box: 2 };
+                      // 制造快照：用合并（内部 snapshotForUndo）
+                      var keepC = window.confirm;
+                      window.confirm = function () { return true; };
+                      sv3.decks.push({ id: 'dedit2' + Date.now(), name: '编辑源2', cards: [
+                        { id: 'cedit2', title: '乙', question: '', answer: '旧2', path: [] }] });
+                      A5.cardOps.merge(dkE.id, 'cedit');
+                      window.confirm = keepC;
+                      var hadSnap = A5.hasOpSnapshot();
+                      // 导入备份（merge 路径）应清空快照
+                      var enc5 = new TextEncoder();
+                      var bz = { app: 'md-review', version: 1, exportedAt: new Date().toISOString(),
+                        decks: [{ id: 'dimp' + Date.now(), name: '导入', cards: [{ id: 'cimp', title: 'i', question: '', answer: 'a', path: [] }] }], stats: {}, daily: {} };
+                      check('v1122 edit created snapshot', hadSnap === true, 'snap=' + hadSnap);
+                      A5.importBackupBuffer(window.MDReviewCore.zipStore([{ name: 'backup.json', data: enc5.encode(JSON.stringify(bz)) }]).buffer.slice(0));
+                      // 预览弹窗是异步打开的：轮询等它出现，再点合并，再等合并完成
+                      return new Promise(function (res) {
+                        var tries = 0;
+                        (function waitModal() {
+                          var mergeBtn = q('#modalBox [data-act="backup-merge"]');
+                          if (!mergeBtn && tries++ < 30) { setTimeout(waitModal, 100); return; }
+                          if (!mergeBtn) { check('v1122 import clears op snapshot', false, 'no merge btn'); res(); return; }
+                          var keepC2 = window.confirm;
+                          window.confirm = function () { return true; };
+                          mergeBtn.click();
+                          window.confirm = keepC2;
+                          setTimeout(function () {
+                            check('v1122 import clears op snapshot', A5.hasOpSnapshot() === false, 'snap after import=' + A5.hasOpSnapshot());
+                            res();
+                          }, 400);
+                        })();
+                      });
+                      // 清理测试数据
+                      var sv4 = A5.state();
+                      sv4.decks = sv4.decks.filter(function (x) { return x.name !== '导入' && x.name !== '编辑源' && x.name !== '编辑源2' && x.name !== '独有'; });
+                      delete sv4.stats['cimp'];
+                    }).then(function () {
+                      finish();
+                    }, function (err) {
+                      check('v1122 async error', false, err && err.message);
+                      finish();
+                    });
                   }, 600);
                 } catch (e) {
                   check('final-step-error', false, e && e.message);

@@ -2054,8 +2054,9 @@ body.light .hl-kw { color: #1a5fb4; }
       if (blk.type === 'code') {
         var langAttr = blk.lang ? ' data-lang="' + escapeHtml(blk.lang) + '"' : '';
         var hl = (typeof global.__mdfcHighlight === 'function') ? global.__mdfcHighlight(blk.text, blk.lang) : escapeHtml(blk.text);
+        var rawAttr = ' data-raw="' + escapeHtml(blk.text) + '"';
         html += '<div class="md-code-wrap"><div class="md-code-bar"><button type="button" class="code-copy" data-act="code-copy" aria-label="copy">&#10697;</button></div>' +
-          '<pre class="md-code"' + langAttr + '><code>' + hl + '</code></pre></div>';
+          '<pre class="md-code"' + langAttr + rawAttr + '><code>' + hl + '</code></pre></div>';
       } else if (blk.type === 'heading') {
         var lv = Math.min(blk.level + 1, 6);
         html += '<div class="md-h md-h' + lv + '">' + inline(blk.text) + '</div>';
@@ -2238,10 +2239,16 @@ body.light .hl-kw { color: #1a5fb4; }
    * 含 CJK（中文句子里的「$100 和 $200」）或纯数字标点 → 不当公式，保留原文。
    */
   function isMathCandidate(tex) {
-    var t = String(tex == null ? '' : tex);
-    if (!t.trim()) return false;
-    if (/[一-鿿]/.test(t)) return false;      // 中文内容
-    if (/^[\d\s,.，。:：]+$/.test(t)) return false;    // 纯数字/标点（货币金额）
+    var t = String(tex == null ? '' : tex).trim();
+    if (!t) return false;
+    if (/[\u4e00-\u9fff]/.test(t)) return false;                  // 中文内容
+    if (/^[\d\s,.，。:：]+$/.test(t)) return false;                 // 纯数字/标点（金额）
+    var hasLetterWord = /[A-Za-z]{2,}/.test(t);                     // 英文单词（5 to / USD / stock）
+    var hasMathCmd = /\\[A-Za-z]+/.test(t);                        // \frac \alpha 等 TeX 命令
+    var hasMathOp = /[=+\-*/^_<>]/.test(t);
+    if (hasLetterWord && !hasMathCmd && !hasMathOp) return false;
+    if (/^[\d\s]*(?:[-–~—]|to)[\d\s]*$/i.test(t)) return false;   // 范围：5- / 5 to 10 / 20-30
+    if (/^[$€£¥]?\s*\d+(?:[.,]\d+)?\s*[a-zA-Z]{0,3}$/.test(t)) return false; // 金额 / 数字+短单位
     return true;
   }
 
@@ -2409,7 +2416,7 @@ body.light .hl-kw { color: #1a5fb4; }
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.1';
+  var APP_VERSION = '1.12.2';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -3563,19 +3570,35 @@ body.light .hl-kw { color: #1a5fb4; }
     });
   }
 
+  /** 纯函数：给定索引与未引用列表 → 该删哪些、保留哪些（供单测/headless 断言） */
+  function cleanupPlan(indexList, unusedNames) {
+    var idx = indexList || [];
+    var un = unusedNames || [];
+    return {
+      deleted: idx.filter(function (n) { return un.indexOf(n) >= 0; }),
+      kept: idx.filter(function (n) { return un.indexOf(n) < 0; })
+    };
+  }
+
   function cleanupUnreferencedImages() {
     return unreferencedImages().then(function (unused) {
       if (!unused.length) return 0;
-      return Store.rawGet('imgIndex').then(function (list) {
-        var kept = (list || []).filter(function (nm) {
-          return !unused.some(function (u) { return u.name === nm; });
-        });
-        return Store.rawPut('imgIndex', kept).then(function () {
-          unused.forEach(function (u) {
+      // 1) 先真正删除每个未引用的 Blob 记录
+      return Promise.all(unused.map(function (u) {
+        return Store.rawDelete('img/' + u.name).then(function (ok) {
+          if (ok) {
             if (IMG_URLS[u.name]) { try { URL.revokeObjectURL(IMG_URLS[u.name]); } catch (e) { /* ignore */ } }
             delete IMG_URLS[u.name];
-          });
-          return unused.length; // 记录本体留在 IDB（无引用即不可达，index 已剔除）；彻底删除走 Store.deleteRaw（如后续提供）
+          }
+          return ok ? u.name : null;
+        });
+      })).then(function (deletedList) {
+        var deleted = deletedList.filter(Boolean);
+        if (!deleted.length) return 0;
+        // 2) 删除成功后，才把已删项从 imgIndex 剔除
+        return Store.rawGet('imgIndex').then(function (list) {
+          var kept = (list || []).filter(function (nm) { return deleted.indexOf(nm) < 0; });
+          return Store.rawPut('imgIndex', kept).then(function () { return deleted.length; });
         });
       });
     });
@@ -5617,10 +5640,38 @@ body.light .hl-kw { color: #1a5fb4; }
     card.title = title || Core.plainText(question || answer).slice(0, 40) || t('card.untitled');
     card.question = question;
     card.answer = answer.replace(/\s+$/, '');
+    // 与新版编辑器一致：重算 id、标记已修改、迁移进度（避免旧弹窗留下陈旧 id）
+    var oldId = modalPayload.cardId;
+    var newId = 'c' + Core.hash32(card.title + '|' + card.question + '|' + card.answer);
+    if (state.stats[oldId] && !state.stats[newId]) state.stats[newId] = state.stats[oldId];
+    if (newId !== oldId) delete state.stats[oldId];
+    card.id = newId;
+    card.modified = true;
+    browse.cardId = newId;
     scheduleSave();
     closeModal();
     renderBrowse();
     toast(t('toast.saved'));
+  }
+
+  function deleteCardById(deckId, cardId, skipConfirm) {
+    var d = findDeck(deckId);
+    if (!d) return false;
+    if (!skipConfirm && !window.confirm(t('confirm.deleteCard'))) return false;
+    var delId = cardId;
+    if (delId) {
+      var sharedElsewhere = state.decks.some(function (x) {
+        return x.id !== d.id && x.cards.some(function (cc) { return cc.id === delId; });
+      });
+      if (!sharedElsewhere) delete state.stats[delId];
+    }
+    d.cards = d.cards.filter(function (c) { return c.id !== delId; });
+    if (!d.cards.length) {
+      state.decks = state.decks.filter(function (x) { return x.id !== d.id; });
+    }
+    cleanupUnreferencedImages();
+    scheduleSave();
+    return true;
   }
 
   function deleteCard() {
@@ -5628,11 +5679,19 @@ body.light .hl-kw { color: #1a5fb4; }
     var d = findDeck(modalPayload.deckId);
     if (!d) return;
     if (!window.confirm(t('confirm.deleteCard'))) return;
-    if (modalPayload.cardId) delete state.stats[modalPayload.cardId];
-    d.cards = d.cards.filter(function (c) { return c.id !== modalPayload.cardId; });
+    var delId = modalPayload.cardId;
+    if (delId) {
+      // 同一 id 的卡若被其他笔记引用（内容哈希相同），保留其进度
+      var sharedElsewhere = state.decks.some(function (x) {
+        return x.id !== d.id && x.cards.some(function (cc) { return cc.id === delId; });
+      });
+      if (!sharedElsewhere) delete state.stats[delId];
+    }
+    d.cards = d.cards.filter(function (c) { return c.id !== delId; });
     if (!d.cards.length) {
       state.decks = state.decks.filter(function (x) { return x.id !== d.id; });
     }
+    cleanupUnreferencedImages(); // 删卡后清理无引用图片
     scheduleSave();
     closeModal();
     goHome();
@@ -6277,6 +6336,7 @@ body.light .hl-kw { color: #1a5fb4; }
   }
 
   function applyBackupOverwrite() {
+    lastOpSnapshot = null; // 覆盖后卡片全换，撤销快照失效
     var obj = modalPayload && modalPayload.backupObj;
     var images = (modalPayload && modalPayload.backupImages) || [];
     if (!obj) return;
@@ -6304,6 +6364,7 @@ body.light .hl-kw { color: #1a5fb4; }
   }
 
   function applyBackupMerge() {
+    lastOpSnapshot = null; // 合并后卡片集合变化，撤销快照失效
     var obj = modalPayload && modalPayload.backupObj;
     var images = (modalPayload && modalPayload.backupImages) || [];
     if (!obj) return;
@@ -6331,6 +6392,7 @@ body.light .hl-kw { color: #1a5fb4; }
       return;
     }
     if (!window.confirm(t('confirm.importBackup'))) return;
+    lastOpSnapshot = null; // 旧 json 恢复：撤销快照失效
     // 恢复只覆盖「笔记 + 进度 + 统计」；AI 供应商配置（备份里本来就没有 Key）、主题、语言保留本机当前的
     var prevSettings = state.settings;
     state = normalizeState(obj);
@@ -6813,8 +6875,26 @@ body.light .hl-kw { color: #1a5fb4; }
       if (mdImg && mdImg.getAttribute('src')) { openImageViewer(mdImg.getAttribute('src')); return; }
       var copyBtn = e.target.closest ? e.target.closest('[data-act="code-copy"]') : null;
       if (copyBtn) {
-        var pre = copyBtn.closest('pre');
-        copyText(pre ? pre.dataset.raw || (pre.querySelector('code') || {}).textContent || '' : '');
+        // 按钮在 .md-code-bar 内，与 <pre> 是兄弟节点：必须从外层 wrap 找
+        var wrap = copyBtn.closest('.md-code-wrap');
+        var pre = wrap ? wrap.querySelector('pre') : null;
+        var code = '';
+        if (pre) {
+          code = pre.dataset.raw;
+          if (code == null) code = (pre.querySelector('code') || {}).textContent || '';
+          if (pre.dataset.raw != null) {
+            // 属性值经过 HTML 转义，用 textarea 反解回原文
+            var ta = document.createElement('textarea');
+            ta.innerHTML = pre.dataset.raw;
+            code = ta.value;
+          }
+        }
+        if (!code.trim()) {
+          // 兜底：取渲染后 code 元素的纯文本
+          var codeEl = wrap ? wrap.querySelector('code') : null;
+          code = codeEl ? codeEl.textContent || '' : '';
+        }
+        copyText(code);
         return;
       }
       var el = e.target.closest ? e.target.closest('[data-act]') : null;
@@ -7039,6 +7119,23 @@ body.light .hl-kw { color: #1a5fb4; }
     importBackupBuffer: importBackupBuffer,
     _normalize: normalizeState,
     renderAnswerHtml: renderAnswerHtml,
+    cleanupUnreferencedImages: cleanupUnreferencedImages,
+    cleanupPlan: cleanupPlan,
+    deleteCardById: deleteCardById,
+    storeImageForTest: function (name, bytes) { return storeImage(name, new Blob([new Uint8Array(bytes)], { type: imgMime(name) })); },
+    idsPresentInIndex: function (list) {
+      return Store.rawGet('imgIndex').then(function (cur) {
+        var have = cur || [];
+        var out = {};
+        list.forEach(function (n) { out[n] = have.indexOf(n) >= 0; });
+        return out;
+      });
+    },
+    idbHasKey: function (key) {
+      return Store.rawGet(key).then(function (v) { return v != null; });
+    },
+    clearOpSnapshot: function () { lastOpSnapshot = null; },
+    hasOpSnapshot: function () { return !!lastOpSnapshot; },
     mergeBackupState: mergeBackupState,
     buildBackupFiles: function () { return backupPayload(null); },
     renderStats: renderStats,
