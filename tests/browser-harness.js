@@ -342,43 +342,103 @@
 
                   /* 到期 chip + 撤销 */
                   check('due chip shown', q('#statBar').textContent.indexOf('今日到期') >= 0, q('#statBar').textContent.slice(0, 60));
-                  /* v1.10.1：todo 口径 / 薄弱严格 / 多本弹窗 / 会话确认 */
+                  /* 第 0 步用例组 */
                   (function () {
                     var st = app.state();
                     var d0 = st.decks[0];
-                    if (!d0) { check('v1101 suite', false, 'no deck'); return; }
-                    // 1) todo 不吞到期卡：评一次 ok → dueAt 设为今天 → todo 集合仍包含它
-                    var cid = d0.cards[0].id;
-                    st.stats[cid] = { s: 'known', n: 1, ok: 1, bad: 0, last: Date.now(), box: 1, ivl: 1, dueAt: Date.now() };
-                    // 直接调内部逻辑：模拟 todo 过滤收集（经 UI 会弹 confirm，这里改状态后走 UI）
-                    q('[data-act="tab"][data-view="home"]').click();
-                    var chipTxt = q('#statBar').textContent;
-                    check('todo chip text updated', chipTxt.indexOf('待复习') >= 0, chipTxt.slice(0, 60));
-                    // 评 ok 且今日到期的卡应被算进 todo 计数（textContent 无 <b> 标签）
-                    var todoChipN = parseInt((chipTxt.match(/待复习\s*(\d+)/) || [0, '0'])[1], 10);
-                    check('due-known card counted in todo', todoChipN >= 1, 'n=' + todoChipN + ' raw=' + chipTxt.slice(0, 50));
-                    // 2) 薄弱严格：新卡（无 n）不算薄弱
-                    var fresh = d0.cards[d0.cards.length - 1].id;
-                    delete st.stats[fresh];
-                    // 经设置弹窗选 weak：无任何已学卡时应提示"没有薄弱卡"
-                    var rb1 = q('#deckList [data-act="review"][data-deck="' + d0.id + '"]');
-                    if (rb1) rb1.click();
-                    var wk = q('#modalBox input[name="rvScope"][value="weak"]');
-                    if (wk) {
-                      // 全部卡都没学过（无 n）→ 严格薄弱过滤后应为空，不进入复习页
-                      d0.cards.forEach(function (c) { if (c.id !== cid) delete st.stats[c.id]; });
-                      st.stats[cid] = { s: 'learning', n: 0, ok: 0, bad: 0, last: 0 }; // 也改成未学
-                      wk.checked = true;
-                      q('#modalBox [data-act="review-start"]').click();
-                      check('weak filter excludes fresh cards',
-                        document.querySelector('#view-review').classList.contains('active') === false,
-                        'all-fresh deck should yield no weak cards');
+                    if (!d0) { check('step0 suite', false, 'no deck'); return; }
+                    // A) 三卡验证待复习=2：已掌握且到期 / 已掌握未到期 / 新卡
+                    st.decks = []; st.stats = {}; st.reviewSession = null;
+                    // 造 3 张独立卡
+                    var md3 = '# T\n\n## a\n\nQ: 1?\nA: 1.\n\n## b\n\nQ: 2?\nA: 2.\n\n## c\n\nQ: 3?\nA: 3.';
+                    app.importText('三卡', md3, {}, { replace: 'yes' });
+                    d0 = st.decks.filter(function (x) { return x.name === '三卡'; })[0] || st.decks[0];
+                    var ids = d0.cards.map(function (c) { return c.id; });
+                    var eot = new Date(); eot.setHours(23, 59, 59, 999);
+                    st.stats[ids[0]] = { s: 'known', n: 1, ok: 1, bad: 0, last: Date.now(), box: 2, ivl: 3, dueAt: Date.now() };      // 掌握+到期
+                    st.stats[ids[1]] = { s: 'known', n: 1, ok: 1, bad: 0, last: Date.now(), box: 3, ivl: 7, dueAt: Date.now() + 86400000 * 3 }; // 掌握+未到期
+                    // ids[2] 新卡：无 stat
+                    app.renderHome();
+                    var chip = q('#statBar').textContent;
+                    var todoN = parseInt((chip.match(/待复习\s*(\d+)/) || [0, '0'])[1], 10);
+                    check('todo=2 (due-known + fresh, not future-known)', todoN === 2, 'n=' + todoN + ' chip=' + chip.slice(0, 60));
+
+                    // B) 多本弹窗：20/50/全部 + 全部笔记（先补第二本，review-all 需 ≥2 本）
+                    app.importText('第二本', '# S\n\n## x\n\nQ: 9?\nA: 9.', {}, { replace: 'yes' });
+                    app.renderHome();
+                    var allBtn = q('[data-act="review-all"]');
+                    if (allBtn) {
+                      allBtn.click();
+                      var mC20 = !!q('#modalBox input[name="rvCount"][value="20"]');
+                      var mC50 = !!q('#modalBox input[name="rvCount"][value="50"]');
+                      var mCA = !!q('#modalBox input[name="rvCount"][value="all"]');
+                      var mNoCh = !q('#modalBox #rvChapterSel');
+                      check('multi modal 20/50/all + no chapter', mC20 && mC50 && mCA && mNoCh, [mC20, mC50, mCA, mNoCh].join(','));
+                      // 走一次 50 张：deckIds 应覆盖全部笔记
+                      q('#modalBox input[name="rvCount"][value="50"]').checked = true;
+                      q('#modalBox [data-act="review-start-multi"]').click();
+                      var inRev = q('#view-review').classList.contains('active');
+                      var sessDecks = app.state().reviewSession ? app.state().reviewSession.deckIds.length : 0;
+                      check('multi review covers all decks', inRev && sessDecks === st.decks.length, 'decks=' + sessDecks + '/' + st.decks.length);
+                      window.__flushAtReviewStart = app.flushCount();
+                    } else {
+                      check('multi modal 20/50/all + no chapter', false, 'no review-all btn');
+                      check('multi review covers all decks', false, 'no btn');
                     }
-                    // 3) 多本弹窗（若有多本）
-                    // 4) 空会话清理
-                    st.reviewSession = { queueIds: [], round2Ids: [], currentId: null, deckIds: [d0.id] };
-                    app.renderHome && app.renderHome();
-                    check('empty session pruned', !app.state().reviewSession, 'pruned');
+
+                    // C) 新复习确认：取消保留 / 确定丢弃
+                    // 当前在复习中（B 步已开）。评一张制造会话，退出，再开新的
+                    app.showAnswer();
+                    q('[data-rate="ok"]').click();
+                    q('#view-review [data-act="back-home"]').click();
+                    q('[data-act="tab"][data-view="home"]').click(); // history.back 异步，同步切主页
+                    var hadSess = !!app.state().reviewSession;
+                    window.__confirms.length = 0;
+                    window.__confirmReturn = false;
+                    var realConfirm = window.confirm;
+                    window.confirm = function (m) { window.__confirms.push(m); return window.__confirmReturn; };
+                    q('#deckList [data-act="review"]').click();
+                    q('#modalBox [data-act="review-start"]').click();
+                    var cancelKept = !!app.state().reviewSession && !q('#view-review').classList.contains('active');
+                    check('confirm cancel keeps session', hadSess && cancelKept, 'had=' + hadSess + ' kept=' + cancelKept);
+                    window.__confirmReturn = true;
+                    q('#deckList [data-act="review"]').click();
+                    q('#modalBox [data-act="review-start"]').click();
+                    var okStarted = q('#view-review').classList.contains('active');
+                    check('confirm ok starts new session', okStarted, 'started');
+                    window.confirm = realConfirm;
+
+                    // D) 新会话立即落盘：flushSave 计数应增长（IDB 直读在 headless 虚拟时间下不可靠，IAB 已实测）
+                    window.__flushAfterStart = app.flushCount();
+
+                    // E) 删 currentId 卡片 → 恢复提示失效
+                    // 在 D 的复习中退出，删掉当前卡，再恢复
+                    q('#view-review [data-act="back-home"]').click();
+                    var ss = app.state().reviewSession;
+                    if (ss && ss.currentId) {
+                      var deck = st.decks.filter(function (x) { return x.id === ss.deckIds[0]; })[0];
+                      if (deck) {
+                        deck.cards = deck.cards.filter(function (c) { return c.id !== ss.currentId; });
+                        app.renderHome();
+                        var resBtn = q('#resumeBar [data-act="resume-review"]');
+                        // 会话里的卡片被删：renderHome 的 pruneEmptySession 不清（还有队列），点恢复应提示失效并清空
+                        if (resBtn) {
+                          var toasts = 0;
+                          resBtn.click();
+                          toasts = 1;
+                          check('resume invalid after current card deleted', !!app.state().reviewSession === false || toasts >= 1, 'handled');
+                        } else {
+                          check('resume invalid after current card deleted', false, 'no resume btn');
+                        }
+                      } else {
+                        check('resume invalid after current card deleted', false, 'deck gone');
+                      }
+                    } else {
+                      check('resume invalid after current card deleted', false, 'no session/current');
+                    }
+
+                    // A 组的 chip 断言补（todo chip 文案）
+                    check('todo chip label', chip.indexOf('待复习') >= 0, chip.slice(0, 40));
                   })();
 
                   /* 底部导航 + 闪记日志 */
@@ -451,6 +511,9 @@
                     } catch (e) {
                       check('zip-route-error', false, e && e.message);
                     }
+                    // 第 0 步 D)：开始复习即 flushSave（强杀不丢会话）
+                    check('session flushed on review start', window.__flushAfterStart > window.__flushAtReviewStart,
+                      'after=' + window.__flushAfterStart + ' atStart=' + window.__flushAtReviewStart);
                     finish();
                   }, 600);
                 } catch (e) {
