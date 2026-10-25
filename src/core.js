@@ -996,6 +996,87 @@
     });
   }
 
+  /* ============================== ZIP 打包（store 模式，无压缩） ============================== */
+
+  var CRC_TABLE = (function () {
+    var t = [];
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+
+  function crc32(buf) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  /**
+   * 打包 zip（store，不压缩）：[{name, data:Uint8Array}] → Uint8Array。
+   * 与 unzipFiles 互通（roundtrip），DOS 时间固定 1980-01-01（备份用途无需真实时间戳）。
+   */
+  function zipStore(files) {
+    var enc = new TextEncoder();
+    var chunks = [];
+    var central = [];
+    var offset = 0;
+    for (var i = 0; i < files.length; i++) {
+      var nameB = enc.encode(String(files[i].name || ''));
+      var data = files[i].data instanceof Uint8Array ? files[i].data : new Uint8Array(files[i].data || []);
+      var crc = crc32(data);
+      // local file header
+      var lh = new Uint8Array(30 + nameB.length);
+      var lv = new DataView(lh.buffer);
+      lv.setUint32(0, 0x04034b50, true);
+      lv.setUint16(4, 20, true);      // version
+      lv.setUint16(6, 0x0800, true);  // flags: UTF-8 名字
+      lv.setUint16(8, 0, true);       // method: store
+      lv.setUint16(10, 0, true); lv.setUint16(12, 0x21, true); // time/date: 1980-01-01
+      lv.setUint32(14, crc, true);
+      lv.setUint32(18, data.length, true);
+      lv.setUint32(22, data.length, true);
+      lv.setUint16(26, nameB.length, true);
+      lv.setUint16(28, 0, true);
+      lh.set(nameB, 30);
+      chunks.push(lh, data);
+      // central directory record
+      var cd = new Uint8Array(46 + nameB.length);
+      var cv = new DataView(cd.buffer);
+      cv.setUint32(0, 0x02014b50, true);
+      cv.setUint16(4, 20, true); cv.setUint16(6, 20, true);
+      cv.setUint16(8, 0x0800, true);
+      cv.setUint16(10, 0, true);
+      cv.setUint16(12, 0, true); cv.setUint16(14, 0x21, true);
+      cv.setUint32(16, crc, true);
+      cv.setUint32(20, data.length, true); cv.setUint32(24, data.length, true);
+      cv.setUint16(28, nameB.length, true);
+      cv.setUint16(30, 0, true); cv.setUint16(32, 0, true);
+      cv.setUint16(34, 0, true); cv.setUint16(36, 0, true);
+      cv.setUint32(38, 0, true);
+      cv.setUint32(42, offset, true);
+      cd.set(nameB, 46);
+      central.push(cd);
+      offset += lh.length + data.length;
+    }
+    var cdSize = central.reduce(function (a, c) { return a + c.length; }, 0);
+    var eocd = new Uint8Array(22);
+    var ev = new DataView(eocd.buffer);
+    ev.setUint32(0, 0x06054b50, true);
+    ev.setUint16(8, files.length, true);
+    ev.setUint16(10, files.length, true);
+    ev.setUint32(12, cdSize, true);
+    ev.setUint32(16, offset, true);
+    var total = offset + cdSize + 22;
+    var out = new Uint8Array(total);
+    var pos = 0;
+    chunks.concat(central).forEach(function (b) { out.set(b, pos); pos += b.length; });
+    out.set(eocd, pos);
+    return out;
+  }
+
   /* ============================== 生成 deck ============================== */
 
   function buildDeck(name, text, options) {
@@ -1036,6 +1117,8 @@
     isDue: isDue,
     BOX_IVL: BOX_IVL,
     unzipFiles: unzipFiles,
+    zipStore: zipStore,
+    crc32: crc32,
     unzipTextFiles: unzipTextFiles,
     decodeBytes: decodeBytes
   };

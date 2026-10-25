@@ -86,7 +86,7 @@
       'update.checking': '检查中…', 'update.latest': '已经是最新版本',
       'update.newTitle': '发现新版本 v{v}', 'update.newBody': '当前版本 v{cur}，是否前往更新？',
       'update.yes': '是', 'update.no': '否', 'update.fail': '检查更新失败，请检查网络后重试',
-      'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '待复习 <b>{n}</b>', 'home.today': '今日已复习 <b>{n}</b>', 'home.due': '今日到期 <b>{n}</b>', 'home.resume': '继续上次复习：{name}（剩 {n} 张）', 'confirm.newSession': '有未完成的复习（剩 {n} 张），开始新复习会丢弃它，继续？',
+      'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '待复习 <b>{n}</b>', 'home.today': '今日已复习 <b>{n}</b>', 'home.due': '今日到期 <b>{n}</b>', 'home.resume': '继续上次复习：{name}（剩 {n} 张）', 'confirm.newSession': '有未完成的复习（剩 {n} 张），开始新复习会丢弃它，继续？', 'import.backupTitle': '导入备份', 'import.backupMeta': '笔记 {decks} 本 · 卡片 {cards} 张 · 图片 {images} 张', 'import.backupWhen': '导出于 {time} · 备份格式 v{v}', 'import.merge': '合并', 'import.overwrite': '覆盖', 'confirm.overwriteBackup': '覆盖将替换全部笔记与进度（本机当前数据会丢失），确定？',
       'deck.meta': '{n} 张卡片 · <span class="ok">已掌握 {k}</span> · <span class="todo">待复习 {t}</span>',
       'deck.review': '随机复习', 'deck.knownOf': '已掌握 {k}', 'deck.quick': '分类速记', 'deck.browse': '浏览/编辑',
       'deck.ai': 'AI 提炼', 'deck.export': '导出', 'deck.delete': '删除',
@@ -99,7 +99,7 @@
       'import.empty': '还没有选择文件', 'import.doAll': '导入全部', 'import.doAllCount': '导入全部（{n}）',
       'toast.onlyMd': '未识别的文件（支持 md / txt / 图片）', 'toast.noFile': '没有选择文件',
       'toast.imgTaken': '已导入 {n} 张图片', 'toast.imgNoStore': '本机存储不可用，图片没有保存', 'img.missing': '图片未导入',
-      'toast.saveFail': '保存失败：本机存储不可用，进度可能丢失', 'toast.notZip': '请选择 .zip 文件', 'toast.unzipping': '正在解压…', 'toast.zipEmpty': 'zip 里没有找到 md / 图片文件',
+      'toast.saveFail': '保存失败：本机存储不可用，进度可能丢失', 'toast.backupMerged': '已合并 {n} 本笔记（本地进度保留）', 'import.suffix': '(导入)', 'toast.notZip': '请选择 .zip 文件', 'toast.unzipping': '正在解压…', 'toast.zipEmpty': 'zip 里没有找到 md / 图片文件',
       'toast.zipTaken': '已从 zip 中取出 {n} 篇笔记', 'toast.unzipFail': '解压失败：{msg}',
       'toast.queueEmpty': '先选择要导入的文件',
       'confirm.batchReplace': '有 {n} 个同名笔记，用新内容替换吗？（取消 = 跳过同名）',
@@ -205,7 +205,7 @@
       'update.checking': '檢查中…', 'update.latest': '已經是最新版本',
       'update.newTitle': '發現新版本 v{v}', 'update.newBody': '當前版本 v{cur}，是否前往更新？',
       'update.yes': '是', 'update.no': '否', 'update.fail': '檢查更新失敗，請檢查網絡後重試',
-      'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '待複習 <b>{n}</b>', 'home.today': '今日已複習 <b>{n}</b>', 'home.due': '今日到期 <b>{n}</b>', 'home.resume': '繼續上次複習：{name}（剩 {n} 張）', 'confirm.newSession': '有未完成的複習（剩 {n} 張），開始新複習會丟棄它，繼續？',
+      'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '待複習 <b>{n}</b>', 'home.today': '今日已複習 <b>{n}</b>', 'home.due': '今日到期 <b>{n}</b>', 'home.resume': '繼續上次複習：{name}（剩 {n} 張）', 'confirm.newSession': '有未完成的複習（剩 {n} 張），開始新複習會丟棄它，繼續？', 'import.backupTitle': '匯入備份', 'import.backupMeta': '筆記 {decks} 本 · 卡片 {cards} 張 · 圖片 {images} 張', 'import.backupWhen': '匯出於 {time} · 備份格式 v{v}', 'import.merge': '合併', 'import.overwrite': '覆蓋', 'confirm.overwriteBackup': '覆蓋將替換全部筆記與進度（本機當前資料會丟失），確定？',
       'deck.meta': '{n} 張卡片 · <span class="ok">已掌握 {k}</span> · <span class="todo">待複習 {t}</span>',
       'deck.review': '隨機複習', 'deck.knownOf': '已掌握 {k}', 'deck.quick': '分類速記', 'deck.browse': '瀏覽/編輯',
       'deck.ai': 'AI 提煉', 'deck.export': '匯出', 'deck.delete': '刪除',
@@ -218,7 +218,7 @@
       'import.empty': '還沒有選擇檔案', 'import.doAll': '匯入全部', 'import.doAllCount': '匯入全部（{n}）',
       'toast.onlyMd': '未識別的檔案（支援 md / txt / 圖片）', 'toast.noFile': '沒有選擇檔案',
       'toast.imgTaken': '已匯入 {n} 張圖片', 'toast.imgNoStore': '本機儲存不可用，圖片沒有保存', 'img.missing': '圖片未匯入',
-      'toast.saveFail': '儲存失敗：本機儲存不可用，進度可能遺失', 'toast.notZip': '請選擇 .zip 檔案', 'toast.unzipping': '正在解壓…', 'toast.zipEmpty': 'zip 裡沒有找到 md / 圖片檔案',
+      'toast.saveFail': '儲存失敗：本機儲存不可用，進度可能遺失', 'toast.backupMerged': '已合併 {n} 本筆記（本機進度保留）', 'import.suffix': '(匯入)', 'toast.notZip': '請選擇 .zip 檔案', 'toast.unzipping': '正在解壓…', 'toast.zipEmpty': 'zip 裡沒有找到 md / 圖片檔案',
       'toast.zipTaken': '已從 zip 中取出 {n} 篇筆記', 'toast.unzipFail': '解壓失敗：{msg}',
       'toast.queueEmpty': '先選擇要匯入的檔案',
       'confirm.batchReplace': '有 {n} 個同名筆記，用新內容替換嗎？（取消 = 跳過同名）',
@@ -324,7 +324,7 @@
       'update.checking': 'Checking…', 'update.latest': 'You are up to date',
       'update.newTitle': 'New version v{v} available', 'update.newBody': 'Current version is v{cur}. Update now?',
       'update.yes': 'Yes', 'update.no': 'No', 'update.fail': 'Update check failed, please try again later',
-      'home.allCards': 'All cards <b>{n}</b>', 'home.todoCards': 'To review <b>{n}</b>', 'home.today': 'Reviewed today <b>{n}</b>', 'home.due': 'Due today <b>{n}</b>', 'home.resume': 'Resume last session: {name} ({n} left)', 'confirm.newSession': 'An unfinished review ({n} cards) will be discarded. Start a new one anyway?',
+      'home.allCards': 'All cards <b>{n}</b>', 'home.todoCards': 'To review <b>{n}</b>', 'home.today': 'Reviewed today <b>{n}</b>', 'home.due': 'Due today <b>{n}</b>', 'home.resume': 'Resume last session: {name} ({n} left)', 'confirm.newSession': 'An unfinished review ({n} cards) will be discarded. Start a new one anyway?', 'import.backupTitle': 'Import backup', 'import.backupMeta': '{decks} notes · {cards} cards · {images} images', 'import.backupWhen': 'Exported {time} · format v{v}', 'import.merge': 'Merge', 'import.overwrite': 'Overwrite', 'confirm.overwriteBackup': 'Overwrite replaces all notes and progress (current data will be lost). Continue?',
       'deck.meta': '{n} cards · <span class="ok">{k} known</span> · <span class="todo">{t} to go</span>',
       'deck.review': 'Review', 'deck.knownOf': '{k} known', 'deck.quick': 'Quick read', 'deck.browse': 'Browse/Edit',
       'deck.ai': 'AI refine', 'deck.export': 'Export', 'deck.delete': 'Delete',
@@ -337,7 +337,7 @@
       'import.empty': 'No files selected yet', 'import.doAll': 'Import all', 'import.doAllCount': 'Import all ({n})',
       'toast.onlyMd': 'Unrecognized files (md / txt / images only)', 'toast.noFile': 'No file selected',
       'toast.imgTaken': 'Imported {n} images', 'toast.imgNoStore': 'Local storage unavailable, images not saved', 'img.missing': 'Image not imported',
-      'toast.saveFail': 'Save failed: local storage unavailable, progress may be lost', 'toast.notZip': 'Please choose a .zip file', 'toast.unzipping': 'Unpacking…', 'toast.zipEmpty': 'No .md / .txt files found in the zip',
+      'toast.saveFail': 'Save failed: local storage unavailable, progress may be lost', 'toast.backupMerged': 'Merged {n} notes (local progress kept)', 'import.suffix': ' (imported)', 'toast.notZip': 'Please choose a .zip file', 'toast.unzipping': 'Unpacking…', 'toast.zipEmpty': 'No .md / .txt files found in the zip',
       'toast.zipTaken': 'Extracted {n} notes from the zip', 'toast.unzipFail': 'Unpack failed: {msg}',
       'toast.queueEmpty': 'Select files to import first',
       'confirm.batchReplace': '{n} notes share names with existing ones. Replace them? (Cancel = skip those)',
@@ -3075,6 +3075,196 @@
     }
   }
 
+  function downloadBinary(filename, mime, u8) {
+    // zip 等二进制：Android 走 saveBinary 桥（第 5 步注入），浏览器走 Blob 下载
+    if (window.AndroidSaver && typeof window.AndroidSaver.saveBinary === 'function') {
+      try {
+        var b64 = '';
+        var CH = 32768;
+        for (var i = 0; i < u8.length; i += CH) {
+          b64 += String.fromCharCode.apply(null, u8.subarray(i, i + CH));
+        }
+        var saved = window.AndroidSaver.saveBinary(filename, mime, btoa(b64));
+        if (saved) { toast(tf('toast.savedToDownloads', { name: filename }), 3000); return; }
+      } catch (e) { /* fallback */ }
+    }
+    try {
+      var blob = new Blob([u8], { type: mime });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); if (a.parentNode) a.parentNode.removeChild(a); }, 1500);
+      toast(t('toast.downloading'), 2600);
+    } catch (e) { toast(t('toast.downloadFail')); }
+  }
+
+  /* ---------- 备份 zip：backup.json + images/ ---------- */
+  function backupPayload(deckIds) {
+    var payload = JSON.parse(backupJson(deckIds));
+    payload.kind = deckIds ? 'deck' : 'full';
+    if (!deckIds) delete payload.version_note;
+    return payload;
+  }
+
+  function exportBackupZip() {
+    var enc = new TextEncoder();
+    var payload = backupPayload(null);
+    var files = [{ name: 'backup.json', data: enc.encode(JSON.stringify(payload)) }];
+    Store.rawGet('imgIndex').then(function (list) {
+      var names = list || [];
+      return Promise.all(names.map(function (n) {
+        return Store.rawGet('img/' + n).then(function (rec) {
+          if (rec && rec.blob) {
+            return rec.blob.arrayBuffer().then(function (ab) {
+              files.push({ name: 'images/' + n, data: new Uint8Array(ab) });
+            });
+          }
+          return null;
+        });
+      }));
+    }).then(function () {
+      var zip = Core.zipStore(files);
+      state.lastBackupAt = Date.now();
+      flushSave();
+      downloadBinary('md-flashcards-backup-' + dateStamp() + '.zip', 'application/zip', zip);
+    }).catch(function () {
+      toast(t('toast.downloadFail'), 3000);
+    });
+  }
+
+  /* ---------- 导入解析：zip 或旧 json ---------- */
+  function parseBackupBuffer(buf) {
+    var b = new Uint8Array(buf);
+    if (b.length > 3 && b[0] === 0x50 && b[1] === 0x4b) {
+      return Core.unzipFiles(buf, /\.(json|md|markdown|txt|png|jpe?g|gif|webp|bmp|svg|avif|heic|heif)$/i).then(function (list) {
+        var dec = new TextDecoder();
+        var obj = null;
+        var images = [];
+        list.forEach(function (en) {
+          var nm = en.name || '';
+          if (/^backup\.json$/i.test(nm.split('/').pop()) && !obj) {
+            try { obj = JSON.parse(dec.decode(en.bytes)); } catch (e) { obj = null; }
+          } else if (nm.indexOf('images/') === 0) {
+            images.push({ name: nm.slice('images/'.length), bytes: en.bytes });
+          }
+        });
+        if (!obj) throw new Error('no backup.json');
+        return { obj: obj, images: images };
+      });
+    }
+    // 旧 json
+    return Promise.resolve(decodeTextBytes(buf)).then(function (text) {
+      var obj = null;
+      try { obj = JSON.parse(text); } catch (e) { obj = null; }
+      if (!obj) throw new Error('bad json');
+      return { obj: obj, images: [] };
+    });
+  }
+
+  /* ---------- 合并：deck 按 id 匹配，冲突建副本加后缀；stats 只补缺 ---------- */
+  function mergeBackupState(localRaw, backupObj) {
+    var next = JSON.parse(JSON.stringify(localRaw)); // 在副本上构造，任何一步失败本地不动
+    var decks = next.decks || [];
+    (backupObj.decks || []).forEach(function (bd) {
+      if (!bd || !Array.isArray(bd.cards)) return;
+      var hit = decks.filter(function (d) { return d.id === bd.id; })[0];
+      if (hit) {
+        var copy = JSON.parse(JSON.stringify(bd));
+        copy.id = uid('d');
+        copy.name = String(bd.name || '').slice(0, 60) + t('import.suffix');
+        copy.createdAt = Date.now();
+        decks.push(copy);
+      } else {
+        decks.push(JSON.parse(JSON.stringify(bd)));
+      }
+    });
+    next.decks = decks;
+    var stats = next.stats || {};
+    Object.keys(backupObj.stats || {}).forEach(function (cid) {
+      if (!stats[cid]) stats[cid] = backupObj.stats[cid]; // 只补缺失，不覆盖本地进度
+    });
+    next.stats = stats;
+    return next;
+  }
+
+  /* ---------- 导入预览 → 覆盖 / 合并 ---------- */
+  function importBackupBuffer(buf) {
+    parseBackupBuffer(buf).then(function (r) {
+      var obj = r.obj;
+      if (!obj || !Array.isArray(obj.decks)) throw new Error('bad');
+      var cards = 0;
+      obj.decks.forEach(function (d) { cards += (d.cards || []).length; });
+      var when = obj.exportedAt ? new Date(obj.exportedAt).toLocaleString() : '-';
+      var ver = obj.version || '-';
+      openModal(
+        '<h3>' + t('import.backupTitle') + '</h3>' +
+        '<p class="modal-note">' +
+          tf('import.backupMeta', { decks: obj.decks.length, cards: cards, images: r.images.length }) + '<br>' +
+          tf('import.backupWhen', { time: when, v: ver }) +
+        '</p>' +
+        '<div class="modal-actions">' +
+          '<button class="btn" data-act="close-modal">' + t('btn.cancel') + '</button>' +
+          '<button class="btn" data-act="backup-merge">' + t('import.merge') + '</button>' +
+          '<button class="btn primary" data-act="backup-overwrite">' + t('import.overwrite') + '</button>' +
+        '</div>'
+      );
+      modalPayload = { backupObj: obj, backupImages: r.images };
+    }).catch(function () {
+      toast(t('toast.badBackup'), 3000);
+    });
+  }
+
+  function storeBackupImages(images) {
+    // 图片写入是纯增量（名字→blob），失败不影响笔记数据
+    return Promise.all((images || []).map(function (im) {
+      return storeImage(im.name, new Blob([im.bytes], { type: imgMime(im.name) }));
+    }));
+  }
+
+  function applyBackupOverwrite() {
+    var obj = modalPayload && modalPayload.backupObj;
+    var images = (modalPayload && modalPayload.backupImages) || [];
+    if (!obj) return;
+    if (!window.confirm(t('confirm.overwriteBackup'))) return;
+    // 回滚安全：图片先写（增量），状态整体替换是单次赋值
+    storeBackupImages(images).then(function () {
+      var prevSettings = state.settings;
+      var prevSession = null;
+      state = normalizeState(obj);
+      state.settings.ai = prevSettings.ai;
+      state.settings.theme = prevSettings.theme;
+      state.settings.lang = prevSettings.lang;
+      state.reviewSession = prevSession;
+      pruneDaily();
+      applyTheme();
+      applyI18nStatic();
+      flushSave();
+      closeModal();
+      renderHome();
+      toast(tf('toast.backupImported', { n: state.decks.length }), 2600);
+    });
+  }
+
+  function applyBackupMerge() {
+    var obj = modalPayload && modalPayload.backupObj;
+    var images = (modalPayload && modalPayload.backupImages) || [];
+    if (!obj) return;
+    storeBackupImages(images).then(function () {
+      var nextRaw = mergeBackupState(state, obj); // 在副本上合并
+      var prevSettings = state.settings;
+      state = normalizeState(nextRaw); // 任何解析异常在赋值前抛出，本地数据不动
+      state.settings.ai = prevSettings.ai;
+      pruneDaily();
+      flushSave();
+      closeModal();
+      renderHome();
+      toast(tf('toast.backupMerged', { n: obj.decks.length }), 2600);
+    }).catch(function () {
+      toast(t('toast.badBackup'), 3000);
+    });
+  }
+
   function importBackup(text) {
     var obj = null;
     try { obj = JSON.parse(text); } catch (e) { obj = null; }
@@ -3316,12 +3506,19 @@
         var did = el.getAttribute('data-deck');
         var dd = findDeck(did);
         if (!dd) break;
-        showExport(backupJson([did]), 'md-review-' + safeName(dd.name) + '-' + dateStamp() + '.json');
+        var dj = backupPayload([did]);
+        showExport(JSON.stringify(dj), 'md-review-' + safeName(dd.name) + '-' + dateStamp() + '.json');
         break;
       }
       case 'export-all':
         if (!state.decks.length) { toast(t('toast.noNotes')); break; }
-        showExport(backupJson(null), 'md-review-backup-' + dateStamp() + '.json');
+        exportBackupZip();
+        break;
+      case 'backup-overwrite':
+        applyBackupOverwrite();
+        break;
+      case 'backup-merge':
+        applyBackupMerge();
         break;
       case 'import-json':
         $('#jsonInput').value = '';
@@ -3479,7 +3676,7 @@
     $('#jsonInput').addEventListener('change', function (e) {
       var f = e.target.files && e.target.files[0];
       if (!f) return;
-      readFileText(f).then(function (text) { importBackup(text); }).catch(function () { toast(t('toast.readFailGeneric')); });
+      readFileBuffer(f).then(function (buf) { importBackupBuffer(buf); }).catch(function () { toast(t('toast.readFailGeneric')); });
       e.target.value = '';
     });
 
@@ -3621,6 +3818,9 @@
     renderAiProviders: renderAiProviders,
     imgUrls: function () { return IMG_URLS; },
     flushCount: function () { return flushCount; },
+    parseBackupBuffer: parseBackupBuffer,
+    mergeBackupState: mergeBackupState,
+    buildBackupFiles: function () { return backupPayload(null); },
     renderStats: renderStats,
     rememberImage: rememberImage,
     resolveImgSrc: resolveImgSrc,

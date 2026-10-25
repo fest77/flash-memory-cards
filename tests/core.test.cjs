@@ -1,6 +1,7 @@
 'use strict';
 const assert = require('assert');
 const path = require('path');
+const C_zipStore = require('../src/core.js').zipStore;
 const Core = require(path.join(__dirname, '..', 'src', 'core.js'));
 
 let pass = 0;
@@ -349,6 +350,25 @@ const zipAB = zipBytes.buffer.slice(zipBytes.byteOffset, zipBytes.byteOffset + z
     assert.strictEqual(Core.isDue({}, eot), true); // 无 box
     assert.strictEqual(Core.isDue({ box: 1, dueAt: eot + 1 }, eot), false); // 明天
     assert.strictEqual(Core.isDue({ box: 1, dueAt: eot }, eot), true); // 今天
+  });
+  test('zipStore/unzipFiles roundtrip（含中文与二进制）', async () => {
+    const enc = new TextEncoder();
+    const zip = C_zipStore([
+      { name: 'backup.json', data: enc.encode(JSON.stringify({ ok: true, text: '中文内容' })) },
+      { name: 'images/pic 1.png', data: new Uint8Array([137, 80, 78, 71, 13, 10]) },
+    ]);
+    const list = await Core.unzipFiles(zip.buffer.slice(0), /.*/);
+    const dec = new TextDecoder();
+    const bj = list.find((x) => x.name === 'backup.json');
+    const img = list.find((x) => x.name === 'images/pic 1.png');
+    assert.ok(bj && JSON.parse(dec.decode(bj.bytes)).text === '中文内容');
+    assert.ok(img && img.bytes.length === 6 && img.bytes[0] === 137);
+  });
+  test('zipStore 空文件与重复名', async () => {
+    const enc = new TextEncoder();
+    const zip = C_zipStore([{ name: 'empty.txt', data: new Uint8Array(0) }, { name: 'empty.txt', data: enc.encode('x') }]);
+    const list = await Core.unzipFiles(zip.buffer.slice(0), /.*/);
+    assert.strictEqual(list.length, 2);
   });
   test('qa 模式问答卡保留标题链 path', () => {
     const deck = Core.buildDeck('t', '# 笔记\n\n## 第一章\n\nQ: a?\nA: b.\n\n## 第二章\n\nQ: c?\nA: d.', { mode: 'qa', maxCardLen: 1600, qstyle: 'prompt' });

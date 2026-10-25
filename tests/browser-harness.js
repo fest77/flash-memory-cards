@@ -242,12 +242,19 @@
               check('filter switched', app.state().settings.filter === 'todo');
               check('filter chip on', q('[data-filter="todo"]').classList.contains('on'));
 
-              /* --- 导出弹层 --- */
-              q('[data-act="export-all"]').click();
-              check('export modal', !q('#modal').classList.contains('hidden'));
-              check('export has json', q('#modalBox textarea') && q('#modalBox textarea').value.indexOf('md-review') >= 0);
-              q('[data-act="close-modal"]').click();
-              check('modal closed', q('#modal').classList.contains('hidden'));
+              /* --- 导出：单 deck 仍弹 JSON 层；全量是 zip（异步无弹层） --- */
+              var exDeck = q('#deckList [data-act="export-deck"]');
+              if (exDeck) {
+                exDeck.click();
+                check('export modal', !q('#modal').classList.contains('hidden'));
+                check('export has json', q('#modalBox textarea') && q('#modalBox textarea').value.indexOf('md-review') >= 0);
+                q('[data-act="close-modal"]').click();
+                check('modal closed', q('#modal').classList.contains('hidden'));
+              } else {
+                check('export modal', false, 'no export-deck btn');
+                check('export has json', false, 'no btn');
+                check('modal closed', true, 'skipped');
+              }
 
               /* --- 分类速记（用导入的测试笔记） --- */
               var qd = app.state().decks.filter(function (x) { return x.name === '改名前的测试笔记' || x.name === '自动化测试'; })[0];
@@ -439,6 +446,37 @@
 
                     // A 组的 chip 断言补（todo chip 文案）
                     check('todo chip label', chip.indexOf('待复习') >= 0, chip.slice(0, 40));
+
+                    /* 第 1 步：合并规则 + zip 解析 */
+                    var local2 = {
+                      decks: [
+                        { id: 'd1', name: '甲', cards: [{ id: 'c1', title: 'a', question: '', answer: 'x', path: [] }] },
+                        { id: 'd2', name: '乙', cards: [{ id: 'c2', title: 'b', question: '', answer: 'y', path: [] }] }
+                      ],
+                      stats: { c1: { s: 'known', n: 5, ok: 5, bad: 0 } },
+                      daily: {}
+                    };
+                    var backup2 = {
+                      decks: [
+                        { id: 'd1', name: '云端甲', cards: [{ id: 'c1', title: 'a', question: '', answer: 'x', path: [] }] },
+                        { id: 'd9', name: '新', cards: [{ id: 'c9', title: 'n', question: '', answer: 'z', path: [] }] }
+                      ],
+                      stats: { c1: { s: 'learning', n: 1 }, c9: { s: 'learning', n: 1 } }
+                    };
+                    var mg = app.mergeBackupState(local2, backup2);
+                    check('merge: 4 decks + suffix copy', mg.decks.length === 4 && mg.decks.some(function (d) { return d.name.indexOf('(导入)') >= 0; }),
+                      mg.decks.map(function (d) { return d.name; }).join(','));
+                    check('merge: local stats kept', mg.stats.c1.n === 5, 'n=' + mg.stats.c1.n);
+                    check('merge: missing stats filled', mg.stats.c9 && mg.stats.c9.n === 1, 'ok');
+                    // zip roundtrip（页面内构造 → parseBackupBuffer）
+                    var enc = new TextEncoder();
+                    var zipB = window.MDReviewCore.zipStore([
+                      { name: 'backup.json', data: enc.encode(JSON.stringify({ app: 'md-review', version: 1, decks: [{ id: 'dz', name: 'z', cards: [{ id: 'cz', title: 't', question: '', answer: 'a', path: [] }] }], stats: {}, daily: {} })) },
+                      { name: 'images/p.png', data: new Uint8Array([1, 2, 3]) }
+                    ]);
+                    app.parseBackupBuffer(zipB.buffer.slice(0)).then(function (pr) {
+                      window.__zipParseOk = pr.obj.decks.length === 1 && pr.images.length === 1 && pr.images[0].name === 'p.png';
+                    }, function (e) { window.__zipParseOk = 'ERR:' + e.message; });
                   })();
 
                   /* 底部导航 + 闪记日志 */
@@ -511,6 +549,8 @@
                     } catch (e) {
                       check('zip-route-error', false, e && e.message);
                     }
+                    // 第 1 步：zip 解析
+                    check('backup zip parsed', window.__zipParseOk === true, String(window.__zipParseOk));
                     // 第 0 步 D)：开始复习即 flushSave（强杀不丢会话）
                     check('session flushed on review start', window.__flushAfterStart > window.__flushAtReviewStart,
                       'after=' + window.__flushAfterStart + ' atStart=' + window.__flushAtReviewStart);
