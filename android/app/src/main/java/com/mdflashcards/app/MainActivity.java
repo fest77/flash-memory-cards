@@ -256,11 +256,18 @@ public class MainActivity extends Activity {
     private void pollWipeThenRecreate(final android.app.Dialog dlg, final int attempt) {
         if (webView == null) return;
         webView.evaluateJavascript("window.__wipeDone||'pending'", value -> {
-            boolean done = value != null && (value.contains("ok") || value.contains("err") || value.contains("blocked"));
-            if (done || attempt >= 40) {
+            String v = value == null ? "" : value.replace("\"", "");
+            boolean ok = v.contains("ok");
+            boolean err = v.contains("err");
+            if (ok) {
                 prefs().edit().clear().apply();
                 dlg.dismiss();
                 recreate();
+            } else if (err) {
+                // 删除报错：不清 PIN、不重建，避免「以为清了其实还在」
+                Toast.makeText(MainActivity.this, "清除数据失败，请重试或重启应用后再试", Toast.LENGTH_LONG).show();
+            } else if (attempt >= 50) { // 约 10 秒仍未完成（含 blocked）
+                Toast.makeText(MainActivity.this, "数据库仍被占用，未能清除。请关闭并重新打开应用后重试", Toast.LENGTH_LONG).show();
             } else {
                 new Handler(Looper.getMainLooper()).postDelayed(() -> pollWipeThenRecreate(dlg, attempt + 1), 200);
             }
@@ -287,14 +294,11 @@ public class MainActivity extends Activity {
                 .setMessage("忘记 PIN 将清除应用全部数据（含笔记与进度），确定？")
                 .setPositiveButton("清除", (d, w) -> {
                     // evaluateJavascript 不会 await Promise：改为 JS 侧完成后置标志，原生轮询该标志
-                    final String clearJs =
-                        "(function(){window.__wipeDone='pending';try{localStorage.clear();}catch(e){}" +
-                        "try{var rq=indexedDB.deleteDatabase('md-review');" +
-                        "rq.onsuccess=function(){window.__wipeDone='ok'};" +
-                        "rq.onerror=function(){window.__wipeDone='err'};" +
-                        "rq.onblocked=function(){window.__wipeDone='blocked'};" +
-                        "}catch(e){window.__wipeDone='err'}})()";
-                    webView.evaluateJavascript(clearJs, null);
+                    // 清库逻辑在 Web 端：先关连接 → 清 localStorage → deleteDatabase（仅 onsuccess 算完成）
+                    webView.evaluateJavascript(
+                        "(function(){window.__wipeDone='pending';" +
+                        "if(typeof window.__wipeAllData==='function'){window.__wipeAllData();}" +
+                        "else{window.__wipeDone='err';}})()", null);
                     pollWipeThenRecreate(dlg, 0);
                 })
                 .setNegativeButton("取消", null).show();

@@ -372,6 +372,13 @@ const zipAB = zipBytes.buffer.slice(zipBytes.byteOffset, zipBytes.byteOffset + z
     assert.ok(html.indexOf('md-code-wrap') >= 0);
     assert.ok(/data-raw="[^"]*var x = 1;/.test(html), 'pre 应带原始代码 data-raw');
   });
+  test('代码块只转义一次（不出现 &amp;lt; 这类二次实体）', () => {
+    const F = String.fromCharCode(96, 96, 96);
+    const html = Core.renderMarkdown(F + 'js' + String.fromCharCode(10) + 'if (a < b && c > d) {}' + String.fromCharCode(10) + F);
+    assert.ok(html.indexOf('&lt;') >= 0, '应转义为 &lt;');
+    assert.ok(html.indexOf('&amp;lt;') < 0, '不能二次转义');
+    assert.ok(html.indexOf('&amp;amp;') < 0, '不能二次转义 &&');
+  });
   test('zipStore/unzipFiles roundtrip（含中文与二进制）', async () => {
     const enc = new TextEncoder();
     const zip = C_zipStore([

@@ -12,7 +12,7 @@ A **zero-backend, dependency-free, single-file** markdown flashcard app:
 - Input: `.md` / `.txt` / `.zip`, or the bundled deck;
 - Process: split into Q/A cards by heading / `Q:`/`A:` / bold questions; generate a question when the heading is not one;
 - Output: random recall (3-way self-rating), "quick read" by chapter + question outline, deck management, JSON backup, settings (theme / language / about);
-- Ship forms: one HTML (~180 KB, no bundled data) or an Android WebView APK.
+- Ship forms: one HTML (about 848 KB, no bundled data) or an Android WebView APK.
 
 **Non-goals**: accounts, cloud sync, SM-2/FSRS scheduling, any framework or CDN.
 
@@ -40,9 +40,9 @@ md-flashcards/
 │   ├── build_interview_decks.py  # interview md → bundled-decks.js
 │   └── build_interview_images.py # interview images/ → bundled-images.js
 ├── tests/
-│   ├── core.test.cjs          # 62 unit tests (Node, no browser)
+│   ├── core.test.cjs          # 63 unit tests (Node, no browser)
 │   ├── browser-harness.js     # injected into the built page
-│   ├── run-browser-test.cjs   # static checks + 155 headless-Edge assertions
+│   ├── run-browser-test.cjs   # static checks + 164 headless-Edge assertions
 │   ├── run-screenshots.cjs    # writes docs/images/*
 │   ├── persist-test.cjs       # file:// persistence check
 │   └── fixtures/notes.zip     # zip-parsing fixture
@@ -290,7 +290,7 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.3 | chapter→question TOC with jump & highlight; developer docs |
 | 1.4 | repo renamed to English paths; Android WebView APK project + GitHub Actions |
 | 1.5 | bundled 199 screenshots embedded as WebP (~7 MB single file); image placeholder rendering |
-| 1.6 | repo build ships without bundled deck data (gitignored, regenerable); settings view (theme dark/light, zh-Hans/zh-Hant/en i18n, about page); dist reduced to a single ~180 KB file |
+| 1.6 | repo build ships without bundled deck data (gitignored, regenerable); settings view (theme dark/light, zh-Hans/zh-Hant/en i18n, about page); dist reduced to a single file |
 | 1.7 | multi-provider AI settings (presets added on demand from an "add provider" sheet + custom, enable/disable, multi-model, per-provider test), home quick model-switcher modal, native Anthropic protocol support, API keys excluded from backups |
 | 1.7.1 | preset model lists refreshed to each vendor's current APIs (2026-10): DeepSeek v4.1-Flash-1017 (`deepseek-flash`), Z.ai GLM-5.3, Kimi K3.1, Bailian Qwen3.8, OpenAI GPT-6.1, Claude 5.5; untouched legacy presets auto-upgraded on load (keyed/edited ones untouched) |
 | 1.7.2 | image import: file picker accepts images (+zip/folder), images stored in IndexedDB (kv `img/*`), rendered into cards by filename via `resolveImgSrc`; `safeUrl` now allows relative paths; Android chooser MIME adds image types; ready-to-install APK shipped at repo root |
@@ -308,3 +308,4 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.11.0 | data safety: `Core.zipStore` (store-mode zip writer, CRC32, roundtrips with unzipFiles/Python); full backup = zip with backup.json+images/, deck export json gains `kind:'deck'`; import parses zip/legacy json → preview modal → overwrite (double confirm) / merge (`mergeBackupState`: id-match, conflict → name+suffix copy, stats only fill missing); failures never touch local state; images: content-digest dedup + auto-rename (`img-2.png`) with same-batch reference rewrite (`IMG_RENAMES`); unreferenced-image cleanup (settings + auto after deck delete; deletes each `img/<name>` blob via `Store.rawDelete` first, then rewrites `imgIndex`); deck delete keeps stats of cards shared with other decks; backup reminder bar (lastChangeAt/lastBackupAt/7d, dismissible) + File System Access folder one-tap zip; Android `saveBinary`/`shareFile` bridge |
 | 1.12.0 | content & platform: KaTeX inlined via build-time `read_katex()` (JS + CSS with base64 subset fonts, `/*KATEX*/` placeholder; math pre-extracted in `renderMathSegments`/`restoreMath`, parse errors fall back to raw text); lightweight regex highlighter `highlightCode` hooked via `window.__mdfcHighlight` (+copy button, overflow-x); image viewer overlay (pinch/double-tap); reading settings (fs/lh/cw → CSS vars); global search (`globalSearch` + debounce + snippet modal + review-from-card); card ops edit/split/merge/move + one-level undo (`snapshotForUndo`), edit writes back to `deck.raw` when uniquely locatable, `modified` badge; tags (frontmatter + inline #tag) & deck sorting; Obsidian callouts in core quote branch + `linkWikiCards` jump; Q_TMPL per-UI-language; Android: SEND/VIEW intents → `__externalImport` (md text/b64), PIN lock (native dialog + salted SHA, auto-lock 5min), AlarmManager daily reminder + BootReceiver; headless virtual budget 90s & poll-count boot wait |
 | 1.12.2 | fixes: copy button resolves `pre` via `.md-code-wrap` and reads `data-raw` (un-escaped through textarea); `isMathCandidate` also rejects English words, currency and numeric ranges (`5 to`, `5-`, `20-30`, `USD`); `cleanupUnreferencedImages` `Store.rawDelete`s each orphan blob BEFORE rewriting imgIndex; `deleteCardById` keeps stats of cards shared with other decks; overwrite/merge/legacy-import all clear `lastOpSnapshot`; legacy editor recomputes id + flags `modified` + migrates stats; PIN wipe polls `window.__wipeDone` before recreate; manifest duplicate permissions removed |
+| 1.12.3 | fixes: `highlightCode` no longer ESC-escapes already-escaped text (code blocks showed `&lt;`/`&amp;` literally); code-copy reads `pre.dataset.raw` directly (browser already decoded it — extra textarea decode turned `&amp;` into `&`); `Store.close()` + `wiping`/`wipeLocked` guards so `__wipeAllData` cancels pending saves, closes the connection, then deletes (only `onsuccess` = ok; blocked/timeout keep PIN and report); Android polls and only proceeds on ok/err |

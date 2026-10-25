@@ -2416,7 +2416,7 @@ body.light .hl-kw { color: #1a5fb4; }
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.2';
+  var APP_VERSION = '1.12.3';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -2906,8 +2906,11 @@ body.light .hl-kw { color: #1a5fb4; }
     var LS_KEY = 'mdreview.state.v1';
     var db = null;
     var dbPromise = null;
+    var wiping = false; // 清库期间禁止重新打开连接（异步保存会把 deleteDatabase 重新 blocked）
+    var wipeLocked = false; // 清库已开始：所有写入（IDB 与 localStorage）一律丢弃
 
     function openDB() {
+      if (wiping) return Promise.resolve(null); // 清库中：读写直接失败，不再新建连接
       // 缓存同一个连接 Promise：并发调用（boot 加载中又来写图片）不再拿到未就绪的 db
       if (dbPromise) return dbPromise;
       dbPromise = new Promise(function (resolve) {
@@ -2973,6 +2976,7 @@ body.light .hl-kw { color: #1a5fb4; }
         }).catch(function () { return lsGet(); });
       },
       save: function (json) {
+        if (wipeLocked || wiping) return Promise.resolve(false); // 清库中/已清库：不再写入任何存储
         return openDB().then(function () {
           if (db) {
             return idbPut('state', json).then(function (ok) {
@@ -2984,6 +2988,20 @@ body.light .hl-kw { color: #1a5fb4; }
         }).catch(function () { return lsSet(json); });
       },
       rawGet: function (key) { return openDB().then(function () { return idbGet(key); }); },
+      /** 关闭连接并清空缓存：deleteDatabase 前必须调用，否则永远 blocked */
+      close: function () {
+        wiping = true;
+        var closing = db;
+        db = null;
+        dbPromise = null;
+        if (closing) { try { closing.close(); } catch (e) { /* ignore */ } }
+        return true;
+      },
+      /** 清库失败/取消后恢复可用（允许重新打开连接） */
+      reopen: function () { wiping = false; wipeLocked = false; db = null; dbPromise = null; },
+      isWiping: function () { return wiping; },
+      lockWrites: function () { wipeLocked = true; },
+      isLocked: function () { return wipeLocked; },
       rawPut: function (key, val) { return openDB().then(function () { return idbPut(key, val); }); },
       rawDelete: function (key) {
         return openDB().then(function () {
@@ -3266,6 +3284,7 @@ body.light .hl-kw { color: #1a5fb4; }
   function flushSave() {
     flushCount++;
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+    if (Store.isLocked && Store.isLocked()) return; // 清库后不再写
     try {
       var pr = Store.save(JSON.stringify(state));
       if (pr && typeof pr.then === 'function') {
@@ -4200,7 +4219,8 @@ body.light .hl-kw { color: #1a5fb4; }
         ? /--[^\n]*|\/\*[\s\S]*?\*\//
         : /\/\/[^\n]*|\/\*[\s\S]*?\*\//;
     var parts = [];
-    var plain = function (t) { parts.push(ESC(t)); };
+    // src 已 ESC 过：plain 直接入栈，二次 ESC 会让 < > & 以实体形式显示出来
+    var plain = function (t) { parts.push(t); };
     // src 已经 ESC 过：命中片段直接入 span，不再二次转义
     var push = function (cls, t) { parts.push('<span class="hl-' + cls + '">' + t + '</span>'); };
     var re = new RegExp(
@@ -6880,18 +6900,15 @@ body.light .hl-kw { color: #1a5fb4; }
         var pre = wrap ? wrap.querySelector('pre') : null;
         var code = '';
         if (pre) {
-          code = pre.dataset.raw;
-          if (code == null) code = (pre.querySelector('code') || {}).textContent || '';
-          if (pre.dataset.raw != null) {
-            // 属性值经过 HTML 转义，用 textarea 反解回原文
-            var ta = document.createElement('textarea');
-            ta.innerHTML = pre.dataset.raw;
-            code = ta.value;
+          // dataset.raw 已被浏览器解码为原始字符，不能再解一次（否则 &amp; 会被解成 &）
+          if (pre.dataset && pre.dataset.raw != null) {
+            code = pre.dataset.raw;
+          } else {
+            code = (pre.querySelector('code') || {}).textContent || '';
           }
         }
-        if (!code.trim()) {
-          // 兜底：取渲染后 code 元素的纯文本
-          var codeEl = wrap ? wrap.querySelector('code') : null;
+        if (!code.trim() && wrap) {
+          var codeEl = wrap.querySelector('code');
           code = codeEl ? codeEl.textContent || '' : '';
         }
         copyText(code);
@@ -7135,6 +7152,14 @@ body.light .hl-kw { color: #1a5fb4; }
       return Store.rawGet(key).then(function (v) { return v != null; });
     },
     clearOpSnapshot: function () { lastOpSnapshot = null; },
+    store: {
+      close: function () { return Store.close(); },
+      reopen: function () { return Store.reopen(); },
+      isWiping: function () { return Store.isWiping(); },
+      isLocked: function () { return Store.isLocked(); }
+    },
+    wipeOrder: function () { return window.__wipeOrder || null; },
+    wipeAllData: function (dryRun) { return window.__wipeAllData(dryRun); },
     hasOpSnapshot: function () { return !!lastOpSnapshot; },
     mergeBackupState: mergeBackupState,
     buildBackupFiles: function () { return backupPayload(null); },
@@ -7184,6 +7209,51 @@ body.light .hl-kw { color: #1a5fb4; }
     var v = $('#imgViewer');
     if (v) { v.classList.add('hidden'); v.innerHTML = ''; }
   }
+
+  /**
+   * 彻底清空本机数据（供 Android「忘记 PIN → 清除数据」调用）。
+   * 顺序：先关连接（否则 deleteDatabase 一直 blocked）→ 清 localStorage → 删库。
+   * 只有 deleteDatabase onsuccess 才算完成；blocked/超时都不能当成成功，并恢复连接可用。
+   */
+  window.__wipeAllData = function (dryRun) {
+    window.__wipeOrder = [];
+    var mark = function (s) { try { window.__wipeOrder.push(s); } catch (e) { /* ignore */ } };
+    try {
+      if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; } // 0) 取消待执行的保存（否则会把 state 写回 localStorage）
+      mark('cancelSave');
+      Store.lockWrites();          // 0.5) 之后所有写入丢弃
+      Store.close();               // 1) 先关闭并清空连接缓存
+      mark('close');
+      try { window.localStorage.clear(); } catch (e) { /* ignore */ }
+      mark('localStorage');
+      if (dryRun) { window.__wipeDone = 'ok'; mark('deleteRequested'); return true; } // 仅用于断言调用顺序
+      var finished = false;
+      var fail = function (why) {
+        if (finished) return;
+        finished = true;
+        Store.reopen();            // 清除失败：解锁并允许重新打开，应用继续可用
+        window.__wipeDone = why;   // 'blocked' / 'err' / 'timeout'
+        mark('fail:' + why);
+      };
+      var rq = indexedDB.deleteDatabase('md-review');
+      rq.onsuccess = function () {
+        if (finished) return;
+        finished = true;
+        window.__wipeDone = 'ok';
+        mark('deleted');
+        try { window.__wipeOrder = window.__wipeOrder; } catch (e) { /* ignore */ }
+        // 成功后保持 wiping（不允许再写入旧库），页面会被原生重建
+      };
+      rq.onerror = function () { fail('err'); };
+      rq.onblocked = function () { fail('blocked'); }; // 不视为完成
+      mark('deleteRequested');
+      setTimeout(function () { fail('timeout'); }, 5000);
+    } catch (e) {
+      window.__wipeDone = 'err';
+      try { Store.reopen(); } catch (e2) { /* ignore */ }
+    }
+    return true;
+  };
 
   /* Android 外部分享/打开（.md/.zip）→ 走导入预览 */
   window.__externalImport = function (name, b64) {

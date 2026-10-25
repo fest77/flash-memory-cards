@@ -29,7 +29,7 @@
 
 | 文件 | 体积 | 说明 |
 |---|---|---|
-| `dist/md-flashcards.html` | 822 KB（含内联 KaTeX 与子集字体） | 唯一的构建产物，功能完整 |
+| `dist/md-flashcards.html` | 约 848 KB（含内联 KaTeX 与子集字体，以构建产物为准） | 唯一的构建产物，功能完整 |
 
 **如果双击/预览打不开**，多半是预览器对中文路径有限制，改用本地 HTTP 服务：
 
@@ -38,7 +38,7 @@
 python -m http.server 8788 --directory dist
 ```
 
-浏览器访问 **http://127.0.0.1:8788/** （单文件约 230 KB，Chrome/Edge 打开秒加载）。
+浏览器访问 **http://127.0.0.1:8788/** （单文件约 848 KB，Chrome/Edge 打开秒加载）。
 
 ### 方式 A：直接开网页（最简单）
 
@@ -47,7 +47,7 @@ python -m http.server 8788 --directory dist
 3. 点「📥 导入 md / zip（批量）」→ 选择文件 → 「导入全部」。
 4. 浏览器菜单 → **添加到主屏幕**，以后像 App 一样打开。
 
-> **打不开/白屏**：先换本地 HTTP 服务方式（方式 0）；文件很小（约 230 KB），基本不可能是体积问题。
+> **打不开/白屏**：先换本地 HTTP 服务方式（方式 0）；文件不到 1 MB，基本不可能是体积问题。
 
 > **图片**：导入时把 md 引用的图片一起选中即可（也支持 zip 打包、电脑端整文件夹）。支持标准 Markdown `![](images/a.png)` 和 **Obsidian 嵌入 `![[images/a.png]]`**（可带 `|宽度` 后缀），按**文件名**匹配引用（取 `a.png`），同名覆盖，只存本机；「备份全部」不含图片，换机后重新导入一次即可。
 >
@@ -226,7 +226,7 @@ cd android && gradle assembleDebug # 产物：app/build/outputs/apk/debug/app-de
 - [x] 断网打开单文件 HTML：公式、代码高亮、图片全部正常（构建强制无外部资源引用；检查更新等运行时可选请求除外）
 - [x] 全局搜索命中片段与来源笔记；卡片编辑/拆分/合并/移动后可撤销且刷新后仍在（写入 IndexedDB）
 - [x] 题目生成语言跟随界面语言（简/繁/英三套模板）
-- [x] 单文件体积增量控制在预算内（~280KB → ~814KB，KaTeX JS+CSS+12 个子集字体全部内联）
+- [x] 单文件体积增量控制在预算内（约 280 KB → 约 848 KB，KaTeX JS+CSS+12 个子集字体全部内联，以构建产物为准）
 - [ ] 安卓分享 .md 导入 / PIN 锁定解锁 / 每日提醒：需真机验证（模拟器/CI 无法测系统分享与通知）
 - 在 APK 里，备份会通过原生桥直接写进系统「下载/MD Flashcards」目录。
 - 删除笔记/卡片只影响本机，**不会改你的原始 .md 文件**。
@@ -252,7 +252,7 @@ md-flashcards/
 ├── README.md                 # 用户文档（本文件）
 ├── DEVELOPER.md              # 开发者文档：架构 / 数据模型 / 扩展指南
 ├── dist/
-│   └── md-flashcards.html    # 构建产物（单文件，~180 KB）
+│   └── md-flashcards.html    # 构建产物（单文件，约 848 KB）
 ├── src/
 │   ├── index.tpl.html        # 页面骨架 + 五个内联占位符
 │   ├── core.js               # 纯函数：拆卡 / 提问 / Markdown 渲染 / zip 解包
@@ -264,8 +264,8 @@ md-flashcards/
 │   ├── build_interview_decks.py   # 题库 md → bundled-decks.js（可选，本版未含数据）
 │   └── build_interview_images.py  # 题库配图 → bundled-images.js（可选，本版未含数据）
 ├── tests/
-│   ├── core.test.cjs         # 62 项单元测试
-│   ├── run-browser-test.cjs  # 155 项 headless Edge 端到端
+│   ├── core.test.cjs         # 63 项单元测试
+│   ├── run-browser-test.cjs  # 164 项 headless Edge 端到端
 │   ├── run-screenshots.cjs   # 生成 docs/images 截图
 │   └── fixtures/             # 测试用 zip
 ├── docs/
@@ -388,5 +388,6 @@ python scripts/build.py                      # 内联 → dist/md-flashcards.htm
 | 1.11.0 | 数据安全与本地备份：zip 备份（含图片）+ 导入预览/覆盖/合并（进度不覆盖）+ 回滚安全；图片同名不覆盖与引用重写；无引用图片清理；删笔记不误伤共享卡进度；7 天备份提醒 + 备份文件夹一键写入；安卓 saveBinary/分享桥 |
 | 1.12.1 | 修复：去除 MainActivity 重复成员、normalizeState 保留 tags/modified/阅读设置、公式不误判代码与货币、设置页重复存储段合并、备份改名写回引用、卡片操作迁移进度、通知权限与导入重试 |
 | 1.12.2 | 修复：复制按钮从代码块容器取源码（pre 带 data-raw）、公式守卫排除英文价格与区间、清理未引用图片真正删除 Blob、删卡保留共享进度、导入/恢复清撤锚快照、旧编辑器重算 id 并迁移进度、PIN 清库等待完成、清单权限去重 |
+| 1.12.3 | 修复：代码块二次转义（`&lt;` 以实体显示）、复制内容二次解码、PIN 忘记密码清库未闭环（先关连接再删库，blocked 不算成功）、文档体积统一 |
 | 1.12.0 | 内容体验与平台能力：KaTeX 公式（本地内联子集字体）、代码高亮/复制、图片点击缩放、阅读设置（字号/行距/卡宽）；全局搜索、卡片编辑/拆分/合并/移动+撤销、标签与排序；Obsidian callout 与 wikilink 跳转、题目语言跟随界面；安卓接收分享导入、PIN 应用锁、每日本地提醒 |
 

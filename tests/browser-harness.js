@@ -767,6 +767,83 @@
                       sv4.decks = sv4.decks.filter(function (x) { return x.name !== '导入' && x.name !== '编辑源' && x.name !== '编辑源2' && x.name !== '独有'; });
                       delete sv4.stats['cimp'];
                     }).then(function () {
+                      /* ===== v1.12.3 ===== */
+                      var A6 = app;
+                      var C6 = window.MDReviewCore;
+                      var NL6 = String.fromCharCode(10);
+                      var F6 = String.fromCharCode(96, 96, 96);
+
+                      // 1) 代码块不得二次转义：pre.textContent 必须与源码逐字符一致
+                      (function () {
+                        var src = 'if (a < b && c > d) {' + NL6 + '  return "<div>";' + NL6 + '}';
+                        var host = document.createElement('div');
+                        host.innerHTML = C6.renderMarkdown(F6 + 'js' + NL6 + src + NL6 + F6);
+                        document.body.appendChild(host);
+                        var pre = host.querySelector('pre');
+                        var text = pre ? pre.textContent : '';
+                        check('v1123 code block text equals source', text === src,
+                          JSON.stringify(text.slice(0, 40)));
+                        check('v1123 no double-escaped entities in text',
+                          text.indexOf('&lt;') < 0 && text.indexOf('&amp;') < 0 && text.indexOf('&gt;') < 0,
+                          text.slice(0, 40));
+                        check('v1123 html still escapes once',
+                          !!pre && pre.innerHTML.indexOf('&lt;') >= 0 && pre.innerHTML.indexOf('&amp;lt;') < 0,
+                          pre ? pre.innerHTML.slice(0, 50) : 'no pre');
+                        check('v1123 highlight still applied',
+                          !!host.querySelector('.hl-kw'), 'kw span');
+                        document.body.removeChild(host);
+                      })();
+
+                      // 2) 复制：逐字符等于源码（含实体与引号）
+                      (function () {
+                        var cases = [
+                          'const html = "<div>&amp;</div>";',
+                          'const s = "&lt;tag&gt;";',
+                          'if (a < b && c > d) { x(); }'
+                        ];
+                        var orig = navigator.clipboard && navigator.clipboard.writeText;
+                        var allEqual = true;
+                        var detail = [];
+                        cases.forEach(function (src) {
+                          var host = document.createElement('div');
+                          host.innerHTML = C6.renderMarkdown(F6 + 'js' + NL6 + src + NL6 + F6);
+                          document.body.appendChild(host);
+                          var captured = null;
+                          if (navigator.clipboard) {
+                            navigator.clipboard.writeText = function (t) { captured = String(t); return Promise.resolve(); };
+                          }
+                          var btn = host.querySelector('[data-act="code-copy"]');
+                          if (btn) btn.click();
+                          if (captured !== src) { allEqual = false; detail.push(JSON.stringify(captured)); }
+                          document.body.removeChild(host);
+                        });
+                        if (navigator.clipboard && orig) navigator.clipboard.writeText = orig;
+                        check('v1123 copy equals source char-by-char', allEqual, allEqual ? '3/3' : detail.join(' | '));
+                      })();
+
+                      // 3) 清库：顺序 close 先于 delete；仅 onsuccess 置 ok
+                      var deckCountBefore = A6.state().decks.length;
+                      // dryRun：headless 虚拟时钟下真实 deleteDatabase 会挂起；真实删除已在 IAB 实测（清库后重载 0 笔记/0 进度/0 localStorage 键）
+                      A6.wipeAllData(true);
+                      return new Promise(function (res) {
+                        setTimeout(function () {
+                          try {
+                            var order = A6.wipeOrder() || [];
+                            var iClose = order.indexOf('close');
+                            var iLocal = order.indexOf('localStorage');
+                            var iDel = order.indexOf('deleteRequested');
+                            check('v1123 wipe closes store before delete',
+                              iClose >= 0 && iLocal > iClose && iDel > iLocal, order.join('>'));
+                            check('v1123 wipe ok only on success', window.__wipeDone === 'ok', String(window.__wipeDone));
+                            check('v1123 writes locked after wipe', A6.store.isLocked() === true, 'locked');
+                            check('v1123 had data before wipe', deckCountBefore > 0, deckCountBefore);
+                          } catch (e) {
+                            check('v1123 block error', false, e && e.message);
+                          }
+                          res();
+                        }, 800);
+                      });
+                    }).then(function () {
                       finish();
                     }, function (err) {
                       check('v1122 async error', false, err && err.message);
