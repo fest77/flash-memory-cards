@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 /**
  * 最小 WebView 壳（零第三方依赖）：
@@ -206,12 +207,12 @@ public class MainActivity extends Activity {
         super.onDestroy();
     }
 
-    /** 备份 JSON 写入系统「下载」目录（API 29+ 用 MediaStore，低版本写应用外部目录）。 */
+    /** 保存/分享桥：文本与二进制写入「下载/MD Flashcards」，zip 等支持系统分享。 */
     public class SaverBridge {
-        @JavascriptInterface
-        public boolean saveText(String filename, String mime, String text) {
+
+        /** 统一写入：返回写入的 Uri（API 29+ MediaStore）或文件路径（低版本），失败返回 null。 */
+        private Uri writeBytes(String filename, String mime, byte[] bytes) {
             try {
-                byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     ContentValues values = new ContentValues();
                     values.put(MediaStore.MediaColumns.DISPLAY_NAME, filename);
@@ -220,22 +221,22 @@ public class MainActivity extends Activity {
                             Environment.DIRECTORY_DOWNLOADS + "/MD Flashcards");
                     Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
                     if (uri == null) {
-                        return false;
+                        return null;
                     }
                     OutputStream os = getContentResolver().openOutputStream(uri);
                     if (os == null) {
-                        return false;
+                        return null;
                     }
                     try {
                         os.write(bytes);
                     } finally {
                         os.close();
                     }
-                    return true;
+                    return uri;
                 }
                 File dir = new File(getExternalFilesDir(null), "Downloads");
                 if (!dir.exists() && !dir.mkdirs()) {
-                    return false;
+                    return null;
                 }
                 File out = new File(dir, filename);
                 FileOutputStream fos = new FileOutputStream(out);
@@ -244,6 +245,43 @@ public class MainActivity extends Activity {
                 } finally {
                     fos.close();
                 }
+                return Uri.fromFile(out);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+
+        @JavascriptInterface
+        public boolean saveText(String filename, String mime, String text) {
+            return writeBytes(filename, mime, text.getBytes(StandardCharsets.UTF_8)) != null;
+        }
+
+        /** 二进制保存（zip 备份等）：base64 输入。 */
+        @JavascriptInterface
+        public boolean saveBinary(String filename, String mime, String base64) {
+            try {
+                byte[] bytes = Base64.getDecoder().decode(base64);
+                return writeBytes(filename, mime, bytes) != null;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        /** 保存后立即弹出系统分享（发送给微信/文件管理等）。 */
+        @JavascriptInterface
+        public boolean shareFile(String filename, String mime, String base64) {
+            try {
+                Uri uri = writeBytes("share-" + filename, mime, Base64.getDecoder().decode(base64));
+                if (uri == null) {
+                    return false;
+                }
+                Intent send = new Intent(Intent.ACTION_SEND);
+                send.setType(mime);
+                send.putExtra(Intent.EXTRA_STREAM, uri);
+                send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                Intent chooser = Intent.createChooser(send, filename);
+                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(chooser);
                 return true;
             } catch (Exception e) {
                 return false;
