@@ -212,7 +212,7 @@ public class MainActivity extends Activity {
         if (uri == null) return;
         try {
             name = uri.getLastPathSegment();
-            if (name == null || !name.matches(".*\.(md|markdown|txt|zip)$")) name = "import.md";
+            if (name == null || !name.matches(".*\\.(md|markdown|txt|zip)$")) name = "import.md";
             java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
             java.io.InputStream is = getContentResolver().openInputStream(uri);
             byte[] buf = new byte[8192];
