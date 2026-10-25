@@ -1212,6 +1212,9 @@
 
   /* ---------- 检查更新（读仓库根目录的 latest.json，经 jsDelivr CDN，带 CORS） ---------- */
   var UPDATE_JSON_URLS = [
+    'https://fastly.jsdelivr.net/gh/fest77/flash-memory-cards@main/latest.json',
+    'https://gcore.jsdelivr.net/gh/fest77/flash-memory-cards@main/latest.json',
+    'https://testingcf.jsdelivr.net/gh/fest77/flash-memory-cards@main/latest.json',
     'https://cdn.jsdelivr.net/gh/fest77/flash-memory-cards@main/latest.json',
     'https://raw.githubusercontent.com/fest77/flash-memory-cards/main/latest.json'
   ];
