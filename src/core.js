@@ -300,23 +300,63 @@
   }
 
   // 标题不是疑问句时，按内容特征套一个「像面试题」的提问模板
-  function pickTemplate(title, body) {
+  var Q_TMPL = {
+    'zh-Hans': {
+      diff: function (t) { return '「' + t + '」和相近概念有什么区别？'; },
+      flow: function (t) { return '说一下「' + t + '」的完整流程？'; },
+      why: function (t) { return '「' + t + '」的原理是什么？'; },
+      use: function (t) { return '「' + t + '」有什么用，为什么需要它？'; },
+      pros: function (t) { return '「' + t + '」的优缺点和注意事项有哪些？'; },
+      list: function (t) { return '「' + t + '」包含哪几个要点？'; },
+      table: function (t) { return '从表格看，「' + t + '」的关键差异是什么？'; },
+      is: function (t) { return '「' + t + '」是什么？'; },
+      generic: function (t) { return '不看答案，说说「' + t + '」的核心内容？'; },
+      isPrefix: /^(?:是|指|即|所谓)/
+    },
+    'zh-Hant': {
+      diff: function (t) { return '「' + t + '」和相近概念有什麼區別？'; },
+      flow: function (t) { return '說一下「' + t + '」的完整流程？'; },
+      why: function (t) { return '「' + t + '」的原理是什麼？'; },
+      use: function (t) { return '「' + t + '」有什麼用，為什麼需要它？'; },
+      pros: function (t) { return '「' + t + '」的優缺點和注意事項有哪些？'; },
+      list: function (t) { return '「' + t + '」包含哪幾個要點？'; },
+      table: function (t) { return '從表格看，「' + t + '」的關鍵差異是什麼？'; },
+      is: function (t) { return '「' + t + '」是什麼？'; },
+      generic: function (t) { return '不看答案，說說「' + t + '」的核心內容？'; },
+      isPrefix: /^(?:是|指|即|所謂)/
+    },
+    en: {
+      diff: function (t) { return 'How does "' + t + '" differ from similar concepts?'; },
+      flow: function (t) { return 'Describe the full process of "' + t + '".'; },
+      why: function (t) { return 'Explain how "' + t + '" works under the hood.'; },
+      use: function (t) { return 'What is "' + t + '" used for, and why is it needed?'; },
+      pros: function (t) { return 'What are the pros, cons and caveats of "' + t + '"?'; },
+      list: function (t) { return 'List the key points of "' + t + '".'; },
+      table: function (t) { return 'From the table, what are the key differences in "' + t + '"?'; },
+      is: function (t) { return 'What exactly is "' + t + '"?'; },
+      generic: function (t) { return 'Without looking, explain the core of "' + t + '".'; },
+      isPrefix: /^(?:is |refers to|means )/i
+    }
+  };
+
+  function pickTemplate(title, body, lang) {
+    var M = Q_TMPL[lang] || Q_TMPL['zh-Hans'];
     var t = cleanInline(title);
     var text = String(body || '');
     var plain = cleanInline(text.replace(/```[\s\S]*?```/g, ' ')).slice(0, 60);
 
-    if (/区别|对比|异同|vs|VS|比较/.test(t)) return '「' + t + '」和相近概念有什么区别？';
-    if (/流程|步骤|过程|链路|生命周期/.test(t)) return '说一下「' + t + '」的完整流程？';
-    if (/原理|机制|底层|实现/.test(t)) return '「' + t + '」的原理是什么？';
-    if (/作用|用途|场景|为什么用|意义/.test(t)) return '「' + t + '」有什么用，为什么需要它？';
-    if (/优缺点|优劣|利弊|注意|坑/.test(t)) return '「' + t + '」的优缺点和注意事项有哪些？';
+    if (/区别|对比|异同|區別|vs|VS|比较|比較|diff/i.test(t)) return M.diff(t);
+    if (/流程|步骤|过程|链路|生命周期|流程圖|process|lifecycle/i.test(t)) return M.flow(t);
+    if (/原理|机制|底层|实现|原理是|mechanism|under the hood|how .* works/i.test(t)) return M.why(t);
+    if (/作用|用途|场景|为什么用|意义|用途是|purpose|use case/i.test(t)) return M.use(t);
+    if (/优缺点|优劣|利弊|注意|坑|優缺點|pros|cons|caveat/i.test(t)) return M.pros(t);
 
     var listCount = (text.match(/^\s*(?:[-*+]|\d{1,2}[.)])\s+\S/gm) || []).length;
-    if (listCount >= 3) return '「' + t + '」包含哪几个要点？';
-    if (text.indexOf('|') >= 0 && /\|\s*:?-{2,}/.test(text)) return '从表格看，「' + t + '」的关键差异是什么？';
-    if (/^(?:是|指|即|所谓)/.test(plain)) return '「' + t + '」是什么？';
+    if (listCount >= 3) return M.list(t);
+    if (text.indexOf('|') >= 0 && /\|\s*:?-{2,}/.test(text)) return M.table(t);
+    if (M.isPrefix.test(plain)) return M.is(t);
 
-    return '不看答案，说说「' + t + '」的核心内容？';
+    return M.generic(t);
   }
 
   // 把答案里的加粗词 / 行内代码挖空，生成"填空题"题面
@@ -338,16 +378,16 @@
    *   cloze  —— 优先挖空，挖不出来再退回提问
    * 标题本身已经是疑问句时，不再重复生成题面。
    */
-  function makeQuestion(title, body, style) {
+  function makeQuestion(title, body, style, lang) {
     style = style || 'prompt';
     var t = cleanInline(title);
     if (!t || style === 'title') return '';
     if (style === 'cloze') {
       var cloze = makeCloze(body);
-      if (cloze) return '填空回顾（说出横线处的内容）：\n\n' + cloze;
+      if (cloze) return (lang === 'en' ? 'Fill in the blanks (say the missing parts):' : (lang === 'zh-Hant' ? '填空回顧（說出橫線處的內容）：' : '填空回顾（说出横线处的内容）：')) + '\n\n' + cloze;
     }
     if (isQuestionLike(t)) return '';
-    return pickTemplate(t, body);
+    return pickTemplate(t, body, lang);
   }
 
   /* ============================== 拆卡主流程 ============================== */
@@ -498,7 +538,7 @@
       if (!answer) answer = title;
       if (!title) title = question ? truncate(cleanInline(question), 40) : ('知识点 ' + (i + 1));
       if (!question) {
-        question = makeQuestion(title, answer, opts.qstyle);
+        question = makeQuestion(title, answer, opts.qstyle, opts.lang);
       }
 
       var key = title + '|' + question + '|' + answer;
@@ -839,7 +879,18 @@
       } else if (blk.type === 'hr') {
         html += '<div class="md-hr"></div>';
       } else if (blk.type === 'quote') {
-        html += '<blockquote>' + inline(blk.text).replace(/\n/g, '<br>') + '</blockquote>';
+        // Obsidian callout：> [!note] 标题
+        var cm2 = /^\[\!(\w+)\]\s*(.*)$/.exec(String(blk.text || '').split('\n')[0] || '');
+        if (cm2) {
+          var kind = cm2[1].toLowerCase();
+          var icons = { note: '📝', tip: '💡', info: 'ℹ️', warning: '⚠️', caution: '⚠️', danger: '🚫', bug: '🐞', example: '📌', quote: '❝', success: '✅', question: '❓' };
+          var body2 = String(blk.text || '').split('\n').slice(1).join('\n');
+          html += '<div class="callout callout-' + (['note','tip','info','warning','caution','danger','bug','example','quote','success','question'].indexOf(kind) >= 0 ? kind : 'note') + '">' +
+            '<div class="callout-title">' + (icons[kind] || '📝') + ' ' + inline(cm2[2] || kind.toUpperCase()) + '</div>' +
+            '<div class="callout-body">' + inline(body2).replace(/\n/g, '<br>') + '</div></div>';
+        } else {
+          html += '<blockquote>' + inline(blk.text).replace(/\n/g, '<br>') + '</blockquote>';
+        }
       } else if (blk.type === 'table') {
         html += '<div class="md-table-wrap"><div class="md-table"><table>';
         for (var r = 0; r < blk.rows.length; r++) {

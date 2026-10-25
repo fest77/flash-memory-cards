@@ -818,3 +818,14 @@ body.light .hl-kw { color: #1a5fb4; }
 .citem-mod { font-size: 10px; color: var(--rate-fuzzy-fg); border: 1px solid rgba(255,216,138,.4); border-radius: 6px; padding: 0 4px; vertical-align: 1px; }
 .citem-ops { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 .btn.xs { padding: 3px 8px; font-size: 11px; border-radius: 7px; }
+
+/* Obsidian callout */
+.callout { border-radius: 10px; padding: 8px 12px; margin: 6px 0; border-left: 3px solid; background: var(--subtle); }
+.callout-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.callout-body { font-size: 13.5px; color: var(--text-soft); }
+.callout-note, .callout-info, .callout-quote { border-color: #58a6ff; }
+.callout-tip, .callout-success { border-color: #3fb950; }
+.callout-warning, .callout-caution, .callout-question { border-color: #d29922; }
+.callout-danger, .callout-bug { border-color: #f85149; }
+.callout-example { border-color: #a371f7; }
+.wikilink { color: var(--link); text-decoration: none; border-bottom: 1px dashed var(--link); }

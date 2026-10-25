@@ -1787,10 +1787,29 @@
     return parts.join('');
   }
 
+  /* Obsidian [[wikilink]]：目标卡片存在则可点击跳到浏览页定位，否则保持原样文字 */
+  function linkWikiCards(html) {
+    if (!html || html.indexOf('[[', 0) < 0) return html;
+    var titleMap = {};
+    state.decks.forEach(function (d) {
+      d.cards.forEach(function (c) {
+        var tt = String(c.title || '').trim();
+        if (tt) titleMap[tt] = { deckId: d.id, cardId: c.id };
+      });
+    });
+    return html.replace(/\[\[([^\]\n|]+)\]\]/g, function (m, target) {
+      var hit = titleMap[String(target).trim()];
+      return hit
+        ? '<a href="#" class="wikilink" data-act="wiki-jump" data-deck="' + hit.deckId + '" data-card="' + hit.cardId + '">' + ESC(String(target).trim()) + '</a>'
+        : m; // 目标不存在：原样显示
+    });
+  }
+
   function renderAnswerHtml(markdown, deck) {
     var mm = renderMathSegments(markdown);
     var html = Core.renderMarkdown(mm.text);
     html = restoreMath(html, mm.segs);
+    html = linkWikiCards(html);
     var set = deckImageSet(deck);
     if (set) {
       html = html.replace(IMG_PLACEHOLDER, function (m, name) {
@@ -1923,7 +1942,7 @@
       return false;
     }
     var opts = currentOpts(override);
-    var deck = Core.buildDeck(name, text, { mode: opts.mode, maxCardLen: opts.maxCardLen, qstyle: opts.qstyle });
+    var deck = Core.buildDeck(name, text, { mode: opts.mode, maxCardLen: opts.maxCardLen, qstyle: opts.qstyle, lang: state.settings.lang });
     // 标签：frontmatter tags: a, b（deck 级）+ 行内 #tag（卡片级）
     var fm = /^---\n([\s\S]*?)\n---/.exec(String(text || ''));
     if (fm && /^tags?:/m.test(fm[1])) {
@@ -4117,6 +4136,17 @@
         if (!state.decks.length) { toast(t('toast.noNotes')); break; }
         exportBackupZip();
         break;
+      case 'wiki-jump': {
+        closeModal();
+        openBrowse(el.getAttribute('data-deck'));
+        browse.q = '';
+        var jumpId = el.getAttribute('data-card');
+        setTimeout(function () {
+          var el2 = document.querySelector('.citem[data-card="' + jumpId + '"]');
+          if (el2) { el2.scrollIntoView({ block: 'center' }); el2.style.outline = '2px solid #3b82f6'; setTimeout(function () { el2.style.outline = ''; }, 2000); }
+        }, 120);
+        break;
+      }
       case 'gs-open': {
         openGsCard(parseInt(el.getAttribute('data-i'), 10) || 0);
         break;
