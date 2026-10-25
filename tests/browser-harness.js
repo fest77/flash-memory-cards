@@ -468,6 +468,24 @@
                       mg.decks.map(function (d) { return d.name; }).join(','));
                     check('merge: local stats kept', mg.stats.c1.n === 5, 'n=' + mg.stats.c1.n);
                     check('merge: missing stats filled', mg.stats.c9 && mg.stats.c9.n === 1, 'ok');
+                    // 第 3 步：删笔记不误伤共享卡片进度
+                    (function () {
+                      var shared = 'c' + Date.now(); // 内容哈希 id 由导入生成——直接构造两本共享同 id 卡
+                      var sA = { id: 'dA', name: '甲本', cards: [{ id: shared, title: 't', question: '', answer: 'x', path: [] }] };
+                      var sB = { id: 'dB', name: '乙本', cards: [{ id: shared, title: 't', question: '', answer: 'x', path: [] }] };
+                      app.state().decks.push(sA, sB);
+                      app.state().stats[shared] = { s: 'known', n: 3, ok: 3, bad: 0, box: 2 };
+                      window.confirm = function () { return true; };
+                      app.renderHome();
+                      var delBtn = q('#deckList [data-act="delete-deck"][data-deck="dA"]');
+                      if (delBtn) delBtn.click(); else check('shared card stat kept after deck delete', false, 'no dA btn');
+                      check('shared card stat kept after deck delete', app.state().stats[shared] && app.state().stats[shared].n === 3,
+                        'n=' + (app.state().stats[shared] || {}).n);
+                      // 清理这两本
+                      app.state().decks = app.state().decks.filter(function (d) { return d.id !== 'dB'; });
+                      delete app.state().stats[shared];
+                    })();
+
                     // 第 2 步：引用名收集（三种引用语法）
                     var stZ = app.state();
                     var refDeck = { id: 'dref', name: '引用', cards: [

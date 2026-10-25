@@ -5835,7 +5835,13 @@ body.light .heat-cell.h4 { background: #116329; }
         var d = findDeck(id);
         if (!d) break;
         if (!window.confirm(tf('confirm.deleteDeck', { name: d.name, n: d.cards.length }))) break;
-        d.cards.forEach(function (c) { delete state.stats[c.id]; }); // 清掉孤儿进度，避免重导后旧状态复活
+        // 只清「本笔记独有」卡片的进度：同 id 卡片被其他笔记引用时保留（内容相同 → 同 id 哈希）
+        var others = {};
+        state.decks.forEach(function (x) {
+          if (x.id === id) return;
+          x.cards.forEach(function (c) { others[c.id] = 1; });
+        });
+        d.cards.forEach(function (c) { if (!others[c.id]) delete state.stats[c.id]; });
         state.decks = state.decks.filter(function (x) { return x.id !== id; });
         cleanupUnreferencedImages(); // 异步清理无引用图片
         scheduleSave();
