@@ -38,7 +38,7 @@
   var I18N = {
     'zh-Hans': {
       'app.title': 'MD 笔记闪卡 · 随机复习',
-      'brand.name': 'MD 笔记闪卡',
+      'brand.name': 'MD闪记卡',
       'brand.tag': 'md → 知识点卡片 → 随机复习',
       'nav.manage': '笔记管理', 'nav.settings': '设置', 'nav.home': '主页', 'nav.stats': '统计', 'nav.bar': '主导航',
       'stats.title': '闪记日志', 'stats.heat': '热力图', 'stats.bars': '条形图', 'stats.note': '记录每天的复习次数 · 数据只保存在本机',
@@ -157,7 +157,7 @@
     },
     'zh-Hant': {
       'app.title': 'MD 筆記閃卡 · 隨機複習',
-      'brand.name': 'MD 筆記閃卡',
+      'brand.name': 'MD閃記卡',
       'brand.tag': 'md → 知識點卡片 → 隨機複習',
       'nav.manage': '筆記管理', 'nav.settings': '設定', 'nav.home': '主頁', 'nav.stats': '統計', 'nav.bar': '主導航',
       'stats.title': '閃記日誌', 'stats.heat': '熱力圖', 'stats.bars': '條形圖', 'stats.note': '記錄每天的複習次數 · 資料只保存在本機',
@@ -276,7 +276,7 @@
     },
     'en': {
       'app.title': 'MD FlashCards · Random Review',
-      'brand.name': 'MD FlashCards',
+      'brand.name': 'MD闪记卡',
       'brand.tag': 'md → cards → random review',
       'nav.manage': 'Notes', 'nav.settings': 'Settings', 'nav.home': 'Home', 'nav.stats': 'Stats', 'nav.bar': 'Main navigation',
       'stats.title': 'Review Log', 'stats.heat': 'Heatmap', 'stats.bars': 'Bars', 'stats.note': 'Daily review counts · stored on this device only',
