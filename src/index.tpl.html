@@ -40,6 +40,7 @@
 
     <section id="homeBody" class="hidden">
       <div id="statBar" class="statbar"></div>
+      <div id="backupBar" class="backup-bar"></div>
       <div id="resumeBar" class="resume-bar"></div>
       <div class="action-grid">
         <button class="btn primary big" data-act="open-import" data-i18n="btn.importBatch">📥 导入 md / zip（批量）</button>
@@ -203,7 +204,11 @@
     <details class="settings" open>
       <summary data-i18n="settings.storage">存储</summary>
       <div class="field" style="border-top:none">
-        <button class="btn" data-act="img-cleanup" data-i18n="img.cleanup">清理未引用图片</button>
+        <div class="row-2">
+          <button class="btn" data-act="img-cleanup" data-i18n="img.cleanup">清理未引用图片</button>
+          <button class="btn" data-act="backup-now" data-i18n="backup.nowBtn">一键备份</button>
+        </div>
+        <button class="btn ghost hidden" id="backupFolderBtn" data-act="backup-folder" data-i18n="backup.folderSet">选择备份文件夹</button>
       </div>
     </details>
 

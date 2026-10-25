@@ -116,7 +116,7 @@
       'ai.testing': '请求中…（最长等 {s} 秒）', 'ai.testOk': '连接成功', 'ai.testFail': '连接失败', 'ai.modelReply': '模型回复：',
       'ai.title': 'AI 提炼提问', 'ai.desc': '用大模型读懂每张卡的答案，把标题改写成更像面试题的问题（<b>只改题面，不动答案</b>）。请求从你的手机直接发出，不经过任何服务器。',
       'ai.notConfigured': '还没有配置 AI：到「设置 → AI 供应商」添加供应商并填 Key。',
-      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.canceled': '已停止提炼', 'img.cleanup': '清理未引用图片', 'img.cleanupNone': '没有可清理的图片', 'img.cleanupConfirm': '发现 {n} 张未被任何卡片引用的图片（约 {kb} KB），删除？', 'img.cleanupDone': '已清理 {n} 张图片', 'ai.undo': '撤销本次提炼', 'ai.undone': '已恢复原题面', 'ai.undoFail': '无法撤销：笔记内容已变化', 'ai.start': '开始提炼',
+      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.canceled': '已停止提炼', 'img.cleanup': '清理未引用图片', 'img.cleanupNone': '没有可清理的图片', 'img.cleanupConfirm': '发现 {n} 张未被任何卡片引用的图片（约 {kb} KB），删除？', 'img.cleanupDone': '已清理 {n} 张图片', 'backup.remind': '内容有改动且超过 7 天未备份，建议导出备份', 'backup.now': '立即备份', 'backup.nowBtn': '一键备份', 'backup.folderSet': '选择备份文件夹', 'backup.folderChange': '更换备份文件夹', 'backup.savedToFolder': '已写入备份文件夹：{name}', 'backup.fsaUnsupported': '当前浏览器不支持文件夹备份，已改为普通下载', 'ai.undo': '撤销本次提炼', 'ai.undone': '已恢复原题面', 'ai.undoFail': '无法撤销：笔记内容已变化', 'ai.start': '开始提炼',
       'ai.busy': '正在提炼，请稍等', 'ai.needConfig': '先配置 AI 地址和模型',
       'ai.progress': '提炼中… {done} / {total} 张（共 {batches} 批）',
       'ai.badFormat': '返回格式无法解析（需要 {"questions":[{"idx":..,"q":".."}]}）',
@@ -235,7 +235,7 @@
       'ai.testing': '請求中…（最長等 {s} 秒）', 'ai.testOk': '連線成功', 'ai.testFail': '連線失敗', 'ai.modelReply': '模型回覆：',
       'ai.title': 'AI 提煉提問', 'ai.desc': '用大模型讀懂每張卡的答案，把標題改寫成更像面試題的問題（<b>只改題面，不動答案</b>）。請求從你的手機直接發出，不經過任何伺服器。',
       'ai.notConfigured': '還沒有設定 AI：到「設定 → AI 供應商」新增供應商並填 Key。',
-      'ai.cardCount': '共 {n} 張卡', 'ai.ready': '已就緒', 'ai.notReady': '未設定', 'ai.canceled': '已停止提煉', 'img.cleanup': '清理未引用圖片', 'img.cleanupNone': '沒有可清理的圖片', 'img.cleanupConfirm': '發現 {n} 張未被任何卡片引用的圖片（約 {kb} KB），刪除？', 'img.cleanupDone': '已清理 {n} 張圖片', 'ai.undo': '撤銷本次提煉', 'ai.undone': '已恢復原題面', 'ai.undoFail': '無法撤銷：筆記內容已變化', 'ai.start': '開始提煉',
+      'ai.cardCount': '共 {n} 張卡', 'ai.ready': '已就緒', 'ai.notReady': '未設定', 'ai.canceled': '已停止提煉', 'img.cleanup': '清理未引用圖片', 'img.cleanupNone': '沒有可清理的圖片', 'img.cleanupConfirm': '發現 {n} 張未被任何卡片引用的圖片（約 {kb} KB），刪除？', 'img.cleanupDone': '已清理 {n} 張圖片', 'backup.remind': '內容有改動且超過 7 天未備份，建議匯出備份', 'backup.now': '立即備份', 'backup.nowBtn': '一鍵備份', 'backup.folderSet': '選擇備份資料夾', 'backup.folderChange': '更換備份資料夾', 'backup.savedToFolder': '已寫入備份資料夾：{name}', 'backup.fsaUnsupported': '當前瀏覽器不支持資料夾備份，已改為普通下載', 'ai.undo': '撤銷本次提煉', 'ai.undone': '已恢復原題面', 'ai.undoFail': '無法撤銷：筆記內容已變化', 'ai.start': '開始提煉',
       'ai.busy': '正在提煉，請稍等', 'ai.needConfig': '先設定 AI 位址和模型',
       'ai.progress': '提煉中… {done} / {total} 張（共 {batches} 批）',
       'ai.badFormat': '返回格式無法解析（需要 {"questions":[{"idx":..,"q":".."}]}）',
@@ -354,7 +354,7 @@
       'ai.testing': 'Requesting… (up to {s} s)', 'ai.testOk': 'Connected', 'ai.testFail': 'Connection failed', 'ai.modelReply': 'Model reply: ',
       'ai.title': 'AI question refine', 'ai.desc': 'Have an LLM rewrite each card\'s title into an interview-style question (<b>questions only, answers untouched</b>). Requests go straight from your phone to the API; no server in between.',
       'ai.notConfigured': 'AI is not configured: add a provider and fill in the key under Settings → AI providers.',
-      'ai.cardCount': '{n} cards', 'ai.ready': 'Ready', 'ai.notReady': 'Not configured', 'ai.canceled': 'Refining stopped', 'img.cleanup': 'Clean unused images', 'img.cleanupNone': 'No unused images', 'img.cleanupConfirm': '{n} images are not referenced by any card (~{kb} KB). Delete?', 'img.cleanupDone': 'Cleaned {n} images', 'ai.undo': 'Undo this refine', 'ai.undone': 'Original questions restored', 'ai.undoFail': 'Cannot undo: the deck has changed', 'ai.start': 'Start refine',
+      'ai.cardCount': '{n} cards', 'ai.ready': 'Ready', 'ai.notReady': 'Not configured', 'ai.canceled': 'Refining stopped', 'img.cleanup': 'Clean unused images', 'img.cleanupNone': 'No unused images', 'img.cleanupConfirm': '{n} images are not referenced by any card (~{kb} KB). Delete?', 'img.cleanupDone': 'Cleaned {n} images', 'backup.remind': 'Changes not backed up for 7+ days — export a backup', 'backup.now': 'Back up', 'backup.nowBtn': 'Back up now', 'backup.folderSet': 'Choose backup folder', 'backup.folderChange': 'Change backup folder', 'backup.savedToFolder': 'Saved to backup folder: {name}', 'backup.fsaUnsupported': 'Folder backup not supported here — using normal download', 'ai.undo': 'Undo this refine', 'ai.undone': 'Original questions restored', 'ai.undoFail': 'Cannot undo: the deck has changed', 'ai.start': 'Start refine',
       'ai.busy': 'Refine in progress, please wait', 'ai.needConfig': 'Configure the API URL and model first',
       'ai.progress': 'Refining… {done} / {total} cards ({batches} batches)',
       'ai.badFormat': 'Unparseable response (expected {"questions":[{"idx":..,"q":".."}]})',
@@ -739,6 +739,9 @@
       decks: [],
       stats: {},
       daily: {},
+      lastBackupAt: 0,
+      lastChangeAt: 0,
+      backupRemindDismissedAt: 0,
       settings: {
         mode: 'auto',
         gran: 'mid',
@@ -794,6 +797,9 @@
     if (raw.reviewSession && typeof raw.reviewSession === 'object' && Array.isArray(raw.reviewSession.queueIds)) {
       s.reviewSession = raw.reviewSession; // 复习会话（继续上次）
     }
+    ['lastBackupAt', 'lastChangeAt', 'backupRemindDismissedAt'].forEach(function (k) {
+      if (typeof raw[k] === 'number') s[k] = raw[k];
+    });
     if (raw.settings && typeof raw.settings === 'object') {
       Object.keys(s.settings).forEach(function (k) {
         if (raw.settings[k] != null) s.settings[k] = raw.settings[k];
@@ -834,6 +840,7 @@
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(function () {
       saveTimer = null;
+      state.lastChangeAt = Date.now(); // 有改动才保存：保存即视为一次变更
       var json = JSON.stringify(state);
       Store.save(json).then(function (ok) {
         if (ok === false) notifySaveFail();
@@ -1465,6 +1472,17 @@
     $('#heroEmpty').classList.toggle('hidden', hasDecks);
     $('#homeBody').classList.toggle('hidden', !hasDecks);
 
+    var bb = $('#backupBar');
+    if (bb) {
+      var need = state.decks.length && state.lastChangeAt &&
+        (state.lastChangeAt - (state.lastBackupAt || 0) > 7 * 86400000) &&
+        (state.lastChangeAt - (state.backupRemindDismissedAt || 0) > 7 * 86400000);
+      bb.innerHTML = need
+        ? '<div class="backup-remind"><span>' + ESC(t('backup.remind')) + '</span>' +
+          '<button class="btn sm primary" data-act="backup-now">' + ESC(t('backup.now')) + '</button>' +
+          '<button class="btn sm ghost" data-act="backup-remind-dismiss">×</button></div>'
+        : '';
+    }
     pruneEmptySession();
     var rs = state.reviewSession;
     var rb = $('#resumeBar');
@@ -3221,11 +3239,11 @@
     return payload;
   }
 
-  function exportBackupZip() {
+  function buildBackupZipFiles() {
     var enc = new TextEncoder();
     var payload = backupPayload(null);
     var files = [{ name: 'backup.json', data: enc.encode(JSON.stringify(payload)) }];
-    Store.rawGet('imgIndex').then(function (list) {
+    return Store.rawGet('imgIndex').then(function (list) {
       var names = list || [];
       return Promise.all(names.map(function (n) {
         return Store.rawGet('img/' + n).then(function (rec) {
@@ -3238,12 +3256,79 @@
         });
       }));
     }).then(function () {
-      var zip = Core.zipStore(files);
-      state.lastBackupAt = Date.now();
-      flushSave();
+      return Core.zipStore(files);
+    });
+  }
+
+  function markBackedUp() {
+    state.lastBackupAt = Date.now();
+    state.backupRemindDismissedAt = 0;
+    flushSave();
+  }
+
+  function exportBackupZip() {
+    buildBackupZipFiles().then(function (zip) {
+      markBackedUp();
       downloadBinary('md-flashcards-backup-' + dateStamp() + '.zip', 'application/zip', zip);
     }).catch(function () {
       toast(t('toast.downloadFail'), 3000);
+    });
+  }
+
+  /* ---------- 备份文件夹（File System Access，仅支持的浏览器） ---------- */
+  function fsaSupported() {
+    return typeof window.showDirectoryPicker === 'function';
+  }
+
+  function saveBackupDirHandle(handle) {
+    return Store.rawPut('backupDirHandle', handle);
+  }
+
+  function getBackupDirHandle() {
+    return Store.rawGet('backupDirHandle');
+  }
+
+  function pickBackupFolder() {
+    if (!fsaSupported()) { toast(t('backup.fsaUnsupported'), 3000); return; }
+    window.showDirectoryPicker({ mode: 'readwrite' }).then(function (h) {
+      return saveBackupDirHandle(h).then(function (ok) {
+        toast(ok ? t('backup.folderSet') : t('toast.saveFail'));
+        renderStorageSection();
+      });
+    }).catch(function (e) {
+      if (e && e.name === 'AbortError') return; // 用户取消
+      toast(t('backup.fsaUnsupported'), 3000);
+    });
+  }
+
+  function backupNow() {
+    var doDownload = function () {
+      exportBackupZip();
+    };
+    if (!fsaSupported()) { doDownload(); return; }
+    getBackupDirHandle().then(function (h) {
+      if (!h) { doDownload(); return; }
+      return buildBackupZipFiles().then(function (zip) {
+        var name = 'md-flashcards-backup-' + dateStamp() + '-' + new Date().toTimeString().slice(0, 8).replace(/:/g, '') + '.zip';
+        return h.getFileHandle(name, { create: true }).then(function (fh) {
+          return fh.createWritable().then(function (w) {
+            return w.write(zip).then(function () { return w.close(); });
+          });
+        }).then(function () {
+          markBackedUp();
+          renderHome();
+          toast(tf('backup.savedToFolder', { name: name }), 3000);
+        });
+      });
+    }).catch(function () { doDownload(); });
+  }
+
+  function renderStorageSection() {
+    var btn = $('#backupFolderBtn');
+    if (!btn) return;
+    if (!fsaSupported()) return; // 不支持的浏览器不显示文件夹功能
+    getBackupDirHandle().then(function (h) {
+      if (btn) btn.textContent = h ? t('backup.folderChange') : t('backup.folderSet');
     });
   }
 
@@ -3635,6 +3720,17 @@
         if (!state.decks.length) { toast(t('toast.noNotes')); break; }
         exportBackupZip();
         break;
+      case 'backup-folder':
+        pickBackupFolder();
+        break;
+      case 'backup-now':
+        backupNow();
+        break;
+      case 'backup-remind-dismiss':
+        state.backupRemindDismissedAt = Date.now();
+        flushSave();
+        renderHome();
+        break;
       case 'img-cleanup':
         unreferencedImages().then(function (unused) {
           if (!unused.length) { toast(t('img.cleanupNone')); return; }
@@ -3718,6 +3814,9 @@
 
   function openSettings() {
     showView('settings');
+    var fbtn = $('#backupFolderBtn');
+    if (fbtn && fsaSupported()) fbtn.classList.remove('hidden');
+    renderStorageSection();
     if ($('#setTheme')) $('#setTheme').value = state.settings.theme || 'dark';
     if ($('#setLang')) $('#setLang').value = state.settings.lang || 'zh-Hans';
     renderAiProviders();

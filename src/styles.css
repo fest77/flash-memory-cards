@@ -778,3 +778,10 @@ body.light .heat-cell.h4 { background: #116329; }
 .resume-bar .btn { width: 100%; }
 .rv-undo { display: flex; justify-content: center; margin-top: 8px; }
 .about-feedback { margin-top: 10px; }
+
+.backup-bar .backup-remind {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid rgba(255, 216, 138, .35); background: rgba(255, 216, 138, .08);
+  border-radius: 12px; padding: 8px 12px; margin: 10px 0 0; font-size: 13px; color: var(--rate-fuzzy-fg);
+}
+.backup-bar .backup-remind span { flex: 1; }
