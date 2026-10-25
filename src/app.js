@@ -116,7 +116,7 @@
       'ai.testing': '请求中…（最长等 {s} 秒）', 'ai.testOk': '连接成功', 'ai.testFail': '连接失败', 'ai.modelReply': '模型回复：',
       'ai.title': 'AI 提炼提问', 'ai.desc': '用大模型读懂每张卡的答案，把标题改写成更像面试题的问题（<b>只改题面，不动答案</b>）。请求从你的手机直接发出，不经过任何服务器。',
       'ai.notConfigured': '还没有配置 AI：到「设置 → AI 供应商」添加供应商并填 Key。',
-      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.canceled': '已停止提炼', 'img.cleanup': '清理未引用图片','read.fs': '字号', 'read.lh': '行距', 'read.cw': '卡片宽度', 'read.small': '小', 'read.medium': '中', 'read.large': '大', 'read.tight': '紧', 'read.loose': '松', 'read.narrow': '窄', 'read.wide': '宽', 'img.cleanupNone': '没有可清理的图片', 'img.cleanupConfirm': '发现 {n} 张未被任何卡片引用的图片（约 {kb} KB），删除？', 'img.cleanupDone': '已清理 {n} 张图片', 'backup.remind': '内容有改动且超过 7 天未备份，建议导出备份', 'backup.now': '立即备份', 'backup.nowBtn': '一键备份', 'backup.folderSet': '选择备份文件夹', 'backup.folderChange': '更换备份文件夹', 'backup.savedToFolder': '已写入备份文件夹：{name}', 'backup.fsaUnsupported': '当前浏览器不支持文件夹备份，已改为普通下载', 'ai.undo': '撤销本次提炼', 'ai.undone': '已恢复原题面', 'ai.undoFail': '无法撤销：笔记内容已变化', 'ai.start': '开始提炼',
+      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.canceled': '已停止提炼', 'img.cleanup': '清理未引用图片','search.ph': '搜索全部笔记…', 'search.empty': '没有匹配的卡片', 'search.more': '还有 {n} 条未显示', 'search.reviewFrom': '从这张开始复习', 'search.openDeck': '查看笔记', 'sort.recent': '最近导入', 'sort.name': '名称', 'sort.cards': '卡片数', 'sort.due': '待复习数','read.fs': '字号','card.editTitle': '编辑卡片', 'card.fTitle': '标题', 'card.fQuestion': '题面', 'card.fAnswer': '答案', 'card.editNote': '保存会尽量写回源 Markdown；无法定位时仅更新卡片并标记「已修改」。', 'card.editConfirm': '保存对这张卡片的修改？', 'card.answerRequired': '答案不能为空', 'card.savedRaw': '已保存（含源 Markdown）', 'card.savedLocal': '已保存（本地修改）', 'card.modified': '已修改', 'card.opEdit': '编辑', 'card.opSplit': '拆分', 'card.opMerge': '合并', 'card.opMove': '移动', 'card.opUndo': '撤销', 'card.splitTitle': '拆分为两张', 'card.splitNote': '光标位置即拆分点。', 'card.splitDo': '拆分', 'card.splitConfirm': '拆分这张卡片为两张？', 'card.splitFail': '拆分点两侧都需要内容', 'card.splitDone': '已拆分为两张', 'card.mergeConfirm': '把下一张卡片合并到这张？（下一张将被删除）', 'card.mergeFail': '没有下一张可合并', 'card.mergeDone': '已合并', 'card.moveTitle': '移动到其他笔记', 'card.moveDeck': '目标笔记', 'card.moveConfirm': '移动这张卡片？', 'card.moveDone': '已移动', 'card.noUndo': '没有可撤销的操作', 'card.undone': '已撤销上次操作', 'read.lh': '行距', 'read.cw': '卡片宽度', 'read.small': '小', 'read.medium': '中', 'read.large': '大', 'read.tight': '紧', 'read.loose': '松', 'read.narrow': '窄', 'read.wide': '宽', 'img.cleanupNone': '没有可清理的图片', 'img.cleanupConfirm': '发现 {n} 张未被任何卡片引用的图片（约 {kb} KB），删除？', 'img.cleanupDone': '已清理 {n} 张图片', 'backup.remind': '内容有改动且超过 7 天未备份，建议导出备份', 'backup.now': '立即备份', 'backup.nowBtn': '一键备份', 'backup.folderSet': '选择备份文件夹', 'backup.folderChange': '更换备份文件夹', 'backup.savedToFolder': '已写入备份文件夹：{name}', 'backup.fsaUnsupported': '当前浏览器不支持文件夹备份，已改为普通下载', 'ai.undo': '撤销本次提炼', 'ai.undone': '已恢复原题面', 'ai.undoFail': '无法撤销：笔记内容已变化', 'ai.start': '开始提炼',
       'ai.busy': '正在提炼，请稍等', 'ai.needConfig': '先配置 AI 地址和模型',
       'ai.progress': '提炼中… {done} / {total} 张（共 {batches} 批）',
       'ai.badFormat': '返回格式无法解析（需要 {"questions":[{"idx":..,"q":".."}]}）',
@@ -235,7 +235,7 @@
       'ai.testing': '請求中…（最長等 {s} 秒）', 'ai.testOk': '連線成功', 'ai.testFail': '連線失敗', 'ai.modelReply': '模型回覆：',
       'ai.title': 'AI 提煉提問', 'ai.desc': '用大模型讀懂每張卡的答案，把標題改寫成更像面試題的問題（<b>只改題面，不動答案</b>）。請求從你的手機直接發出，不經過任何伺服器。',
       'ai.notConfigured': '還沒有設定 AI：到「設定 → AI 供應商」新增供應商並填 Key。',
-      'ai.cardCount': '共 {n} 張卡', 'ai.ready': '已就緒', 'ai.notReady': '未設定', 'ai.canceled': '已停止提煉', 'img.cleanup': '清理未引用圖片','read.fs': '字號', 'read.lh': '行距', 'read.cw': '卡片寬度', 'read.small': '小', 'read.medium': '中', 'read.large': '大', 'read.tight': '緊', 'read.loose': '鬆', 'read.narrow': '窄', 'read.wide': '寬', 'img.cleanupNone': '沒有可清理的圖片', 'img.cleanupConfirm': '發現 {n} 張未被任何卡片引用的圖片（約 {kb} KB），刪除？', 'img.cleanupDone': '已清理 {n} 張圖片', 'backup.remind': '內容有改動且超過 7 天未備份，建議匯出備份', 'backup.now': '立即備份', 'backup.nowBtn': '一鍵備份', 'backup.folderSet': '選擇備份資料夾', 'backup.folderChange': '更換備份資料夾', 'backup.savedToFolder': '已寫入備份資料夾：{name}', 'backup.fsaUnsupported': '當前瀏覽器不支持資料夾備份，已改為普通下載', 'ai.undo': '撤銷本次提煉', 'ai.undone': '已恢復原題面', 'ai.undoFail': '無法撤銷：筆記內容已變化', 'ai.start': '開始提煉',
+      'ai.cardCount': '共 {n} 張卡', 'ai.ready': '已就緒', 'ai.notReady': '未設定', 'ai.canceled': '已停止提煉', 'img.cleanup': '清理未引用圖片','search.ph': '搜尋全部筆記…', 'search.empty': '沒有匹配的卡片', 'search.more': '還有 {n} 條未顯示', 'search.reviewFrom': '從這張開始複習', 'search.openDeck': '查看筆記', 'sort.recent': '最近匯入', 'sort.name': '名稱', 'sort.cards': '卡片數', 'sort.due': '待複習數','read.fs': '字號','card.editTitle': '編輯卡片', 'card.fTitle': '標題', 'card.fQuestion': '題面', 'card.fAnswer': '答案', 'card.editNote': '保存會盡量寫回源 Markdown；無法定位時僅更新卡片並標記「已修改」。', 'card.editConfirm': '保存對這張卡片的修改？', 'card.answerRequired': '答案不能為空', 'card.savedRaw': '已保存（含源 Markdown）', 'card.savedLocal': '已保存（本機修改）', 'card.modified': '已修改', 'card.opEdit': '編輯', 'card.opSplit': '拆分', 'card.opMerge': '合併', 'card.opMove': '移動', 'card.opUndo': '撤銷', 'card.splitTitle': '拆分為兩張', 'card.splitNote': '游標位置即拆分點。', 'card.splitDo': '拆分', 'card.splitConfirm': '拆分這張卡片為兩張？', 'card.splitFail': '拆分點兩側都需要內容', 'card.splitDone': '已拆分為兩張', 'card.mergeConfirm': '把下一張卡片合併到這張？（下一張將被刪除）', 'card.mergeFail': '沒有下一張可合併', 'card.mergeDone': '已合併', 'card.moveTitle': '移動到其他筆記', 'card.moveDeck': '目標筆記', 'card.moveConfirm': '移動這張卡片？', 'card.moveDone': '已移動', 'card.noUndo': '沒有可撤銷的操作', 'card.undone': '已撤銷上次操作', 'read.lh': '行距', 'read.cw': '卡片寬度', 'read.small': '小', 'read.medium': '中', 'read.large': '大', 'read.tight': '緊', 'read.loose': '鬆', 'read.narrow': '窄', 'read.wide': '寬', 'img.cleanupNone': '沒有可清理的圖片', 'img.cleanupConfirm': '發現 {n} 張未被任何卡片引用的圖片（約 {kb} KB），刪除？', 'img.cleanupDone': '已清理 {n} 張圖片', 'backup.remind': '內容有改動且超過 7 天未備份，建議匯出備份', 'backup.now': '立即備份', 'backup.nowBtn': '一鍵備份', 'backup.folderSet': '選擇備份資料夾', 'backup.folderChange': '更換備份資料夾', 'backup.savedToFolder': '已寫入備份資料夾：{name}', 'backup.fsaUnsupported': '當前瀏覽器不支持資料夾備份，已改為普通下載', 'ai.undo': '撤銷本次提煉', 'ai.undone': '已恢復原題面', 'ai.undoFail': '無法撤銷：筆記內容已變化', 'ai.start': '開始提煉',
       'ai.busy': '正在提煉，請稍等', 'ai.needConfig': '先設定 AI 位址和模型',
       'ai.progress': '提煉中… {done} / {total} 張（共 {batches} 批）',
       'ai.badFormat': '返回格式無法解析（需要 {"questions":[{"idx":..,"q":".."}]}）',
@@ -354,7 +354,7 @@
       'ai.testing': 'Requesting… (up to {s} s)', 'ai.testOk': 'Connected', 'ai.testFail': 'Connection failed', 'ai.modelReply': 'Model reply: ',
       'ai.title': 'AI question refine', 'ai.desc': 'Have an LLM rewrite each card\'s title into an interview-style question (<b>questions only, answers untouched</b>). Requests go straight from your phone to the API; no server in between.',
       'ai.notConfigured': 'AI is not configured: add a provider and fill in the key under Settings → AI providers.',
-      'ai.cardCount': '{n} cards', 'ai.ready': 'Ready', 'ai.notReady': 'Not configured', 'ai.canceled': 'Refining stopped', 'img.cleanup': 'Clean unused images','read.fs': 'Font size', 'read.lh': 'Line height', 'read.cw': 'Card width', 'read.small': 'Small', 'read.medium': 'Medium', 'read.large': 'Large', 'read.tight': 'Tight', 'read.loose': 'Loose', 'read.narrow': 'Narrow', 'read.wide': 'Wide', 'img.cleanupNone': 'No unused images', 'img.cleanupConfirm': '{n} images are not referenced by any card (~{kb} KB). Delete?', 'img.cleanupDone': 'Cleaned {n} images', 'backup.remind': 'Changes not backed up for 7+ days — export a backup', 'backup.now': 'Back up', 'backup.nowBtn': 'Back up now', 'backup.folderSet': 'Choose backup folder', 'backup.folderChange': 'Change backup folder', 'backup.savedToFolder': 'Saved to backup folder: {name}', 'backup.fsaUnsupported': 'Folder backup not supported here — using normal download', 'ai.undo': 'Undo this refine', 'ai.undone': 'Original questions restored', 'ai.undoFail': 'Cannot undo: the deck has changed', 'ai.start': 'Start refine',
+      'ai.cardCount': '{n} cards', 'ai.ready': 'Ready', 'ai.notReady': 'Not configured', 'ai.canceled': 'Refining stopped', 'img.cleanup': 'Clean unused images','search.ph': 'Search all notes…', 'search.empty': 'No matching cards', 'search.more': '{n} more not shown', 'search.reviewFrom': 'Review from this card', 'search.openDeck': 'Open note', 'sort.recent': 'Recent', 'sort.name': 'Name', 'sort.cards': 'Cards', 'sort.due': 'Due','read.fs': 'Font size','card.editTitle': 'Edit card', 'card.fTitle': 'Title', 'card.fQuestion': 'Question', 'card.fAnswer': 'Answer', 'card.editNote': 'Saving writes back to the source Markdown when possible; otherwise the card is updated locally and marked modified.', 'card.editConfirm': 'Save changes to this card?', 'card.answerRequired': 'Answer cannot be empty', 'card.savedRaw': 'Saved (source Markdown updated)', 'card.savedLocal': 'Saved (local edit)', 'card.modified': 'modified', 'card.opEdit': 'Edit', 'card.opSplit': 'Split', 'card.opMerge': 'Merge', 'card.opMove': 'Move', 'card.opUndo': 'Undo', 'card.splitTitle': 'Split into two', 'card.splitNote': 'The cursor position is the split point.', 'card.splitDo': 'Split', 'card.splitConfirm': 'Split this card into two?', 'card.splitFail': 'Both sides need content', 'card.splitDone': 'Split into two', 'card.mergeConfirm': 'Merge the next card into this one? (the next card will be removed)', 'card.mergeFail': 'No next card to merge', 'card.mergeDone': 'Merged', 'card.moveTitle': 'Move to another note', 'card.moveDeck': 'Target note', 'card.moveConfirm': 'Move this card?', 'card.moveDone': 'Moved', 'card.noUndo': 'Nothing to undo', 'card.undone': 'Last operation undone', 'read.lh': 'Line height', 'read.cw': 'Card width', 'read.small': 'Small', 'read.medium': 'Medium', 'read.large': 'Large', 'read.tight': 'Tight', 'read.loose': 'Loose', 'read.narrow': 'Narrow', 'read.wide': 'Wide', 'img.cleanupNone': 'No unused images', 'img.cleanupConfirm': '{n} images are not referenced by any card (~{kb} KB). Delete?', 'img.cleanupDone': 'Cleaned {n} images', 'backup.remind': 'Changes not backed up for 7+ days — export a backup', 'backup.now': 'Back up', 'backup.nowBtn': 'Back up now', 'backup.folderSet': 'Choose backup folder', 'backup.folderChange': 'Change backup folder', 'backup.savedToFolder': 'Saved to backup folder: {name}', 'backup.fsaUnsupported': 'Folder backup not supported here — using normal download', 'ai.undo': 'Undo this refine', 'ai.undone': 'Original questions restored', 'ai.undoFail': 'Cannot undo: the deck has changed', 'ai.start': 'Start refine',
       'ai.busy': 'Refine in progress, please wait', 'ai.needConfig': 'Configure the API URL and model first',
       'ai.progress': 'Refining… {done} / {total} cards ({batches} batches)',
       'ai.badFormat': 'Unparseable response (expected {"questions":[{"idx":..,"q":".."}]})',
@@ -830,6 +830,8 @@
     if (s.settings.filter !== 'todo') s.settings.filter = 'all';
     if (THEMES.indexOf(s.settings.theme) < 0) s.settings.theme = 'dark';
     if (s.settings.statsView !== 'bars') s.settings.statsView = 'heat';
+    if (typeof s.settings.tagFilter !== 'string') s.settings.tagFilter = '';
+    if (['recent', 'name', 'cards', 'due'].indexOf(s.settings.deckSort) < 0) s.settings.deckSort = 'recent';
     if (LANGS.indexOf(s.settings.lang) < 0) s.settings.lang = 'zh-Hans';
     s.settings.ai = normalizeAi(raw.settings && raw.settings.ai);
     return s;
@@ -1394,6 +1396,258 @@
     }
   }
 
+  /* ---------- 标签与排序 ---------- */
+  function collectTags() {
+    var set = {};
+    state.decks.forEach(function (d) {
+      (d.tags || []).forEach(function (tg) { set[tg] = (set[tg] || 0) + 1; });
+      d.cards.forEach(function (c) {
+        (c.tags || []).forEach(function (tg) { set[tg] = (set[tg] || 0) + 1; });
+      });
+    });
+    return set;
+  }
+
+  function applyHomeFilterSort(decks) {
+    var tag = state.settings.tagFilter || '';
+    var sort = state.settings.deckSort || 'recent';
+    var list = decks.slice();
+    if (tag) {
+      list = list.filter(function (d) {
+        return (d.tags || []).indexOf(tag) >= 0 || d.cards.some(function (c) { return (c.tags || []).indexOf(tag) >= 0; });
+      });
+    }
+    list.sort(function (a, b) {
+      if (sort === 'name') return String(a.name).localeCompare(String(b.name), 'zh');
+      if (sort === 'cards') return b.cards.length - a.cards.length;
+      if (sort === 'due') return dueOfDeck(b) - dueOfDeck(a);
+      return (b.createdAt || 0) - (a.createdAt || 0); // recent
+    });
+    return list;
+  }
+
+  function dueOfDeck(d) {
+    var n = 0;
+    d.cards.forEach(function (c) { if (isDueStat(state.stats[c.id])) n++; });
+    return n;
+  }
+
+  /* ---------- 卡片操作（写前快照 → 一级撤销） ---------- */
+  var lastOpSnapshot = null;
+  function snapshotForUndo() {
+    try { lastOpSnapshot = JSON.stringify({ decks: state.decks, stats: state.stats }); } catch (e) { lastOpSnapshot = null; }
+  }
+  function undoLastCardOp() {
+    if (!lastOpSnapshot) { toast(t('card.noUndo')); return; }
+    try {
+      var snap = JSON.parse(lastOpSnapshot);
+      state.decks = snap.decks;
+      state.stats = snap.stats;
+      lastOpSnapshot = null;
+      flushSave();
+      renderHome();
+      if ($('#view-browse').classList.contains('active') && browse.deckId) renderBrowse();
+      toast(t('card.undone'));
+    } catch (e) { toast(t('card.noUndo')); }
+  }
+
+  function openCardEdit(deckId, cardId) {
+    var d = findDeck(deckId);
+    var c = d && d.cards.filter(function (x) { return x.id === cardId; })[0];
+    if (!c) return;
+    openModal(
+      '<h3>' + t('card.editTitle') + '</h3>' +
+      '<div class="field"><label>' + t('card.fTitle') + '</label><input type="text" id="ceTitle" value="' + ESC(c.title) + '"></div>' +
+      '<div class="field"><label>' + t('card.fQuestion') + '</label><textarea id="ceQ" rows="2">' + ESC(c.question) + '</textarea></div>' +
+      '<div class="field"><label>' + t('card.fAnswer') + '</label><textarea id="ceA" rows="7">' + ESC(c.answer) + '</textarea></div>' +
+      '<p class="modal-note">' + t('card.editNote') + '</p>' +
+      '<div class="modal-actions">' +
+        '<button class="btn" data-act="close-modal">' + t('btn.cancel') + '</button>' +
+        '<button class="btn primary" data-act="card-edit-save" data-deck="' + deckId + '" data-card="' + cardId + '">' + t('btn.save') + '</button>' +
+      '</div>'
+    );
+  }
+
+  function saveCardEdit(deckId, cardId) {
+    var d = findDeck(deckId);
+    var c = d && d.cards.filter(function (x) { return x.id === cardId; })[0];
+    if (!c) return;
+    var nt = ($('#ceTitle') || {}).value || '';
+    var nq = ($('#ceQ') || {}).value || '';
+    var na = ($('#ceA') || {}).value || '';
+    if (!na.trim()) { toast(t('card.answerRequired')); return; }
+    if (!window.confirm(t('card.editConfirm'))) return;
+    snapshotForUndo();
+    // 优先写回源 Markdown：旧答案能在 raw 中唯一定位时同步替换
+    var wroteRaw = false;
+    if (d.raw && c.answer && d.raw.indexOf(c.answer) >= 0 && d.raw.indexOf(c.answer) === d.raw.lastIndexOf(c.answer)) {
+      d.raw = d.raw.split(c.answer).join(na);
+      wroteRaw = true;
+    }
+    c.title = nt; c.question = nq; c.answer = na;
+    c.modified = true; // 卡片上标「已修改」
+    c.id = 'c' + Core.hash32(c.title + '|' + c.question + '|' + c.answer);
+    closeModal();
+    flushSave();
+    renderBrowse();
+    renderHome();
+    toast(wroteRaw ? t('card.savedRaw') : t('card.savedLocal'), 2400);
+  }
+
+  function openCardSplit(deckId, cardId) {
+    var d = findDeck(deckId);
+    var c = d && d.cards.filter(function (x) { return x.id === cardId; })[0];
+    if (!c) return;
+    openModal(
+      '<h3>' + t('card.splitTitle') + '</h3>' +
+      '<p class="modal-note">' + t('card.splitNote') + '</p>' +
+      '<div class="field"><textarea id="csA" rows="8">' + ESC(c.answer) + '</textarea></div>' +
+      '<p class="modal-note">' + t('card.splitHint') + '</p>' +
+      '<div class="modal-actions">' +
+        '<button class="btn" data-act="close-modal">' + t('btn.cancel') + '</button>' +
+        '<button class="btn primary" data-act="card-split-do" data-deck="' + deckId + '" data-card="' + cardId + '">' + t('card.splitDo') + '</button>' +
+      '</div>'
+    );
+    var ta = $('#csA');
+    if (ta) {
+      ta.focus();
+      var mid = Math.floor(ta.value.length / 2);
+      var brk = ta.value.indexOf('\n', mid);
+      if (brk > 0) ta.setSelectionRange(brk + 1, brk + 1);
+    }
+  }
+
+  function doCardSplit(deckId, cardId) {
+    var d = findDeck(deckId);
+    var ci = d ? d.cards.findIndex(function (x) { return x.id === cardId; }) : -1;
+    if (ci < 0) return;
+    var c = d.cards[ci];
+    var ta = $('#csA');
+    var pos = ta ? (ta.selectionStart || Math.floor(ta.value.length / 2)) : Math.floor(c.answer.length / 2);
+    var a1 = c.answer.slice(0, pos).trim();
+    var a2 = c.answer.slice(pos).trim();
+    if (!a1 || !a2) { toast(t('card.splitFail')); return; }
+    if (!window.confirm(t('card.splitConfirm'))) return;
+    snapshotForUndo();
+    c.answer = a1;
+    c.id = 'c' + Core.hash32(c.title + '|' + c.question + '|' + a1);
+    d.cards.splice(ci + 1, 0, {
+      id: 'c' + Core.hash32((c.title + '·2') + '|' + c.question + '|' + a2),
+      title: c.title, question: c.question, answer: a2, path: c.path.slice(), chapter: c.chapter, modified: true
+    });
+    closeModal();
+    flushSave();
+    renderBrowse();
+    toast(t('card.splitDone'));
+  }
+
+  function doCardMerge(deckId, cardId) {
+    var d = findDeck(deckId);
+    var ci = d ? d.cards.findIndex(function (x) { return x.id === cardId; }) : -1;
+    if (ci < 0 || ci + 1 >= d.cards.length) { toast(t('card.mergeFail')); return; }
+    var c = d.cards[ci], nx = d.cards[ci + 1];
+    if (!window.confirm(t('card.mergeConfirm'))) return;
+    snapshotForUndo();
+    c.answer = c.answer + '\n\n' + nx.answer;
+    c.modified = true;
+    c.id = 'c' + Core.hash32(c.title + '|' + c.question + '|' + c.answer);
+    delete state.stats[nx.id];
+    d.cards.splice(ci + 1, 1);
+    flushSave();
+    renderBrowse();
+    toast(t('card.mergeDone'));
+  }
+
+  function openCardMove(deckId, cardId) {
+    var d = findDeck(deckId);
+    var c = d && d.cards.filter(function (x) { return x.id === cardId; })[0];
+    if (!c) return;
+    var opts = state.decks.map(function (x) { return '<option value="' + x.id + '"' + (x.id === deckId ? ' selected' : '') + '>' + ESC(x.name) + '</option>'; }).join('');
+    openModal(
+      '<h3>' + t('card.moveTitle') + '</h3>' +
+      '<div class="field"><label>' + t('card.moveDeck') + '</label><select id="cmDeck">' + opts + '</select></div>' +
+      '<div class="modal-actions">' +
+        '<button class="btn" data-act="close-modal">' + t('btn.cancel') + '</button>' +
+        '<button class="btn primary" data-act="card-move-do" data-deck="' + deckId + '" data-card="' + cardId + '">' + t('btn.save') + '</button>' +
+      '</div>'
+    );
+  }
+
+  function doCardMove(fromDeck, cardId) {
+    var fd = findDeck(fromDeck);
+    var td = findDeck(($('#cmDeck') || {}).value);
+    var ci = fd ? fd.cards.findIndex(function (x) { return x.id === cardId; }) : -1;
+    if (ci < 0 || !td) return;
+    if (td.id === fd.id) { closeModal(); return; }
+    if (!window.confirm(t('card.moveConfirm'))) return;
+    snapshotForUndo();
+    var c = fd.cards.splice(ci, 1)[0];
+    td.cards.push(c);
+    c.modified = true;
+    closeModal();
+    flushSave();
+    renderBrowse();
+    renderHome();
+    toast(t('card.moveDone'));
+  }
+
+  /* ---------- 全局搜索（跨笔记：标题/问题/答案/章节） ---------- */
+  var searchAllTimer = null;
+  function globalSearch(qs) {
+    var q = String(qs || '').trim().toLowerCase();
+    var out = [];
+    if (!q) return out;
+    state.decks.forEach(function (d) {
+      d.cards.forEach(function (c) {
+        var hay = [c.title, c.question, c.answer, (c.path || []).join('/'), c.chapter || ''].join('\n').toLowerCase();
+        var idx = hay.indexOf(q);
+        if (idx < 0) return;
+        // 命中片段：找答案/问题里的原文位置
+        var src = [c.title, c.question, c.answer].join(' ');
+        var si = src.toLowerCase().indexOf(q);
+        var snip = si >= 0 ? src.slice(Math.max(0, si - 18), si + q.length + 30) : src.slice(0, 46);
+        out.push({ deckId: d.id, deckName: d.name, card: c, snippet: snip });
+        if (out.length >= 60) return;
+      });
+    });
+    return out;
+  }
+
+  function runGlobalSearch() {
+    var box = $('#gsResults');
+    var q = ($('#globalSearch') || {}).value || '';
+    if (!box) return;
+    if (!q.trim()) { box.innerHTML = ''; box.classList.add('hidden'); return; }
+    var hits = globalSearch(q);
+    box.classList.remove('hidden');
+    if (!hits.length) {
+      box.innerHTML = '<p class="muted" style="padding:10px 4px">' + ESC(t('search.empty')) + '</p>';
+      return;
+    }
+    box.innerHTML = hits.slice(0, 30).map(function (h, i) {
+      return '<div class="gs-row" data-act="gs-open" data-i="' + i + '">' +
+        '<div class="gs-meta">' + ESC(h.deckName) + (h.card.chapter ? ' · ' + ESC(h.card.chapter) : '') + '</div>' +
+        '<div class="gs-snip">' + ESC(h.snippet) + '</div></div>';
+    }).join('') + (hits.length > 30 ? '<p class="muted" style="padding:6px">' + tf('search.more', { n: hits.length - 30 }) + '</p>' : '');
+    window.__gsHits = hits;
+  }
+
+  function openGsCard(i) {
+    var h = (window.__gsHits || [])[i];
+    if (!h) return;
+    openModal(
+      '<h3>' + ESC(h.card.title || h.deckName) + '</h3>' +
+      '<p class="modal-note">' + ESC(h.deckName) + (h.card.chapter ? ' · ' + ESC(h.card.chapter) : '') + '</p>' +
+      (h.card.question ? '<div class="gs-q">' + ESC(String(h.card.question).slice(0, 200)) + '</div>' : '') +
+      '<div class="gs-a">' + resolveImgSrc(Core.renderMarkdown(h.card.answer)) + '</div>' +
+      '<div class="modal-actions">' +
+        '<button class="btn" data-act="close-modal">' + t('btn.close') + '</button>' +
+        '<button class="btn" data-act="gs-review" data-deck="' + h.deckId + '" data-card="' + h.card.id + '">' + t('search.reviewFrom') + '</button>' +
+        '<button class="btn primary" data-act="gs-browse" data-deck="' + h.deckId + '" data-card="' + h.card.id + '">' + t('search.openDeck') + '</button>' +
+      '</div>'
+    );
+  }
+
   /* ---------- 检查更新（读仓库根目录的 latest.json，经 jsDelivr CDN，带 CORS） ---------- */
   var UPDATE_JSON_URLS = [
     'https://fastly.jsdelivr.net/gh/fest77/flash-memory-cards@main/latest.json',
@@ -1597,7 +1851,18 @@
       return;
     }
 
-    var html = state.decks.map(function (d) {
+    var tags = collectTags();
+    var tagBar = $('#tagBar');
+    if (tagBar) {
+      var curTag = state.settings.tagFilter || '';
+      var keys = Object.keys(tags).sort();
+      tagBar.innerHTML = keys.length
+        ? keys.map(function (tg) {
+            return '<button class="chip ' + (curTag === tg ? 'on' : '') + '" data-act="tag-filter" data-tag="' + ESC(tg) + '">' + ESC(tg) + ' <b>' + tags[tg] + '</b></button>';
+          }).join('')
+        : '';
+    }
+    var html = applyHomeFilterSort(state.decks).map(function (d) {
       var n = d.cards.length;
       var k = knownOf(d);
       var pct = n ? Math.round((k / n) * 100) : 0;
@@ -1659,6 +1924,22 @@
     }
     var opts = currentOpts(override);
     var deck = Core.buildDeck(name, text, { mode: opts.mode, maxCardLen: opts.maxCardLen, qstyle: opts.qstyle });
+    // 标签：frontmatter tags: a, b（deck 级）+ 行内 #tag（卡片级）
+    var fm = /^---\n([\s\S]*?)\n---/.exec(String(text || ''));
+    if (fm && /^tags?:/m.test(fm[1])) {
+      var tgLine = fm[1].match(/^tags?:\s*(.+)$/m);
+      if (tgLine) {
+        deck.tags = tgLine[1].replace(/[\[\]'"']/g, '').split(/[,，]\s*/).map(function (x) { return x.trim(); }).filter(Boolean);
+      }
+    }
+    deck.cards.forEach(function (c) {
+      var tags = [];
+      String(c.answer + ' ' + c.question).replace(/(^|\s)#([\w\u4e00-\u9fa5-]{1,24})/g, function (m, pre, tg) {
+        if (tags.indexOf(tg) < 0) tags.push(tg);
+        return m;
+      });
+      if (tags.length) c.tags = tags;
+    });
     deck.source = b.source || '';
     if (!deck.cards.length) {
       if (!b.silent) toast(t('toast.noCards'));
@@ -2424,6 +2705,7 @@
 
   function startReview(deckIds, opts) {
     var o = (typeof opts === 'string') ? { filter: opts } : (opts || {});
+    var startCardId = o.startCard || null;
     var hadSession = !!state.reviewSession;
     pruneEmptySession();
     if (state.reviewSession === null && hadSession) flushSave(); // 清空残会话也落盘
@@ -2470,6 +2752,14 @@
     };
     $('#rvSummary').classList.add('hidden');
     $('#rvCard').classList.remove('hidden');
+    if (startCardId) {
+      for (var qi = 0; qi < review.queue.length; qi++) {
+        if (review.queue[qi].card.id === startCardId) {
+          review.queue.unshift(review.queue.splice(qi, 1)[0]);
+          break;
+        }
+      }
+    }
     $('#rvAnswer').innerHTML = '';
     saveReviewSession();
     flushSave(); // 新会话立即落盘：pagehide 前被强杀也不丢
@@ -2838,8 +3128,15 @@
         '<div class="citem" data-act="open-card" data-deck="' + d.id + '" data-card="' + ESC(c.id) + '">' +
           '<span class="dot ' + s + '" title="' + label + '"></span>' +
           '<div class="citem-main">' +
-            '<div class="citem-title">' + ESC(c.title) + '</div>' +
+            '<div class="citem-title">' + ESC(c.title) + (c.modified ? ' <span class="citem-mod">' + ESC(t('card.modified')) + '</span>' : '') + '</div>' +
             '<div class="citem-snip">' + ESC(Core.plainText(c.answer).slice(0, 80)) + '</div>' +
+            '<div class="citem-ops">' +
+              '<button class="btn xs" data-act="card-edit" data-deck="' + d.id + '" data-card="' + ESC(c.id) + '">' + t('card.opEdit') + '</button>' +
+              '<button class="btn xs" data-act="card-split" data-deck="' + d.id + '" data-card="' + ESC(c.id) + '">' + t('card.opSplit') + '</button>' +
+              '<button class="btn xs" data-act="card-merge" data-deck="' + d.id + '" data-card="' + ESC(c.id) + '">' + t('card.opMerge') + '</button>' +
+              '<button class="btn xs" data-act="card-move" data-deck="' + d.id + '" data-card="' + ESC(c.id) + '">' + t('card.opMove') + '</button>' +
+              '<button class="btn xs ghost" data-act="card-undo">' + t('card.opUndo') + '</button>' +
+            '</div>' +
           '</div>' +
         '</div>';
     }).join('');
@@ -3820,6 +4117,60 @@
         if (!state.decks.length) { toast(t('toast.noNotes')); break; }
         exportBackupZip();
         break;
+      case 'gs-open': {
+        openGsCard(parseInt(el.getAttribute('data-i'), 10) || 0);
+        break;
+      }
+      case 'gs-review': {
+        var gdeck = el.getAttribute('data-deck');
+        var gcard = el.getAttribute('data-card');
+        closeModal();
+        startReview([gdeck], { startCard: gcard, resumeOk: false });
+        break;
+      }
+      case 'gs-browse': {
+        var bdeck = el.getAttribute('data-deck');
+        closeModal();
+        openBrowse(bdeck);
+        break;
+      }
+      case 'card-edit':
+        openCardEdit(el.getAttribute('data-deck'), el.getAttribute('data-card'));
+        break;
+      case 'card-edit-save':
+        saveCardEdit(el.getAttribute('data-deck'), el.getAttribute('data-card'));
+        break;
+      case 'card-split':
+        openCardSplit(el.getAttribute('data-deck'), el.getAttribute('data-card'));
+        break;
+      case 'card-split-do':
+        doCardSplit(el.getAttribute('data-deck'), el.getAttribute('data-card'));
+        break;
+      case 'card-merge':
+        doCardMerge(el.getAttribute('data-deck'), el.getAttribute('data-card'));
+        break;
+      case 'card-move':
+        openCardMove(el.getAttribute('data-deck'), el.getAttribute('data-card'));
+        break;
+      case 'card-move-do':
+        doCardMove(el.getAttribute('data-deck'), el.getAttribute('data-card'));
+        break;
+      case 'card-undo':
+        undoLastCardOp();
+        break;
+      case 'tag-filter': {
+        var tg = el.getAttribute('data-tag');
+        state.settings.tagFilter = (state.settings.tagFilter === tg) ? '' : tg;
+        flushSave();
+        renderHome();
+        break;
+      }
+      case 'deck-sort': {
+        state.settings.deckSort = el.value;
+        flushSave();
+        renderHome();
+        break;
+      }
       case 'backup-folder':
         pickBackupFolder();
         break;
@@ -4024,6 +4375,13 @@
       e.target.value = '';
     });
 
+    var gs = $('#globalSearch');
+    if (gs) {
+      gs.addEventListener('input', function () {
+        if (searchAllTimer) clearTimeout(searchAllTimer);
+        searchAllTimer = setTimeout(runGlobalSearch, 150); // 防抖
+      });
+    }
     var searchTimer = null;
     $('#searchInput').addEventListener('input', function (e) {
       var v = e.target.value;
@@ -4063,6 +4421,10 @@
         onThemeChange(e.target.value);
       } else if (e.target.id === 'setLang') {
         onLangChange(e.target.value);
+      } else if (e.target.id === 'deckSort') {
+        state.settings.deckSort = e.target.value;
+        flushSave();
+        renderHome();
       } else if (e.target.id === 'setReadFs') {
         onReadingChange('fs', e.target.value);
       } else if (e.target.id === 'setReadLh') {

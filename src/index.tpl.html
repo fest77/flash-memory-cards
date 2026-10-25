@@ -39,6 +39,15 @@
     </section>
 
     <section id="homeBody" class="hidden">
+      <input type="search" id="globalSearch" data-i18n-ph="search.ph" placeholder="搜索全部笔记…" autocomplete="off">
+      <div id="gsResults" class="gs-results hidden"></div>
+      <div id="tagBar" class="tagbar"></div>
+      <div class="sortbar"><select id="deckSort" data-act="deck-sort">
+        <option value="recent" data-i18n="sort.recent">最近导入</option>
+        <option value="name" data-i18n="sort.name">名称</option>
+        <option value="cards" data-i18n="sort.cards">卡片数</option>
+        <option value="due" data-i18n="sort.due">待复习数</option>
+      </select></div>
       <div id="statBar" class="statbar"></div>
       <div id="backupBar" class="backup-bar"></div>
       <div id="resumeBar" class="resume-bar"></div>

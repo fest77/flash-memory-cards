@@ -802,3 +802,19 @@ body.light .hl-num { color: #a05f1c; }
 body.light .hl-kw { color: #1a5fb4; }
 #imgViewer { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.92); display: grid; place-items: center; }
 #imgViewer img { max-width: 96vw; max-height: 92vh; transition: transform .12s; will-change: transform; }
+
+/* 组 B：搜索 / 标签 / 排序 / 卡片操作 */
+#globalSearch { width: 100%; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--dashed); background: var(--subtle); color: var(--text-soft); margin-top: 6px; box-sizing: border-box; }
+.gs-results { max-height: 300px; overflow-y: auto; border: 1px solid var(--dashed); border-radius: 12px; margin-top: 6px; background: var(--subtle); }
+.gs-row { padding: 8px 12px; border-bottom: 1px solid var(--subtle); cursor: pointer; }
+.gs-row:hover { background: var(--hover); }
+.gs-meta { font-size: 11px; color: var(--muted); }
+.gs-snip { font-size: 13px; color: var(--text-soft); }
+.gs-q { margin: 6px 0; color: var(--muted); font-size: 13px; }
+.gs-a { max-height: 40vh; overflow-y: auto; }
+.tagbar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.sortbar { margin: 8px 0 0; display: flex; justify-content: flex-end; }
+.sortbar select { background: var(--subtle); border: 1px solid var(--dashed); border-radius: 8px; color: var(--text-soft); font-size: 12px; padding: 4px 6px; }
+.citem-mod { font-size: 10px; color: var(--rate-fuzzy-fg); border: 1px solid rgba(255,216,138,.4); border-radius: 6px; padding: 0 4px; vertical-align: 1px; }
+.citem-ops { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.btn.xs { padding: 3px 8px; font-size: 11px; border-radius: 7px; }
