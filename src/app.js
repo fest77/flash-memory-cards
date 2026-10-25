@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.7.3';
+  var APP_VERSION = '1.8.0';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -40,7 +40,11 @@
       'app.title': 'MD 笔记闪卡 · 随机复习',
       'brand.name': 'MD 笔记闪卡',
       'brand.tag': 'md → 知识点卡片 → 随机复习',
-      'nav.manage': '笔记管理', 'nav.settings': '设置',
+      'nav.manage': '笔记管理', 'nav.settings': '设置', 'nav.home': '主页', 'nav.stats': '统计', 'nav.bar': '主导航',
+      'stats.title': '闪记日志', 'stats.heat': '热力图', 'stats.bars': '条形图', 'stats.note': '记录每天的复习次数 · 数据只保存在本机',
+      'stats.today': '今日复习', 'stats.total': '累计复习', 'stats.streak': '连续天数',
+      'stats.wds': '日,一,二,三,四,五,六',
+      'stats.months': '1月,2月,3月,4月,5月,6月,7月,8月,9月,10月,11月,12月',
       'hero.title': '导入长篇笔记，拆成多张闪记卡', 'hero.sub': '随时复习，闪速记忆',
       'btn.import': '📥 导入 md / zip', 'btn.paste': '✍️ 粘贴 Markdown 文本', 'btn.demo': '看看示例（10 张卡）',
       'btn.importBatch': '📥 导入 md / zip（批量）', 'btn.pasteShort': '粘贴文本', 'btn.backup': '备份全部', 'btn.restoreBackup': '恢复备份',
@@ -149,7 +153,11 @@
       'app.title': 'MD 筆記閃卡 · 隨機複習',
       'brand.name': 'MD 筆記閃卡',
       'brand.tag': 'md → 知識點卡片 → 隨機複習',
-      'nav.manage': '筆記管理', 'nav.settings': '設定',
+      'nav.manage': '筆記管理', 'nav.settings': '設定', 'nav.home': '主頁', 'nav.stats': '統計', 'nav.bar': '主導航',
+      'stats.title': '閃記日誌', 'stats.heat': '熱力圖', 'stats.bars': '條形圖', 'stats.note': '記錄每天的複習次數 · 資料只保存在本機',
+      'stats.today': '今日複習', 'stats.total': '累計複習', 'stats.streak': '連續天數',
+      'stats.wds': '日,一,二,三,四,五,六',
+      'stats.months': '1月,2月,3月,4月,5月,6月,7月,8月,9月,10月,11月,12月',
       'hero.title': '匯入長篇筆記，拆成多張閃記卡', 'hero.sub': '隨時複習，閃速記憶',
       'btn.import': '📥 匯入 md / zip', 'btn.paste': '✍️ 貼上 Markdown 文字', 'btn.demo': '看看範例（10 張卡）',
       'btn.importBatch': '📥 匯入 md / zip（批次）', 'btn.pasteShort': '貼上文字', 'btn.backup': '備份全部', 'btn.restoreBackup': '還原備份',
@@ -258,7 +266,11 @@
       'app.title': 'MD FlashCards · Random Review',
       'brand.name': 'MD FlashCards',
       'brand.tag': 'md → cards → random review',
-      'nav.manage': 'Notes', 'nav.settings': 'Settings',
+      'nav.manage': 'Notes', 'nav.settings': 'Settings', 'nav.home': 'Home', 'nav.stats': 'Stats', 'nav.bar': 'Main navigation',
+      'stats.title': 'Review Log', 'stats.heat': 'Heatmap', 'stats.bars': 'Bars', 'stats.note': 'Daily review counts · stored on this device only',
+      'stats.today': 'today', 'stats.total': 'total', 'stats.streak': 'day streak',
+      'stats.wds': 'Su,Mo,Tu,We,Th,Fr,Sa',
+      'stats.months': 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
       'hero.title': 'Import long notes, split into flashcards', 'hero.sub': 'Review anytime, remember fast',
       'btn.import': '📥 Import md / zip', 'btn.paste': '✍️ Paste Markdown text', 'btn.demo': 'Try the sample (10 cards)',
       'btn.importBatch': '📥 Import md / zip (batch)', 'btn.pasteShort': 'Paste text', 'btn.backup': 'Backup all', 'btn.restoreBackup': 'Restore backup',
@@ -703,6 +715,7 @@
         filter: 'all',
         theme: 'dark',
         lang: 'zh-Hans',
+        statsView: 'heat',
         bundledVersion: '',
         ai: emptyAi()
       }
@@ -756,6 +769,7 @@
     if (!QSTYLE_LABELS[s.settings.qstyle]) s.settings.qstyle = 'prompt';
     if (s.settings.filter !== 'todo') s.settings.filter = 'all';
     if (THEMES.indexOf(s.settings.theme) < 0) s.settings.theme = 'dark';
+    if (s.settings.statsView !== 'bars') s.settings.statsView = 'heat';
     if (LANGS.indexOf(s.settings.lang) < 0) s.settings.lang = 'zh-Hans';
     s.settings.ai = normalizeAi(raw.settings && raw.settings.ai);
     return s;
@@ -763,9 +777,9 @@
 
   function pruneDaily() {
     var keys = Object.keys(state.daily);
-    if (keys.length < 200) return;
+    if (keys.length < 400) return;
     var cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 120);
+    cutoff.setDate(cutoff.getDate() - 370);
     var min = cutoff.getFullYear() + '-' + pad2(cutoff.getMonth() + 1) + '-' + pad2(cutoff.getDate());
     keys.forEach(function (k) {
       if (k < min) delete state.daily[k];
@@ -849,6 +863,10 @@
     $$('.view').forEach(function (v) { v.classList.remove('active'); });
     var v = $('#view-' + name);
     if (v) v.classList.add('active');
+    var tabName = (name === 'review' || name === 'quick' || name === 'browse') ? 'home' : name;
+    $$('#tabbar .tab').forEach(function (b) {
+      b.classList.toggle('on', b.getAttribute('data-view') === tabName);
+    });
     if (name !== 'home' && !noPush) {
       try { window.history.pushState({ view: name }, ''); viewStack++; } catch (e) { /* file:// 等环境忽略 */ }
     }
@@ -960,6 +978,102 @@
   /* ---------- 内置题库图片（（配图 xxx）→ 内嵌图） ---------- */
 
   var IMG_PLACEHOLDER = /（配图\s*([^）]+?)）/g;
+
+  /* ---------- 统计（闪记日志） ---------- */
+  function dateKey(d) {
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+
+  function renderStats() {
+    var daily = state.daily || {};
+    var total = 0;
+    Object.keys(daily).forEach(function (k) { total += daily[k] || 0; });
+    var streak = 0;
+    var d = new Date(); d.setHours(0, 0, 0, 0);
+    while ((daily[dateKey(d)] || 0) > 0) { streak++; d.setDate(d.getDate() - 1); }
+    var chips = $('#statsChips');
+    if (chips) {
+      chips.innerHTML =
+        '<span class="chip"><b>' + (daily[todayKey()] || 0) + '</b>' + t('stats.today') + '</span>' +
+        '<span class="chip"><b>' + total + '</b>' + t('stats.total') + '</span>' +
+        '<span class="chip"><b>' + streak + '</b>' + t('stats.streak') + '</span>';
+    }
+    renderHeat(daily);
+    renderBars(daily);
+    applyStatsMode();
+  }
+
+  var HEAT_WEEKS = 26;
+
+  function renderHeat(daily) {
+    var box = $('#statsHeat');
+    if (!box) return;
+    var end = new Date(); end.setHours(0, 0, 0, 0);
+    var start = new Date(end);
+    start.setDate(start.getDate() - (HEAT_WEEKS * 7 - 1));
+    start.setDate(start.getDate() - start.getDay()); // 对齐到周日
+    var cols = Math.round((end - start) / 86400000) + 1;
+    cols = Math.ceil(cols / 7);
+    var months = t('stats.months').split(',');
+    var monthsHtml = '';
+    var prevMonth = -1;
+    var grid = '<div class="heat-grid">';
+    for (var c = 0; c < cols; c++) {
+      var d0 = new Date(start);
+      d0.setDate(d0.getDate() + c * 7);
+      if (d0.getMonth() !== prevMonth) {
+        prevMonth = d0.getMonth();
+        monthsHtml += '<span class="hm" style="left:' + (c * 16) + 'px">' + (months[d0.getMonth()] || '') + '</span>';
+      }
+      grid += '<div class="heat-col">';
+      for (var r = 0; r < 7; r++) {
+        var dd = new Date(start);
+        dd.setDate(dd.getDate() + c * 7 + r);
+        if (dd > end) { grid += '<i class="heat-cell ghost"></i>'; continue; }
+        var n = daily[dateKey(dd)] || 0;
+        var lv = n === 0 ? 0 : n < 3 ? 1 : n < 6 ? 2 : n < 10 ? 3 : 4;
+        grid += '<i class="heat-cell h' + lv + '" title="' + dateKey(dd) + ' · ' + n + '"></i>';
+      }
+      grid += '</div>';
+    }
+    grid += '</div>';
+    box.innerHTML = '<div class="heat-scroll"><div class="heat-inner"><div class="heat-months">' + monthsHtml + '</div>' + grid + '</div></div>';
+    var sc = box.querySelector('.heat-scroll');
+    if (sc) sc.scrollLeft = sc.scrollWidth; // 默认停在最新一侧
+  }
+
+  function renderBars(daily) {
+    var box = $('#statsBars');
+    if (!box) return;
+    var wds = t('stats.wds').split(',');
+    var days = [];
+    var d = new Date(); d.setHours(0, 0, 0, 0);
+    for (var i = 6; i >= 0; i--) {
+      var dd = new Date(d);
+      dd.setDate(dd.getDate() - i);
+      days.push({ n: daily[dateKey(dd)] || 0, wd: dd.getDay(), today: i === 0 });
+    }
+    var max = 1;
+    days.forEach(function (x) { if (x.n > max) max = x.n; });
+    var html = '<div class="bars-row">';
+    days.forEach(function (x) {
+      html += '<div class="bar-col' + (x.today ? ' today' : '') + '">' +
+        '<span class="bar-n">' + (x.n || '') + '</span>' +
+        '<i class="bar" style="height:' + (x.n ? Math.max(Math.round(x.n / max * 100), 8) : 2) + '%"></i>' +
+        '<span class="bar-wd">' + wds[x.wd] + '</span></div>';
+    });
+    box.innerHTML = html + '</div>';
+  }
+
+  function applyStatsMode() {
+    var mode = state.settings.statsView === 'bars' ? 'bars' : 'heat';
+    var heat = $('#statsHeat'), bars = $('#statsBars');
+    if (heat) heat.classList.toggle('hidden', mode !== 'heat');
+    if (bars) bars.classList.toggle('hidden', mode !== 'bars');
+    $$('#view-stats .seg-btn').forEach(function (b) {
+      b.classList.toggle('on', b.getAttribute('data-mode') === mode);
+    });
+  }
 
   function deckImageSet(deck) {
     var all = window.MDReviewBundledImages;
@@ -2491,6 +2605,19 @@
       case 'quick':
         openQuick(el.getAttribute('data-deck'));
         break;
+      case 'tab': {
+        var tabView = el.getAttribute('data-view');
+        if (tabView === 'home') goHome();
+        else if (tabView === 'manage') openManage();
+        else if (tabView === 'settings') openSettings();
+        else if (tabView === 'stats') { renderStats(); showView('stats'); }
+        break;
+      }
+      case 'stats-view':
+        state.settings.statsView = el.getAttribute('data-mode') === 'bars' ? 'bars' : 'heat';
+        applyStatsMode();
+        scheduleSave();
+        break;
       case 'open-manage':
         openManage();
         break;
@@ -2898,6 +3025,7 @@
     seedBundledDecks: seedBundledDecks,
     renderAiProviders: renderAiProviders,
     imgUrls: function () { return IMG_URLS; },
+    renderStats: renderStats,
     rememberImage: rememberImage,
     resolveImgSrc: resolveImgSrc,
     version: APP_VERSION

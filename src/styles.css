@@ -60,7 +60,7 @@ button { cursor: pointer; }
 #app {
   max-width: 760px;
   margin: 0 auto;
-  padding: 14px 14px calc(28px + var(--safe-b));
+  padding: 14px 14px calc(84px + var(--safe-b));
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -679,3 +679,70 @@ body.light {
 .ai-q-row.on .ai-q-dot { border-color: var(--accent); background: var(--accent); }
 .ai-q-name { font-weight: 700; font-size: 14px; flex: none; }
 .ai-q-model { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------------- 底部导航 ---------------- */
+#tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: flex; justify-content: space-around; align-items: stretch;
+  background: var(--modal-bg);
+  border-top: 1px solid var(--line);
+  padding-bottom: var(--safe-b);
+}
+.tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 0 7px; background: none; border: none; color: var(--muted);
+  font-size: 11px; line-height: 1;
+}
+.tab-ico { font-size: 20px; line-height: 1; filter: grayscale(1) opacity(.75); transition: filter .15s; }
+.tab.on { color: var(--link); }
+.tab.on .tab-ico { filter: none; }
+.tab-txt { white-space: nowrap; }
+
+/* ---------------- 统计（闪记日志） ---------------- */
+.stats-card {
+  border: 1px solid var(--line); border-radius: 20px;
+  background: var(--subtle); padding: 16px 14px 14px;
+}
+.stats-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.stats-head h2 { margin: 0; font-size: 20px; color: var(--text-head); }
+.seg { display: flex; border: 1px solid var(--dashed); border-radius: 999px; overflow: hidden; }
+.seg-btn { background: none; border: none; color: var(--muted); font-size: 12px; padding: 6px 12px; }
+.seg-btn.on { background: var(--active); color: var(--text-head); }
+.stats-chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; }
+.stats-chips .chip {
+  border: 1px solid var(--dashed); border-radius: 12px; padding: 6px 10px;
+  font-size: 12px; color: var(--muted); display: flex; align-items: baseline; gap: 5px;
+}
+.stats-chips .chip b { font-size: 16px; color: var(--text-head); }
+.stats-chart { margin-top: 12px; }
+.stats-note { margin: 12px 2px 0; font-size: 11px; color: var(--muted); }
+
+/* 热力图（GitHub 风格：列=周，行=周日～周六） */
+.heat-scroll { overflow-x: auto; padding-bottom: 4px; }
+.heat-inner { display: inline-block; min-width: 100%; }
+.heat-months { position: relative; height: 16px; margin-bottom: 3px; }
+.heat-months .hm { position: absolute; top: 0; font-size: 10px; color: var(--muted); white-space: nowrap; }
+.heat-grid { display: flex; gap: 3px; }
+.heat-col { display: grid; grid-template-rows: repeat(7, 13px); gap: 3px; }
+.heat-cell { width: 13px; height: 13px; border-radius: 3px; background: var(--bar-track); }
+.heat-cell.ghost { opacity: .25; }
+.heat-cell.h1 { background: #1a4d2e; }
+.heat-cell.h2 { background: #1d7a3e; }
+.heat-cell.h3 { background: #2da44e; }
+.heat-cell.h4 { background: #4ae168; }
+body.light .heat-cell.h1 { background: #acf2b0; }
+body.light .heat-cell.h2 { background: #4ac265; }
+body.light .heat-cell.h3 { background: #2da44e; }
+body.light .heat-cell.h4 { background: #116329; }
+
+/* 条形图（最近 7 天） */
+.bars-row { display: flex; align-items: stretch; height: 200px; gap: 6px; padding-top: 18px; }
+.bar-col {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  gap: 6px; min-width: 0;
+}
+.bar-n { font-size: 11px; color: var(--text-soft); min-height: 14px; }
+.bar { width: 60%; max-width: 26px; background: var(--link); opacity: .45; border-radius: 6px 6px 2px 2px; transition: height .25s; }
+.bar-col.today .bar { opacity: 1; background: #3b82f6; }
+.bar-col.today .bar-wd { color: var(--text-head); }
+.bar-wd { font-size: 11px; color: var(--muted); }

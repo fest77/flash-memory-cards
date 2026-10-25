@@ -193,6 +193,8 @@ Notes:
 | ai providers | `AI_PRESETS` (DeepSeek/Z.ai/Kimi/Bailian/ChatGPT/Claude, added on demand — not auto-seeded)/`normalizeAi` (migration)/`renderAiProviders`/`onProviderField`/`openAddProviderModal`/`addPreset`/`addCustomProvider`/`deleteProvider`/`testProviderModal` |
 | ai quick | `openAiQuick`/`pickAiQuick` — home modal to switch provider · model without opening settings |
 | settings | `openSettings`/`onThemeChange`/`applyTheme` (body.light + meta theme-color) |
+| navigation | bottom `#tabbar` (home/manage/stats/settings, `data-act="tab"`); `showView` syncs highlight (review/quick/browse → home tab); top-right entries removed in 1.8 |
+| stats | `renderStats`/`renderHeat` (26-week GitHub-style grid, `state.daily` per-day counts, auto-scroll to latest)/`renderBars` (last 7 days)/`applyStatsMode` (`settings.statsView` = heat|bars); daily retention 370 days |
 | i18n | `I18N` dict (zh-Hans/zh-Hant/en)/`t`/`tf`/`applyI18nStatic` (`data-i18n`, `data-i18n-ph`, `data-i18n-aria`, `data-i18n-title`) |
 | events | `bindEvents` (single `data-act` delegate) + `onAction` switch |
 
@@ -290,3 +292,4 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.7.1 | preset model lists refreshed to each vendor's current APIs (2026-10): DeepSeek v4.1-Flash-1017 (`deepseek-flash`), Z.ai GLM-5.3, Kimi K3.1, Bailian Qwen3.8, OpenAI GPT-6.1, Claude 5.5; untouched legacy presets auto-upgraded on load (keyed/edited ones untouched) |
 | 1.7.2 | image import: file picker accepts images (+zip/folder), images stored in IndexedDB (kv `img/*`), rendered into cards by filename via `resolveImgSrc`; `safeUrl` now allows relative paths; Android chooser MIME adds image types; ready-to-install APK shipped at repo root |
 | 1.7.3 | zip detected by content (PK magic), not extension — renamed zips (e.g. WeChat `.apk.1`) import fine; the generic file button also routes zips to the unzipper (pass `ZIP_ACCEPT_RE` to `Core.unzipFiles` — its default filter only takes md/txt); about page feedback email |
+| 1.8.0 | bottom tab navigation (home/notes/stats/settings, top-right entries removed); new Stats view "闪记日志": GitHub-style heatmap (default) toggleable with 7-day bar chart; chart preference persisted |

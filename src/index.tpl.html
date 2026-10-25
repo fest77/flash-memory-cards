@@ -23,10 +23,6 @@
         <p data-i18n="brand.tag">md → 知识点卡片 → 随机复习</p>
       </div>
     </div>
-    <div class="top-actions">
-      <button class="icon-btn" data-act="open-manage" data-i18n-aria="nav.manage" data-i18n-title="nav.manage" aria-label="笔记管理" title="笔记管理">☰</button>
-      <button class="icon-btn" data-act="open-settings" data-i18n-aria="nav.settings" data-i18n-title="nav.settings" aria-label="设置" title="设置">⚙</button>
-    </div>
   </header>
 
   <!-- ================= 首页 ================= -->
@@ -230,6 +226,38 @@
       </div>
     </details>
   </main>
+
+  <!-- ================= 统计（闪记日志） ================= -->
+  <main id="view-stats" class="view">
+    <section class="stats-card">
+      <div class="stats-head">
+        <h2 data-i18n="stats.title">闪记日志</h2>
+        <div class="seg" role="tablist">
+          <button class="seg-btn on" data-act="stats-view" data-mode="heat" data-i18n="stats.heat">热力图</button>
+          <button class="seg-btn" data-act="stats-view" data-mode="bars" data-i18n="stats.bars">条形图</button>
+        </div>
+      </div>
+      <div id="statsChips" class="stats-chips"></div>
+      <div id="statsHeat" class="stats-chart"></div>
+      <div id="statsBars" class="stats-chart hidden"></div>
+      <p class="stats-note" data-i18n="stats.note">记录每天的复习次数 · 数据只保存在本机</p>
+    </section>
+  </main>
+
+  <nav id="tabbar" data-i18n-aria="nav.bar" aria-label="主导航">
+    <button class="tab on" data-act="tab" data-view="home">
+      <span class="tab-ico">🏠</span><span class="tab-txt" data-i18n="nav.home">主页</span>
+    </button>
+    <button class="tab" data-act="tab" data-view="manage">
+      <span class="tab-ico">📚</span><span class="tab-txt" data-i18n="nav.manage">笔记管理</span>
+    </button>
+    <button class="tab" data-act="tab" data-view="stats">
+      <span class="tab-ico">📊</span><span class="tab-txt" data-i18n="nav.stats">统计</span>
+    </button>
+    <button class="tab" data-act="tab" data-view="settings">
+      <span class="tab-ico">⚙️</span><span class="tab-txt" data-i18n="nav.settings">设置</span>
+    </button>
+  </nav>
 
   <div id="toast" class="toast"></div>
 </div>

@@ -242,7 +242,7 @@
               check('quick jump closed toc', !!q('#quickToc') && q('#quickToc').classList.contains('hidden'));
 
               /* --- 设置视图：主题 / 语言 --- */
-              q('[data-act="open-settings"]').click();
+              q('[data-act="tab"][data-view="settings"]').click();
               check('settings view active', q('#view-settings').classList.contains('active'));
               check('theme select exists', !!q('#setTheme') && !!q('#setLang'));
               check('about version shown', q('#aboutVersion').textContent.indexOf('v') === 0, q('#aboutVersion').textContent);
@@ -311,6 +311,30 @@
                     window.__imgTest ? window.__imgTest.html : 'no-run');
                   check('img missing placeholder', !!window.__imgTest && window.__imgTest.missing && window.__imgTest.missing.indexOf('img-missing') >= 0,
                     window.__imgTest ? window.__imgTest.missing : 'no-run');
+
+                  /* 底部导航 + 闪记日志 */
+                  check('tabbar has 4 tabs', document.querySelectorAll('#tabbar .tab').length === 4,
+                    document.querySelectorAll('#tabbar .tab').length);
+                  check('topbar entries removed', !document.querySelector('#topbar [data-act="open-settings"]') && !document.querySelector('#topbar [data-act="open-manage"]'),
+                    'top-actions');
+                  var st = app.state();
+                  var td = new Date();
+                  function dk(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+                  st.daily[dk(td)] = 5;
+                  var yd = new Date(td); yd.setDate(yd.getDate() - 1); st.daily[dk(yd)] = 2;
+                  var d3 = new Date(td); d3.setDate(d3.getDate() - 3); st.daily[dk(d3)] = 11;
+                  app.renderStats();
+                  check('stats view tab opens', (function(){ q('[data-act="tab"][data-view="stats"]').click(); return q('#view-stats').classList.contains('active'); })(), 'stats');
+                  check('heatmap cells rendered', document.querySelectorAll('#statsHeat .heat-cell').length > 180,
+                    document.querySelectorAll('#statsHeat .heat-cell').length);
+                  check('heatmap max level used', !!document.querySelector('#statsHeat .heat-cell.h4'), 'h4');
+                  check('stats chips show today 5', q('#statsChips').textContent.indexOf('5') >= 0, q('#statsChips').textContent);
+                  q('#view-stats [data-act="stats-view"][data-mode="bars"]').click();
+                  check('bars mode toggles', q('#statsBars').classList.contains('hidden') === false && q('#statsHeat').classList.contains('hidden') === true, 'bars');
+                  check('bars today count', q('#statsBars .bar-col.today .bar-n').textContent === '5',
+                    q('#statsBars .bar-col.today .bar-n').textContent);
+                  q('#view-stats [data-act="stats-view"][data-mode="heat"]').click();
+                  check('heat mode toggles back', q('#statsHeat').classList.contains('hidden') === false, 'heat');
 
                   /* zip 按内容识别：改名为 .apk.1 的 zip 走「选择文件」按钮也能导入 */
                   var qBefore = app.importQueue().length;
