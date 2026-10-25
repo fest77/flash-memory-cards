@@ -326,6 +326,36 @@ const zipAB = zipBytes.buffer.slice(zipBytes.byteOffset, zipBytes.byteOffset + z
     assert.ok(deck.cards.some((c) => c.question.indexOf('默认隔离级别') >= 0));
     assert.ok(deck.cards.some((c) => c.question.indexOf('MVCC') >= 0));
   });
+  test('schedule：三盒递进与回退', () => {
+    const now = 1700000000000, DAY = 86400000;
+    let st = {};
+    Object.assign(st, Core.schedule(st, 'ok', now));
+    assert.strictEqual(st.box, 1); assert.strictEqual(st.ivl, 1);
+    assert.ok(Math.abs(st.dueAt - (now + DAY)) < 1000);
+    Object.assign(st, Core.schedule(st, 'ok', now));
+    assert.strictEqual(st.box, 2); assert.strictEqual(st.ivl, 3);
+    Object.assign(st, Core.schedule(st, 'ok', now));
+    assert.strictEqual(st.box, 3); assert.strictEqual(st.ivl, 7); // 封顶
+    Object.assign(st, Core.schedule(st, 'ok', now));
+    assert.strictEqual(st.box, 3); // 不超 3
+    Object.assign(st, Core.schedule(st, 'bad', now));
+    assert.strictEqual(st.box, 1); assert.strictEqual(st.dueAt, now); // 立即到期
+    Object.assign(st, Core.schedule(st, 'fuzzy', now));
+    assert.ok(Math.abs(st.dueAt - (now + DAY)) < 1000); // 明天
+  });
+  test('isDue：旧卡/新卡视为今日到期', () => {
+    const eot = 2000000000000;
+    assert.strictEqual(Core.isDue(null, eot), true);
+    assert.strictEqual(Core.isDue({}, eot), true); // 无 box
+    assert.strictEqual(Core.isDue({ box: 1, dueAt: eot + 1 }, eot), false); // 明天
+    assert.strictEqual(Core.isDue({ box: 1, dueAt: eot }, eot), true); // 今天
+  });
+  test('qa 模式问答卡保留标题链 path', () => {
+    const deck = Core.buildDeck('t', '# 笔记\n\n## 第一章\n\nQ: a?\nA: b.\n\n## 第二章\n\nQ: c?\nA: d.', { mode: 'qa', maxCardLen: 1600, qstyle: 'prompt' });
+    const paths = deck.cards.map((c) => c.path.join('/'));
+    assert.ok(paths.includes('笔记/第一章'), paths.join(','));
+    assert.ok(paths.includes('笔记/第二章'), paths.join(','));
+  });
   test('Q/A 前的正文保留为概述卡', () => {
     const deck = Core.buildDeck('t', '## 事务隔离级别\n\n事务隔离级别共有四种，下面是重点：\n\nQ: 默认级别？\nA: 可重复读。', { mode: 'auto', maxCardLen: 1600, qstyle: 'prompt' });
     assert.ok(deck.cards.some((c) => c.answer.indexOf('四种') >= 0), '概述不应丢失');

@@ -40,7 +40,7 @@ md-flashcards/
 │   ├── build_interview_decks.py  # interview md → bundled-decks.js
 │   └── build_interview_images.py # interview images/ → bundled-images.js
 ├── tests/
-│   ├── core.test.cjs          # 53 unit tests (Node, no browser)
+│   ├── core.test.cjs          # 58 unit tests (Node, no browser)
 │   ├── browser-harness.js     # injected into the built page
 │   ├── run-browser-test.cjs   # static checks + 108 headless-Edge assertions
 │   ├── run-screenshots.cjs    # writes docs/images/*
@@ -255,7 +255,7 @@ Notes:
 ## 9. Tests
 
 ```bash
-node tests/core.test.cjs            # 53 tests, Node 18+ (DecompressionStream)
+node tests/core.test.cjs            # 58 tests, Node 18+ (DecompressionStream)
 node tests/run-browser-test.cjs     # static checks + 108 headless Edge assertions
 node tests/run-screenshots.cjs      # docs/images screenshots
 node tests/persist-test.cjs         # file:// persistence
@@ -303,3 +303,4 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.8.5 | second-round review fixes: quick-read grouping actually works (chapter = card's owning section title, `path` only holds ancestors), overview cards titled `小节 · 概览`/`文档标题 · 概览` instead of 知识点 N, `flushSave` also surfaces resolved-false, AI undo reachable from home after closing the modal (`aiRun.lastRefine`), latent `kidQA[kq]` crash fixed, `Q1、`/`Q1.` numbering recognized again (digit + 顿号/句点), parent-section preface kept when an oversized section is split into children |
 | 1.8.6 | third-round review fixes: new `chapter` field (owning section) threaded through parsing/storage/normalizeState — quick-read groups by `chapterOf` reading `chapter` only; off-by-one in parent-preface capture (`sec.start` is already the line after the heading); AI undo reports failure honestly when the deck changed; zh-Hant/en dictionaries got the missing undo strings |
 | 1.8.7 | fourth-round review fixes: chunked-card branches (paragraph chunks inside an oversized section, soleTitle chunks) also write `chapter`; qa-mode overview card shares the questions' (empty) chapter instead of a docTitle group; old-data fallback comment corrected — `path` only holds ancestors, old decks keep coarse grouping until re-imported |
+| 1.10.0 | spaced review: `Core.schedule` (Leitner 3-box 1/3/7d) + `isDue` (boxless = due today); stats gain `box/ivl/dueAt`; home due-chip; review setup modal (20/50/all, weak-first = has-errors-or-box-1, per-chapter via `chapterOf` full path); session persisted in `state.reviewSession` (queue/round2/current/undo as id lists, flushed on rate — 250ms debounce is not enough) and resumed via `#resumeBar`; undo restores stat + queue from pre-rating snapshot; quick-read groups by full `path+chapter` path (same-name sections under different parents no longer merge); qa-mode cards carry heading-chain `path`; About feedback email moved below repo links |

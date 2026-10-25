@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.9.0';
+  var APP_VERSION = '1.10.0';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -86,7 +86,7 @@
       'update.checking': '检查中…', 'update.latest': '已经是最新版本',
       'update.newTitle': '发现新版本 v{v}', 'update.newBody': '当前版本 v{cur}，是否前往更新？',
       'update.yes': '是', 'update.no': '否', 'update.fail': '检查更新失败，请检查网络后重试',
-      'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '只看没掌握 <b>{n}</b>', 'home.today': '今日已复习 <b>{n}</b>',
+      'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '只看没掌握 <b>{n}</b>', 'home.today': '今日已复习 <b>{n}</b>', 'home.due': '今日到期 <b>{n}</b>', 'home.resume': '继续上次复习：{name}（剩 {n} 张）',
       'deck.meta': '{n} 张卡片 · <span class="ok">已掌握 {k}</span> · <span class="todo">待复习 {t}</span>',
       'deck.review': '随机复习', 'deck.knownOf': '已掌握 {k}', 'deck.quick': '分类速记', 'deck.browse': '浏览/编辑',
       'deck.ai': 'AI 提炼', 'deck.export': '导出', 'deck.delete': '删除',
@@ -125,7 +125,7 @@
       'card.untitled': '未命名', 'deck.aiDefault': 'AI 卡片', 'toast.nothingToImport': '没有可导入的卡片', 'toast.aiImported': '已导入 AI 卡片 {n} 张',
       'review.noTodo': '没有「没掌握」的卡片，先全部过一遍吧', 'review.noCards': '没有可复习的卡片',
       'review.allDecks': '全部笔记 · {n} 个文件', 'deck.defaultName': '笔记',
-      'review.round2': '进入第 2 轮：再过一遍模糊/忘记的 {n} 张', 'review.round2Label': '第 2 轮',
+      'review.round2': '进入第 2 轮：再过一遍模糊/忘记的 {n} 张', 'review.setupTitle': '复习设置', 'review.count': '数量', 'review.limit20': '20 张', 'review.limit50': '50 张', 'review.limitAll': '全部', 'review.scope': '范围', 'review.scopeAll': '全部卡片', 'review.weak': '薄弱卡优先', 'review.chapters': '章节', 'review.chAll': '全部章节', 'review.start': '开始复习', 'review.undo': '撤销上一张', 'review.noUndo': '没有可撤销的评分', 'review.undone': '已恢复到评分前', 'review.noWeak': '没有薄弱卡，试试全部卡片', 'review.sessionGone': '上次会话已失效（有卡片被删除）', 'review.round2Label': '第 2 轮',
       'review.progress': '本轮 {rated} / {total} · 还剩 {left} 张',
       'review.done': '本轮完成', 'review.again': '🔁 再随机来一轮', 'review.againTodo': '只复习没掌握的', 'review.backList': '返回列表', 'review.finished': '本轮结束',
       'browse.meta': '{n} 张卡片 · 已掌握 {k}', 'browse.noMatch': '没有匹配的卡片',
@@ -205,7 +205,7 @@
       'update.checking': '檢查中…', 'update.latest': '已經是最新版本',
       'update.newTitle': '發現新版本 v{v}', 'update.newBody': '當前版本 v{cur}，是否前往更新？',
       'update.yes': '是', 'update.no': '否', 'update.fail': '檢查更新失敗，請檢查網絡後重試',
-      'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '只看沒掌握 <b>{n}</b>', 'home.today': '今日已複習 <b>{n}</b>',
+      'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '只看沒掌握 <b>{n}</b>', 'home.today': '今日已複習 <b>{n}</b>', 'home.due': '今日到期 <b>{n}</b>', 'home.resume': '繼續上次複習：{name}（剩 {n} 張）',
       'deck.meta': '{n} 張卡片 · <span class="ok">已掌握 {k}</span> · <span class="todo">待複習 {t}</span>',
       'deck.review': '隨機複習', 'deck.knownOf': '已掌握 {k}', 'deck.quick': '分類速記', 'deck.browse': '瀏覽/編輯',
       'deck.ai': 'AI 提煉', 'deck.export': '匯出', 'deck.delete': '刪除',
@@ -244,7 +244,7 @@
       'card.untitled': '未命名', 'deck.aiDefault': 'AI 卡片', 'toast.nothingToImport': '沒有可匯入的卡片', 'toast.aiImported': '已匯入 AI 卡片 {n} 張',
       'review.noTodo': '沒有「沒掌握」的卡片，先全部過一遍吧', 'review.noCards': '沒有可複習的卡片',
       'review.allDecks': '全部筆記 · {n} 個檔案', 'deck.defaultName': '筆記',
-      'review.round2': '進入第 2 輪：再過一遍模糊/忘記的 {n} 張', 'review.round2Label': '第 2 輪',
+      'review.round2': '進入第 2 輪：再過一遍模糊/忘記的 {n} 張', 'review.setupTitle': '複習設定', 'review.count': '數量', 'review.limit20': '20 張', 'review.limit50': '50 張', 'review.limitAll': '全部', 'review.scope': '範圍', 'review.scopeAll': '全部卡片', 'review.weak': '薄弱卡優先', 'review.chapters': '章節', 'review.chAll': '全部章節', 'review.start': '開始複習', 'review.undo': '撤銷上一張', 'review.noUndo': '沒有可撤銷的評分', 'review.undone': '已恢復到評分前', 'review.noWeak': '沒有薄弱卡，試試全部卡片', 'review.sessionGone': '上次會話已失效（有卡片被刪除）', 'review.round2Label': '第 2 輪',
       'review.progress': '本輪 {rated} / {total} · 還剩 {left} 張',
       'review.done': '本輪完成', 'review.again': '🔁 再隨機來一輪', 'review.againTodo': '只複習沒掌握的', 'review.backList': '返回列表', 'review.finished': '本輪結束',
       'browse.meta': '{n} 張卡片 · 已掌握 {k}', 'browse.noMatch': '沒有匹配的卡片',
@@ -324,7 +324,7 @@
       'update.checking': 'Checking…', 'update.latest': 'You are up to date',
       'update.newTitle': 'New version v{v} available', 'update.newBody': 'Current version is v{cur}. Update now?',
       'update.yes': 'Yes', 'update.no': 'No', 'update.fail': 'Update check failed, please try again later',
-      'home.allCards': 'All cards <b>{n}</b>', 'home.todoCards': 'Not mastered <b>{n}</b>', 'home.today': 'Reviewed today <b>{n}</b>',
+      'home.allCards': 'All cards <b>{n}</b>', 'home.todoCards': 'Not mastered <b>{n}</b>', 'home.today': 'Reviewed today <b>{n}</b>', 'home.due': 'Due today <b>{n}</b>', 'home.resume': 'Resume last session: {name} ({n} left)',
       'deck.meta': '{n} cards · <span class="ok">{k} known</span> · <span class="todo">{t} to go</span>',
       'deck.review': 'Review', 'deck.knownOf': '{k} known', 'deck.quick': 'Quick read', 'deck.browse': 'Browse/Edit',
       'deck.ai': 'AI refine', 'deck.export': 'Export', 'deck.delete': 'Delete',
@@ -363,7 +363,7 @@
       'card.untitled': 'Untitled', 'deck.aiDefault': 'AI cards', 'toast.nothingToImport': 'No importable cards', 'toast.aiImported': 'Imported {n} AI cards',
       'review.noTodo': 'No unmastered cards left — review everything once more', 'review.noCards': 'No cards to review',
       'review.allDecks': 'All notes · {n} files', 'deck.defaultName': 'Note',
-      'review.round2': 'Round 2: replaying the {n} fuzzy/forgotten cards', 'review.round2Label': 'Round 2',
+      'review.round2': 'Round 2: replaying the {n} fuzzy/forgotten cards', 'review.setupTitle': 'Review options', 'review.count': 'Cards', 'review.limit20': '20', 'review.limit50': '50', 'review.limitAll': 'All', 'review.scope': 'Scope', 'review.scopeAll': 'All cards', 'review.weak': 'Weak first', 'review.chapters': 'Sections', 'review.chAll': 'All sections', 'review.start': 'Start', 'review.undo': 'Undo last rating', 'review.noUndo': 'Nothing to undo', 'review.undone': 'Rating undone', 'review.noWeak': 'No weak cards — try all cards', 'review.sessionGone': 'Last session is no longer valid (cards were deleted)', 'review.round2Label': 'Round 2',
       'review.progress': 'This round {rated} / {total} · {left} left',
       'review.done': 'Round complete', 'review.again': '🔁 Another random round', 'review.againTodo': 'Review unmastered only', 'review.backList': 'Back to list', 'review.finished': 'Round finished',
       'browse.meta': '{n} cards · {k} known', 'browse.noMatch': 'No matching cards',
@@ -778,6 +778,9 @@
     }
     if (raw.stats && typeof raw.stats === 'object') s.stats = raw.stats;
     if (raw.daily && typeof raw.daily === 'object') s.daily = raw.daily;
+    if (raw.reviewSession && typeof raw.reviewSession === 'object' && Array.isArray(raw.reviewSession.queueIds)) {
+      s.reviewSession = raw.reviewSession; // 复习会话（继续上次）
+    }
     if (raw.settings && typeof raw.settings === 'object') {
       Object.keys(s.settings).forEach(function (k) {
         if (raw.settings[k] != null) s.settings[k] = raw.settings[k];
@@ -850,6 +853,33 @@
   function ensureStat(cardId) {
     if (!state.stats[cardId]) state.stats[cardId] = { s: 'new', n: 0, ok: 0, bad: 0, last: 0 };
     return state.stats[cardId];
+  }
+
+  function endOfTodayMs() {
+    var d = new Date();
+    d.setHours(23, 59, 59, 999);
+    return d.getTime();
+  }
+
+  /** 是否到期：无 box（旧卡/新卡）视为今日到期；有 box 看 dueAt 是否不晚于今天结束 */
+  function isDueStat(st) {
+    return Core.isDue(st, endOfTodayMs());
+  }
+
+  /** 薄弱卡：有过错误、或仍在盒 1、或从没进过盒 */
+  function isWeakStat(st) {
+    if (!st) return true;
+    if ((st.bad || 0) > 0) return true;
+    if (!st.box || st.box <= 1) return true;
+    return false;
+  }
+
+  function dueCountAll() {
+    var n = 0;
+    state.decks.forEach(function (d) {
+      d.cards.forEach(function (c) { if (isDueStat(state.stats[c.id])) n++; });
+    });
+    return n;
   }
 
   function knownOf(deck) {
@@ -1300,11 +1330,21 @@
     $('#statBar').innerHTML =
       '<button class="chip ' + (filter === 'all' ? 'on' : '') + '" data-act="set-filter" data-filter="all">' + tf('home.allCards', { n: totalCards }) + '</button>' +
       '<button class="chip ' + (filter === 'todo' ? 'on' : '') + '" data-act="set-filter" data-filter="todo">' + tf('home.todoCards', { n: totalCards - knownCards }) + '</button>' +
-      '<span class="chip">' + tf('home.today', { n: today }) + '</span>';
+      '<span class="chip">' + tf('home.today', { n: today }) + '</span>' +
+      '<span class="chip due">' + tf('home.due', { n: dueCountAll() }) + '</span>';
 
     var hasDecks = state.decks.length > 0;
     $('#heroEmpty').classList.toggle('hidden', hasDecks);
     $('#homeBody').classList.toggle('hidden', !hasDecks);
+
+    var rs = state.reviewSession;
+    var rb = $('#resumeBar');
+    if (rb) {
+      var remain = rs ? rs.queueIds.length + rs.round2Ids.length + (rs.currentId ? 1 : 0) : 0;
+      rb.innerHTML = (rs && remain > 0)
+        ? '<button class="btn primary" data-act="resume-review">' + ESC(tf('home.resume', { name: rs.deckName, n: remain })) + '</button>'
+        : '';
+    }
 
     if (!hasDecks) {
       $('#deckList').innerHTML = '';
@@ -2101,29 +2141,44 @@
 
   /* ============================== 复习 ============================== */
 
-  function collectReviewItems(deckIds, filter) {
+  function collectReviewItems(deckIds, o) {
     var out = [];
     deckIds.forEach(function (id) {
       var d = findDeck(id);
       if (!d) return;
       d.cards.forEach(function (c) {
-        if (filter === 'todo' && statusOf(c.id) === 'known') return;
+        if (o.filter === 'todo' && statusOf(c.id) === 'known') return;
+        if (o.scope === 'weak' && !isWeakStat(state.stats[c.id])) return;
+        if (o.chapter && chapterOf(c) !== o.chapter) return;
         out.push({ card: c, deckId: id, deckName: d.name });
       });
     });
     return out;
   }
 
-  function startReview(deckIds, filter) {
-    var items = collectReviewItems(deckIds, filter || 'all');
+  function startReview(deckIds, opts) {
+    var o = (typeof opts === 'string') ? { filter: opts } : (opts || {});
+    var items = collectReviewItems(deckIds, o);
     if (!items.length) {
-      toast(filter === 'todo' ? t('review.noTodo') : t('review.noCards'));
+      toast(o.scope === 'weak' ? t('review.noWeak') : (o.filter === 'todo' || o.filter === 'todoonly' ? t('review.noTodo') : t('review.noCards')));
       return;
     }
-    shuffle(items);
+    // 到期优先：到期卡洗牌后排前面，未到期排后面；数量限制时优先留下到期的
+    if (o.count && items.length > o.count) {
+      shuffle(items);
+      var due = [], not = [];
+      items.forEach(function (it) {
+        if (isDueStat(state.stats[it.card.id])) due.push(it); else not.push(it);
+      });
+      items = due.concat(not).slice(0, o.count);
+    } else {
+      shuffle(items);
+    }
     review = {
       deckIds: deckIds.slice(),
-      filter: filter || 'all',
+      filter: o.filter || 'all',
+      scope: o.scope || 'all',
+      chapter: o.chapter || '',
       deckName: deckIds.length === 1
         ? (findDeck(deckIds[0]) || {}).name || t('deck.defaultName')
         : tf('review.allDecks', { n: deckIds.length }),
@@ -2141,12 +2196,141 @@
     $('#rvSummary').classList.add('hidden');
     $('#rvCard').classList.remove('hidden');
     $('#rvAnswer').innerHTML = '';
+    saveReviewSession();
     showView('review');
     nextCard();
   }
 
+  /* ---------- 复习设置弹窗（数量 / 范围 / 章节） ---------- */
+  function openReviewSetup(deckId) {
+    var d = findDeck(deckId);
+    if (!d) return;
+    var chs = [];
+    d.cards.forEach(function (c) {
+      var g = chapterOf(c);
+      if (chs.indexOf(g) < 0) chs.push(g);
+    });
+    openModal(
+      '<h3>' + t('review.setupTitle') + '</h3>' +
+      '<div class="field"><label>' + t('review.count') + '</label>' +
+        '<div class="seg-row">' +
+          '<label class="seg-opt"><input type="radio" name="rvCount" value="20">' + t('review.limit20') + '</label>' +
+          '<label class="seg-opt"><input type="radio" name="rvCount" value="50">' + t('review.limit50') + '</label>' +
+          '<label class="seg-opt"><input type="radio" name="rvCount" value="all" checked>' + t('review.limitAll') + '</label>' +
+        '</div></div>' +
+      '<div class="field"><label>' + t('review.scope') + '</label>' +
+        '<div class="seg-row">' +
+          '<label class="seg-opt"><input type="radio" name="rvScope" value="all" checked>' + t('review.scopeAll') + '</label>' +
+          '<label class="seg-opt"><input type="radio" name="rvScope" value="weak">' + t('review.weak') + '</label>' +
+        '</div></div>' +
+      '<div class="field"><label for="rvChapterSel">' + t('review.chapters') + '</label>' +
+        '<select id="rvChapterSel"><option value="">' + t('review.chAll') + '</option>' +
+          chs.map(function (c) { return '<option value="' + ESC(c) + '">' + ESC(c) + '</option>'; }).join('') +
+        '</select></div>' +
+      '<div class="modal-actions">' +
+        '<button class="btn" data-act="close-modal">' + t('btn.cancel') + '</button>' +
+        '<button class="btn primary" data-act="review-start" data-deck="' + d.id + '">' + t('review.start') + '</button>' +
+      '</div>'
+    );
+    modalPayload = { deckId: d.id };
+  }
+
   function currentRoundTotal() {
     return review ? review.total : 0;
+  }
+
+  function sessionIds(arr) { return arr.map(function (x) { return x.card.id; }); }
+
+  function saveReviewSession() {
+    if (!review) return;
+    // 会话直接写入 state 并立即落盘：复习中途退出/刷新不能丢（防抖 250ms 可能赶不上）
+    var u = review.undo;
+    state.reviewSession = {
+      deckIds: review.deckIds.slice(),
+      filter: review.filter,
+      deckName: review.deckName,
+      phase: review.phase,
+      total: review.total,
+      rated: review.rated,
+      okCount: review.okCount,
+      fuzzyCount: review.fuzzyCount,
+      badCount: review.badCount,
+      queueIds: sessionIds(review.queue),
+      round2Ids: sessionIds(review.round2),
+      currentId: review.current ? review.current.card.id : null,
+      undo: u ? {
+        cardId: u.cardId, stat: u.stat,
+        queueIds: sessionIds(u.queue), round2Ids: sessionIds(u.round2),
+        phase: u.phase, rated: u.rated, okCount: u.okCount, fuzzyCount: u.fuzzyCount, badCount: u.badCount, total: u.total
+      } : null,
+      savedAt: Date.now()
+    };
+  }
+
+  function clearReviewSession() {
+    state.reviewSession = null;
+  }
+
+  function resolveItem(cardId) {
+    var ids = (state.reviewSession && state.reviewSession.deckIds) || (review ? review.deckIds : []);
+    for (var i = 0; i < ids.length; i++) {
+      var d = findDeck(ids[i]);
+      if (!d) continue;
+      for (var j = 0; j < d.cards.length; j++) {
+        if (d.cards[j].id === cardId) return { card: d.cards[j], deckId: d.id, deckName: d.name };
+      }
+    }
+    return null;
+  }
+
+  function resumeReview() {
+    var ss = state.reviewSession;
+    if (!ss) return;
+    var gone = false;
+    var mk = function (id) { var it = resolveItem(id); if (!it) gone = true; return it; };
+    var queue = ss.queueIds.map(mk).filter(Boolean);
+    var round2 = ss.round2Ids.map(mk).filter(Boolean);
+    var undo = null;
+    if (ss.undo) {
+      undo = {
+        cardId: ss.undo.cardId, stat: ss.undo.stat,
+        queue: ss.undo.queueIds.map(mk).filter(Boolean),
+        round2: ss.undo.round2Ids.map(mk).filter(Boolean),
+        phase: ss.undo.phase, rated: ss.undo.rated, okCount: ss.undo.okCount,
+        fuzzyCount: ss.undo.fuzzyCount, badCount: ss.undo.badCount, total: ss.undo.total
+      };
+    }
+    if (gone) { // 有卡片被删除：会话失效
+      state.reviewSession = null;
+      toast(t('review.sessionGone'));
+      renderHome();
+      return;
+    }
+    review = {
+      deckIds: ss.deckIds.slice(),
+      filter: ss.filter,
+      deckName: ss.deckName,
+      phase: ss.phase,
+      queue: queue,
+      round2: round2,
+      total: ss.total,
+      rated: ss.rated,
+      okCount: ss.okCount,
+      fuzzyCount: ss.fuzzyCount,
+      badCount: ss.badCount,
+      current: null,
+      revealed: false,
+      undo: undo
+    };
+    $('#rvSummary').classList.add('hidden');
+    $('#rvCard').classList.remove('hidden');
+    $('#rvAnswer').innerHTML = '';
+    showView('review');
+    if (ss.currentId) {
+      var cur = resolveItem(ss.currentId);
+      if (cur) { review.current = cur; review.revealed = false; renderCard(); return; }
+    }
+    nextCard();
   }
 
   function nextCard() {
@@ -2166,6 +2350,7 @@
     }
     review.current = review.queue.shift();
     review.revealed = false;
+    saveReviewSession();
     renderCard();
   }
 
@@ -2178,6 +2363,8 @@
     var left = review.total - review.rated;
     $('#rvProg').textContent = tf('review.progress', { rated: review.rated, total: review.total, left: left });
     $('#rvBar').style.width = (currentRoundTotal() ? Math.min(100, (review.rated / currentRoundTotal()) * 100) : 0) + '%';
+    var ub = $('#undoRateBtn');
+    if (ub) ub.classList.toggle('hidden', !review.undo);
 
     var pathParts = [];
     if (review.deckIds.length > 1) pathParts.push(q.deckName);
@@ -2227,8 +2414,20 @@
     if (!review || !review.current || !review.revealed) return;
     var item = review.current;
     var st = ensureStat(item.card.id);
+    // 撤销快照（评分前）：可恢复该卡状态与整个队列
+    review.undo = {
+      cardId: item.card.id,
+      stat: { s: st.s, n: st.n, ok: st.ok, bad: st.bad, last: st.last, box: st.box, dueAt: st.dueAt, ivl: st.ivl },
+      queue: review.queue.slice(),
+      round2: review.round2.slice(),
+      phase: review.phase,
+      rated: review.rated,
+      okCount: review.okCount, fuzzyCount: review.fuzzyCount, badCount: review.badCount,
+      total: review.total
+    };
     st.n = (st.n || 0) + 1;
     st.last = Date.now();
+    Object.assign(st, Core.schedule(st, kind, Date.now()));
     if (kind === 'ok') {
       st.ok = (st.ok || 0) + 1;
       st.s = 'known';
@@ -2242,12 +2441,45 @@
     }
     review.rated++;
     bumpDaily();
+    saveReviewSession();
     scheduleSave();
+    flushSave();
     review.current = null;
     nextCard();
   }
 
+  /* ---------- 撤销上一张评分 ---------- */
+  function undoRate() {
+    if (!review || !review.undo) { toast(t('review.noUndo')); return; }
+    var u = review.undo;
+    review.undo = null;
+    var st = state.stats[u.cardId];
+    if (st) {
+      st.s = u.stat.s; st.n = u.stat.n; st.ok = u.stat.ok; st.bad = u.stat.bad;
+      st.last = u.stat.last; st.box = u.stat.box; st.dueAt = u.stat.dueAt; st.ivl = u.stat.ivl;
+    }
+    review.queue = u.queue.slice();
+    review.round2 = u.round2.slice();
+    review.phase = u.phase;
+    review.rated = u.rated;
+    review.okCount = u.okCount; review.fuzzyCount = u.fuzzyCount; review.badCount = u.badCount;
+    review.total = u.total;
+    var item = resolveItem(u.cardId);
+    if (!item) { // 卡片在撤销前被删：丢弃会话重新开始
+      toast(t('review.noUndo'));
+      clearReviewSession();
+      goHome();
+      return;
+    }
+    review.current = item;
+    review.revealed = false;
+    saveReviewSession();
+    renderCard();
+    toast(t('review.undone'), 1600);
+  }
+
   function finishReview() {
+    clearReviewSession();
     $('#rvCard').classList.add('hidden');
     $('#btnShow').classList.add('hidden');
     $('#rateRow').classList.add('hidden');
@@ -2441,13 +2673,15 @@
   /* ============================== 分类速记 ============================== */
 
   function chapterOf(card) {
+    // 完整路径分组：祖先标题链 + 所属小节，不同章节下的同名小节不会合并
+    var parts = [];
+    (card.path || []).forEach(function (p) {
+      p = String(p || '').trim();
+      if (p && parts.indexOf(p) < 0) parts.push(p);
+    });
     var ch = String(card.chapter || '').trim();
-    if (ch) return ch;
-    // 旧数据（v1.8.5 之前）没有 chapter：path 只存祖先标题链，末项回退是近似——
-    // 老笔记保持旧的粗粒度分组，重新导入同一文件即可获得精确的所属小节分组
-    var p = card.path || [];
-    for (var i = p.length - 1; i >= 0; i--) if (p[i]) return p[i];
-    return t('quick.uncategorized');
+    if (ch && parts.indexOf(ch) < 0) parts.push(ch);
+    return parts.length ? parts.join(' / ') : t('quick.uncategorized');
   }
 
   function quickChapterNames(deck) {
@@ -2928,10 +3162,29 @@
         loadDemo();
         break;
       case 'review': {
-        var deckId = el.getAttribute('data-deck');
-        startReview([deckId], state.settings.filter);
+        openReviewSetup(el.getAttribute('data-deck'));
         break;
       }
+      case 'review-start': {
+        var sd = el.getAttribute('data-deck');
+        var cnt = (document.querySelector('input[name="rvCount"]:checked') || {}).value || 'all';
+        var scope = (document.querySelector('input[name="rvScope"]:checked') || {}).value || 'all';
+        var chap = (document.querySelector('#rvChapterSel') || {}).value || '';
+        closeModal();
+        startReview([sd], {
+          count: cnt === 'all' ? 0 : parseInt(cnt, 10),
+          scope: scope,
+          chapter: chap,
+          filter: state.settings.filter
+        });
+        break;
+      }
+      case 'resume-review':
+        resumeReview();
+        break;
+      case 'undo-rate':
+        undoRate();
+        break;
       case 'review-all': {
         var ids = state.decks.map(function (d) { return d.id; });
         if (ids.length) startReview(ids, state.settings.filter);
@@ -3021,10 +3274,10 @@
         }
         break;
       case 'again':
-        if (review) startReview(review.deckIds, review.filter);
+        if (review) startReview(review.deckIds, {});
         break;
       case 'again-todo':
-        if (review) startReview(review.deckIds, 'todo');
+        if (review) startReview(review.deckIds, { filter: 'todo' });
         break;
       case 'reset-progress': {
         var rid = browse.deckId;

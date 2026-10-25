@@ -40,6 +40,7 @@
 
     <section id="homeBody" class="hidden">
       <div id="statBar" class="statbar"></div>
+      <div id="resumeBar" class="resume-bar"></div>
       <div class="action-grid">
         <button class="btn primary big" data-act="open-import" data-i18n="btn.importBatch">📥 导入 md / zip（批量）</button>
         <div class="row-3">
@@ -119,6 +120,9 @@
         <button class="btn rate bad" data-act="rate" data-rate="bad">😵<span data-i18n="rate.bad">忘了</span></button>
         <button class="btn rate fuzzy" data-act="rate" data-rate="fuzzy">🤔<span data-i18n="rate.fuzzy">模糊</span></button>
         <button class="btn rate ok" data-act="rate" data-rate="ok">😎<span data-i18n="rate.ok">记住了</span></button>
+      </div>
+      <div class="rv-undo">
+        <button class="btn sm ghost hidden" id="undoRateBtn" data-act="undo-rate" data-i18n="review.undo">撤销上一张</button>
       </div>
     </div>
   </main>
@@ -218,12 +222,12 @@
         <div class="about-name-en">MD FlashCards</div>
         <div class="about-version" id="aboutVersion"></div>
         <div class="about-author" data-i18n="about.author">作者：fest</div>
-        <div class="about-feedback" data-i18n="about.feedback">如有 bug 和建议反馈，可联系邮箱：<a href="mailto:fest1024@163.com">fest1024@163.com</a></div>
         <div class="about-check"><button class="btn sm" id="checkUpdateBtn" data-act="check-update" data-i18n="about.checkUpdate">检查更新</button></div>
         <div class="about-links">
           <a href="https://gitee.com/festeel/flash-memory-cards" target="_blank" rel="noopener">Gitee</a>
           <a href="https://github.com/fest77/flash-memory-cards" target="_blank" rel="noopener">GitHub</a>
         </div>
+        <div class="about-feedback" data-i18n="about.feedback">如有 bug 和建议反馈，可联系邮箱：<a href="mailto:fest1024@163.com">fest1024@163.com</a></div>
       </div>
     </details>
   </main>

@@ -155,6 +155,40 @@
     return cands[0].level;
   }
 
+  /* ============================== 轻量间隔复习（Leitner 3 盒） ============================== */
+
+  var BOX_IVL = [1, 3, 7]; // 盒 1/2/3 的间隔天数
+
+  /**
+   * 评分后的调度（纯函数）：返回应写入 stat 的调度字段。
+   * ok → 盒数上升、间隔拉长；fuzzy → 回到盒 1、明天再来；bad → 回到盒 1、立即到期。
+   * 无 box 的旧卡/新卡视为盒 0（答对即进盒 1）。
+   */
+  function schedule(st, kind, now) {
+    var base = (st && st.box) || 0;
+    var box, ivl, dueAt;
+    if (kind === 'ok') {
+      box = Math.min(3, base + 1);
+      ivl = BOX_IVL[box - 1];
+      dueAt = now + ivl * 86400000;
+    } else if (kind === 'fuzzy') {
+      box = 1;
+      ivl = 1;
+      dueAt = now + 86400000;
+    } else {
+      box = 1;
+      ivl = 0;
+      dueAt = now;
+    }
+    return { box: box, ivl: ivl, dueAt: dueAt };
+  }
+
+  /** 是否到期：无 box（旧卡/新卡）视为今日到期；有 box 看 dueAt 是否不晚于今天结束。 */
+  function isDue(st, endOfTodayMs) {
+    if (!st || !st.box) return true;
+    return (st.dueAt || 0) <= (endOfTodayMs || 0);
+  }
+
   /* ============================== 问答（Q/A）识别 ============================== */
 
   var Q_KEYS = 'Question|Q|问题|问|题目|考点';
@@ -185,6 +219,7 @@
       cur = null;
       target = null;
     }
+    var at = from;
 
     for (var i = from; i < to; i++) {
       var line = lines[i];
@@ -197,13 +232,13 @@
       if ((m = RE_Q.exec(line)) && (m[0].length > 0)) {
         seenMarker = true;
         flush();
-        cur = { q: line.slice(m[0].length), a: '' };
+        cur = { q: line.slice(m[0].length), a: '', at: i };
         target = 'q';
         continue;
       }
       if ((m = RE_A.exec(line)) && (m[0].length > 0)) {
         seenMarker = true;
-        if (!cur) cur = { q: '', a: '' };
+        if (!cur) { cur = { q: '', a: '', at: i }; }
         target = 'a';
         cur.a += (cur.a ? '\n' : '') + line.slice(m[0].length);
         continue;
@@ -217,7 +252,7 @@
     for (var p = 0; p < pairs.length; p++) {
       var q = trimBlank(pairs[p].q);
       var a = trimBlank(pairs[p].a);
-      if (q && a) out.push({ q: q, a: a });
+      if (q && a) out.push({ q: q, a: a, at: pairs[p].at || 0 });
     }
     // 前导正文里的小节标题行/空行是结构性的，不算内容
     var preText = trimBlank(preBuf.filter(function (l) { return l.trim() && !/^#{1,6}\s/.test(l); }).join('\n'));
@@ -516,13 +551,33 @@
     var docTitle = '';
     if (headings.length && headings[0].index <= 2 && headings[0].level <= 2) docTitle = headings[0].title;
 
+    // 每行所属的祖先标题链（不含该行之后的标题）——问答模式用它保留标题层级
+    var chainAt = (function () {
+      var arr = new Array(lines.length);
+      var chain = [];
+      var hi = 0;
+      for (var li = 0; li < lines.length; li++) {
+        arr[li] = chain.map(function (c) { return c.title; });
+        while (hi < headings.length && headings[hi].index <= li) {
+          var h = headings[hi];
+          while (chain.length && chain[chain.length - 1].level >= h.level) chain.pop();
+          chain.push(h);
+          hi++;
+        }
+      }
+      return arr;
+    })();
+
     var raw = [];
     var modeUsed = opts.mode;
 
     if (opts.mode === 'qa') {
       var qaAll = extractQA(lines, mask, 0, lines.length);
       if (qaAll.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '概览', question: '', answer: qaAll.pre, path: [] });
-      for (var i = 0; i < qaAll.pairs.length; i++) raw.push({ title: '', question: qaAll.pairs[i].q, answer: qaAll.pairs[i].a, path: [] });
+      for (var i = 0; i < qaAll.pairs.length; i++) {
+        var ch = chainAt[qaAll.pairs[i].at] || [];
+        raw.push({ title: '', question: qaAll.pairs[i].q, answer: qaAll.pairs[i].a, path: ch });
+      }
     } else if (opts.mode === 'hr') {
       raw = cardsFromHr(lines, mask, opts);
     } else if (opts.mode === 'para') {
@@ -977,6 +1032,9 @@
     makeCloze: makeCloze,
     isQuestionLike: isQuestionLike,
     pickTemplate: pickTemplate,
+    schedule: schedule,
+    isDue: isDue,
+    BOX_IVL: BOX_IVL,
     unzipFiles: unzipFiles,
     unzipTextFiles: unzipTextFiles,
     decodeBytes: decodeBytes

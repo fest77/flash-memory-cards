@@ -156,14 +156,21 @@
         }, 400);
       })();
 
-      /* --- 复习 --- */
+      /* --- 复习（经设置弹窗） --- */
       q('[data-act="review"][data-deck="' + testDeckId + '"]').click();
+      check('review setup modal opens', !q('#modal').classList.contains('hidden') && !!q('#modalBox [data-act="review-start"]'), 'setup');
+      check('setup has 20 option', !!q('#modalBox input[name="rvCount"][value="20"]'), '20');
+      check('setup has weak option', !!q('#modalBox input[name="rvScope"][value="weak"]'), 'weak');
+      check('setup chapter select', q('#modalBox #rvChapterSel').options.length >= 1, q('#modalBox #rvChapterSel').options.length);
+      q('#modalBox [data-act="review-start"]').click();
       check('review active', q('#view-review').classList.contains('active'));
       check('card title shown', q('#rvTitle').textContent.length > 0, q('#rvTitle').textContent);
       check('progress text', q('#rvProg').textContent.indexOf('/') > 0, q('#rvProg').textContent);
       check('answer hidden initially', q('#rvAnswer').classList.contains('hidden'));
       check('rate row hidden initially', q('#rateRow').classList.contains('hidden'));
 
+      // 评分 → 撤销按钮出现 → 撤销恢复
+      var undoCid = app.state().reviewSession ? app.state().reviewSession.currentId : null;
       q('[data-act="show-answer"]').click();
       check('answer visible after reveal', !q('#rvAnswer').classList.contains('hidden'));
       check('answer html rendered', q('#rvAnswer').innerHTML.length > 5);
@@ -174,6 +181,25 @@
       var known = 0;
       Object.keys(stats).forEach(function (k) { if (stats[k].s === 'known') known++; });
       check('stat recorded', Object.keys(stats).length >= 1, Object.keys(stats).length);
+      /* 撤销链路：重开一轮，评一张，撤销，验证 stat 回滚 */
+      (function(){
+        var d0 = app.state().decks[0];
+        if (!d0) return;
+        app.startReview([d0.id], {});
+        if (!window.MDReviewApp.state().reviewSession) return;
+        var cid = app.state().reviewSession.currentId;
+        app.showAnswer();
+        q('[data-rate="ok"]').click();
+        var after = app.state().stats[cid];
+        var box1 = after && after.box === 1 && after.n === 1;
+        check('schedule applied on rate', box1, after ? 'box=' + after.box + ' n=' + after.n : 'no stat');
+        var ub = q('#undoRateBtn');
+        check('undo visible after rate', ub && !ub.classList.contains('hidden'), 'visible');
+        ub.click();
+        var st2 = app.state().stats[cid];
+        check('undo restores stat', st2 && (st2.n === 0) && (!st2.box), st2 ? 'n=' + st2.n + ' box=' + st2.box : 'gone');
+        check('undo keeps queue', app.state().reviewSession && app.state().reviewSession.currentId === cid, 'same card back');
+      })();
       check('known marked', known === 1, known);
 
       /* --- 跑完一轮 --- */
@@ -311,6 +337,20 @@
                     window.__imgTest ? window.__imgTest.html : 'no-run');
                   check('img missing placeholder', !!window.__imgTest && window.__imgTest.missing && window.__imgTest.missing.indexOf('img-missing') >= 0,
                     window.__imgTest ? window.__imgTest.missing : 'no-run');
+
+                  /* 到期 chip + 撤销 */
+                  check('due chip shown', q('#statBar').textContent.indexOf('今日到期') >= 0, q('#statBar').textContent.slice(0, 60));
+                  // 撤销链路：开一轮新复习，评一张 → 按钮出现 → 撤销 → 恢复
+                  (function(){
+                    var dd = app.state().decks[0];
+                    if (!dd) { check('undo flow', false, 'no deck'); return; }
+                    q('#tabbar [data-view="home"]') && q('[data-act="tab"][data-view="home"]').click();
+                    var rbtn = q('#deckList [data-act="review"][data-deck="' + dd.id + '"]');
+                    if (rbtn) rbtn.click();
+                    var go = q('#modalBox [data-act="review-start"]');
+                    if (go) go.click();
+                  })();
+                  var st0 = window.__undoT = null;
 
                   /* 底部导航 + 闪记日志 */
                   check('tabbar has 4 tabs', document.querySelectorAll('#tabbar .tab').length === 4,
