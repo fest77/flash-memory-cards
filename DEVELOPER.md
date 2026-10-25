@@ -195,6 +195,8 @@ Notes:
 | settings | `openSettings`/`onThemeChange`/`applyTheme` (body.light + meta theme-color) |
 | navigation | bottom `#tabbar` (home/manage/stats/settings, `data-act="tab"`); `showView` syncs highlight (review/quick/browse → home tab); top-right entries removed in 1.8 |
 | stats | `renderStats`/`renderHeat` (26-week GitHub-style grid, `state.daily` per-day counts, auto-scroll to latest)/`renderBars` (last 7 days)/`applyStatsMode` (`settings.statsView` = heat|bars); daily retention 370 days |
+| obsidian images | `Core.convertWikiImages` (`![[path/img.png|w]]` → `![](path/img.png)`, applied in renderMarkdown + renderInline); `resolveImgSrc` also wired into the single-line question branch (`renderInline`) and the review title (titles containing image syntax render as imgs via `.rv-title img` CSS) |
+| android schemes | `shouldOverrideUrlLoading` routes non-http(s) schemes (mailto:/tel:) to system apps via ACTION_VIEW |
 | stats extras | touch/mouse tooltip `#statTip` via delegated pointerover/pointerdown on `[data-tip]`; Y/M/D selectors (from 2020) set `statsAnchor` — both charts re-window around it (heat 26wk ends at anchor + `.sel` outline, bars = 7 days ending at anchor); `renderStatsCharts`/`applyStatsMode` re-scroll (rAF) since hidden charts can't scroll; `stats-today` resets |
 | i18n | `I18N` dict (zh-Hans/zh-Hant/en)/`t`/`tf`/`applyI18nStatic` (`data-i18n`, `data-i18n-ph`, `data-i18n-aria`, `data-i18n-title`) |
 | events | `bindEvents` (single `data-act` delegate) + `onAction` switch |
@@ -296,3 +298,4 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.8.0 | bottom tab navigation (home/notes/stats/settings, top-right entries removed); new Stats view "闪记日志": GitHub-style heatmap (default) toggleable with 7-day bar chart; chart preference persisted |
 | 1.8.1 | stats: tap/hover tooltip (date + count) on heatmap cells, bars and month cells; Y/M/D picker (years from 2020) switching heatmap to a calendar-month heat view with selected-day highlight; back-to-today reset |
 | 1.8.2 | date search reworked after feedback: heatmap keeps its form (window shifts to selected date, cell outlined) instead of turning into a calendar; bars now follow the search too (7 days ending at the date); scroll-into-view fix for charts rendered while hidden |
+| 1.8.3 | Obsidian `![[...]]` image embeds render in cards (title/question/answer); mailto: links in About open the system email app instead of ERR_UNKNOWN_URL_SCHEME |
