@@ -13,6 +13,8 @@ android/app/src/main/assets/*.html
 *.aab
 *.jks
 *.keystore
+# 固定调试签名（debug 密钥按 Android 惯例不是机密），随仓库提交以保证 CI 构建签名一致、可覆盖安装
+!android/debug.keystore
 
 # Python
 __pycache__/
