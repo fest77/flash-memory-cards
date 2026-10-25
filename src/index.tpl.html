@@ -238,7 +238,14 @@
         </div>
       </div>
       <div id="statsChips" class="stats-chips"></div>
+      <div class="stats-nav">
+        <select id="statsY" class="sel" data-i18n-aria="stats.year" aria-label="年"></select>
+        <select id="statsM" class="sel" data-i18n-aria="stats.month" aria-label="月"></select>
+        <select id="statsD" class="sel" data-i18n-aria="stats.day" aria-label="日"></select>
+        <button class="btn mini" data-act="stats-today" data-i18n="stats.backToday">回到今天</button>
+      </div>
       <div id="statsHeat" class="stats-chart"></div>
+      <div id="statsMonth" class="stats-chart hidden"></div>
       <div id="statsBars" class="stats-chart hidden"></div>
       <p class="stats-note" data-i18n="stats.note">记录每天的复习次数 · 数据只保存在本机</p>
     </section>
@@ -259,6 +266,7 @@
     </button>
   </nav>
 
+  <div id="statTip" class="stat-tip hidden"></div>
   <div id="toast" class="toast"></div>
 </div>
 

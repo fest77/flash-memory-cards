@@ -336,6 +336,38 @@
                   q('#view-stats [data-act="stats-view"][data-mode="heat"]').click();
                   check('heat mode toggles back', q('#statsHeat').classList.contains('hidden') === false, 'heat');
 
+                  /* 日期气泡 + 年月日选择器 */
+                  var tipTarget = document.querySelector('#statsHeat .heat-cell[data-tip*="5"]');
+                  check('heat cells carry tips', !!tipTarget, tipTarget ? 'ok' : 'none');
+                  if (tipTarget) {
+                    tipTarget.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                    check('tap shows tip bubble', !q('#statTip').classList.contains('hidden') && q('#statTip').textContent.length > 0,
+                      q('#statTip').textContent);
+                  }
+                  var barTip = q('#statsBars .bar-col[data-tip]');
+                  check('bars carry date tips', !!barTip, barTip ? barTip.getAttribute('data-tip') : 'none');
+                  var sy = q('#statsY');
+                  check('year starts at 2020', sy.options.length > 0 && sy.options[0].value === '2020',
+                    sy.options.length ? sy.options[0].value : 'empty');
+                  sy.value = sy.options[sy.options.length - 1].value;
+                  sy.dispatchEvent(new Event('change', { bubbles: true }));
+                  q('#statsM').value = q('#statsM').options[q('#statsM').options.length - 1].value;
+                  q('#statsM').dispatchEvent(new Event('change', { bubbles: true }));
+                  check('month view appears', !q('#statsMonth').classList.contains('hidden') && document.querySelectorAll('#statsMonth .mo-cell:not(.blank)').length >= 28,
+                    document.querySelectorAll('#statsMonth .mo-cell:not(.blank)').length);
+                  var sd = q('#statsD');
+                  sd.value = sd.options[sd.options.length - 1].value;
+                  sd.dispatchEvent(new Event('change', { bubbles: true }));
+                  check('selected day highlighted', !!q('#statsMonth .mo-cell.sel'), 'sel');
+                  var moSel = q('#statsMonth .mo-cell.sel');
+                  if (moSel) {
+                    moSel.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                    check('month cell tip', !q('#statTip').classList.contains('hidden'), q('#statTip').textContent);
+                  }
+                  q('[data-act="stats-today"]').click();
+                  check('back to today resets', q('#statsMonth').classList.contains('hidden') && !q('#statsHeat').classList.contains('hidden'),
+                    'reset');
+
                   /* zip 按内容识别：改名为 .apk.1 的 zip 走「选择文件」按钮也能导入 */
                   var qBefore = app.importQueue().length;
                   app.addQueueFiles([new File([zipArr], 'notes.apk.1', { type: 'application/octet-stream' })]);

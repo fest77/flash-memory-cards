@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.8.0';
+  var APP_VERSION = '1.8.1';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -43,6 +43,8 @@
       'nav.manage': '笔记管理', 'nav.settings': '设置', 'nav.home': '主页', 'nav.stats': '统计', 'nav.bar': '主导航',
       'stats.title': '闪记日志', 'stats.heat': '热力图', 'stats.bars': '条形图', 'stats.note': '记录每天的复习次数 · 数据只保存在本机',
       'stats.today': '今日复习', 'stats.total': '累计复习', 'stats.streak': '连续天数',
+      'stats.backToday': '回到今天', 'stats.tipCount': '复习 {n} 次', 'stats.tipNone': '无记录',
+      'stats.year': '年', 'stats.month': '月', 'stats.day': '日',
       'stats.wds': '日,一,二,三,四,五,六',
       'stats.months': '1月,2月,3月,4月,5月,6月,7月,8月,9月,10月,11月,12月',
       'hero.title': '导入长篇笔记，拆成多张闪记卡', 'hero.sub': '随时复习，闪速记忆',
@@ -156,6 +158,8 @@
       'nav.manage': '筆記管理', 'nav.settings': '設定', 'nav.home': '主頁', 'nav.stats': '統計', 'nav.bar': '主導航',
       'stats.title': '閃記日誌', 'stats.heat': '熱力圖', 'stats.bars': '條形圖', 'stats.note': '記錄每天的複習次數 · 資料只保存在本機',
       'stats.today': '今日複習', 'stats.total': '累計複習', 'stats.streak': '連續天數',
+      'stats.backToday': '回到今天', 'stats.tipCount': '複習 {n} 次', 'stats.tipNone': '無記錄',
+      'stats.year': '年', 'stats.month': '月', 'stats.day': '日',
       'stats.wds': '日,一,二,三,四,五,六',
       'stats.months': '1月,2月,3月,4月,5月,6月,7月,8月,9月,10月,11月,12月',
       'hero.title': '匯入長篇筆記，拆成多張閃記卡', 'hero.sub': '隨時複習，閃速記憶',
@@ -269,6 +273,8 @@
       'nav.manage': 'Notes', 'nav.settings': 'Settings', 'nav.home': 'Home', 'nav.stats': 'Stats', 'nav.bar': 'Main navigation',
       'stats.title': 'Review Log', 'stats.heat': 'Heatmap', 'stats.bars': 'Bars', 'stats.note': 'Daily review counts · stored on this device only',
       'stats.today': 'today', 'stats.total': 'total', 'stats.streak': 'day streak',
+      'stats.backToday': 'Back to today', 'stats.tipCount': '{n} reviews', 'stats.tipNone': 'no reviews',
+      'stats.year': 'Year', 'stats.month': 'Month', 'stats.day': 'Day',
       'stats.wds': 'Su,Mo,Tu,We,Th,Fr,Sa',
       'stats.months': 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
       'hero.title': 'Import long notes, split into flashcards', 'hero.sub': 'Review anytime, remember fast',
@@ -998,12 +1004,35 @@
         '<span class="chip"><b>' + total + '</b>' + t('stats.total') + '</span>' +
         '<span class="chip"><b>' + streak + '</b>' + t('stats.streak') + '</span>';
     }
+    initStatsNav();
     renderHeat(daily);
+    renderMonth();
     renderBars(daily);
     applyStatsMode();
   }
 
   var HEAT_WEEKS = 26;
+
+  function tipCount(n) { return n > 0 ? tf('stats.tipCount', { n: n }) : t('stats.tipNone'); }
+
+  var tipTimer = null;
+  function showStatTip(target) {
+    var tip = $('#statTip');
+    if (!tip || !target) return;
+    var txt = target.getAttribute('data-tip');
+    if (!txt) return;
+    tip.textContent = txt;
+    tip.classList.remove('hidden');
+    var r = target.getBoundingClientRect();
+    tip.style.left = Math.min(Math.max(r.left + r.width / 2, 70), window.innerWidth - 70) + 'px';
+    tip.style.top = Math.max(r.top - 8, 34) + 'px';
+    if (tipTimer) clearTimeout(tipTimer);
+    tipTimer = setTimeout(hideStatTip, 2600);
+  }
+  function hideStatTip() {
+    var t = $('#statTip');
+    if (t) t.classList.add('hidden');
+  }
 
   function renderHeat(daily) {
     var box = $('#statsHeat');
@@ -1032,7 +1061,7 @@
         if (dd > end) { grid += '<i class="heat-cell ghost"></i>'; continue; }
         var n = daily[dateKey(dd)] || 0;
         var lv = n === 0 ? 0 : n < 3 ? 1 : n < 6 ? 2 : n < 10 ? 3 : 4;
-        grid += '<i class="heat-cell h' + lv + '" title="' + dateKey(dd) + ' · ' + n + '"></i>';
+        grid += '<i class="heat-cell h' + lv + '" data-tip="' + dateKey(dd) + ' · ' + tipCount(n) + '"></i>';
       }
       grid += '</div>';
     }
@@ -1051,13 +1080,13 @@
     for (var i = 6; i >= 0; i--) {
       var dd = new Date(d);
       dd.setDate(dd.getDate() - i);
-      days.push({ n: daily[dateKey(dd)] || 0, wd: dd.getDay(), today: i === 0 });
+      days.push({ k: dateKey(dd), n: daily[dateKey(dd)] || 0, wd: dd.getDay(), today: i === 0 });
     }
     var max = 1;
     days.forEach(function (x) { if (x.n > max) max = x.n; });
     var html = '<div class="bars-row">';
     days.forEach(function (x) {
-      html += '<div class="bar-col' + (x.today ? ' today' : '') + '">' +
+      html += '<div class="bar-col' + (x.today ? ' today' : '') + '" data-tip="' + x.k + ' · ' + tipCount(x.n) + '">' +
         '<span class="bar-n">' + (x.n || '') + '</span>' +
         '<i class="bar" style="height:' + (x.n ? Math.max(Math.round(x.n / max * 100), 8) : 2) + '%"></i>' +
         '<span class="bar-wd">' + wds[x.wd] + '</span></div>';
@@ -1065,10 +1094,84 @@
     box.innerHTML = html + '</div>';
   }
 
+  var statsMonth = null; // null = 滚动热力图；{y,m,d} = 月历视图
+
+  function initStatsNav() {
+    var ys = $('#statsY'), ms = $('#statsM'), ds = $('#statsD');
+    if (!ys || ys.options.length) return;
+    var now = new Date();
+    var yHtml = '';
+    for (var y = 2020; y <= now.getFullYear(); y++) yHtml += '<option value="' + y + '">' + y + '</option>';
+    ys.innerHTML = yHtml;
+    var mHtml = '';
+    for (var m = 1; m <= 12; m++) mHtml += '<option value="' + m + '">' + m + '</option>';
+    ms.innerHTML = mHtml;
+    setStatsNavToToday();
+  }
+
+  function setStatsNavToToday() {
+    var now = new Date();
+    var ys = $('#statsY'), ms = $('#statsM'), ds = $('#statsD');
+    if (!ys) return;
+    ys.value = String(now.getFullYear());
+    ms.value = String(now.getMonth() + 1);
+    fillStatsDays(now.getFullYear(), now.getMonth() + 1);
+    ds.value = String(now.getDate());
+    statsMonth = null;
+  }
+
+  function fillStatsDays(y, m) {
+    var ds = $('#statsD');
+    if (!ds) return;
+    var days = new Date(y, m, 0).getDate();
+    var keep = parseInt(ds.value, 10) || 1;
+    var html = '';
+    for (var d = 1; d <= days; d++) html += '<option value="' + d + '">' + d + '</option>';
+    ds.innerHTML = html;
+    ds.value = String(Math.min(keep, days));
+  }
+
+  function onStatsNavChange(changed) {
+    var ys = $('#statsY'), ms = $('#statsM'), ds = $('#statsD');
+    if (!ys || !ms || !ds) return;
+    var y = parseInt(ys.value, 10), m = parseInt(ms.value, 10);
+    if (changed !== 'statsD') fillStatsDays(y, m);
+    statsMonth = { y: y, m: m, d: parseInt(ds.value, 10) || 1 };
+    renderMonth();
+    applyStatsMode();
+  }
+
+  function renderMonth() {
+    var box = $('#statsMonth');
+    if (!box || !statsMonth) return;
+    var daily = state.daily || {};
+    var y = statsMonth.y, m = statsMonth.m;
+    var first = new Date(y, m - 1, 1);
+    var days = new Date(y, m, 0).getDate();
+    var wds = t('stats.wds').split(',');
+    var todayK = todayKey();
+    var html = '<div class="month-wds">';
+    for (var i = 0; i < 7; i++) html += '<span>' + wds[i] + '</span>';
+    html += '</div><div class="month-grid">';
+    for (var b = 0; b < first.getDay(); b++) html += '<i class="mo-cell blank"></i>';
+    for (var d2 = 1; d2 <= days; d2++) {
+      var k = y + '-' + pad2(m) + '-' + pad2(d2);
+      var n = daily[k] || 0;
+      var lv = n === 0 ? 0 : n < 3 ? 1 : n < 6 ? 2 : n < 10 ? 3 : 4;
+      var cls = 'mo-cell h' + lv;
+      if (statsMonth.d === d2) cls += ' sel';
+      if (k === todayK) cls += ' sel today';
+      html += '<i class="' + cls + '" data-tip="' + k + ' · ' + tipCount(n) + '"><span>' + d2 + '</span></i>';
+    }
+    box.innerHTML = html + '</div>';
+  }
+
   function applyStatsMode() {
     var mode = state.settings.statsView === 'bars' ? 'bars' : 'heat';
-    var heat = $('#statsHeat'), bars = $('#statsBars');
-    if (heat) heat.classList.toggle('hidden', mode !== 'heat');
+    var heat = $('#statsHeat'), bars = $('#statsBars'), month = $('#statsMonth');
+    var monthOn = !!statsMonth && mode === 'heat';
+    if (heat) heat.classList.toggle('hidden', mode !== 'heat' || monthOn);
+    if (month) month.classList.toggle('hidden', !monthOn);
     if (bars) bars.classList.toggle('hidden', mode !== 'bars');
     $$('#view-stats .seg-btn').forEach(function (b) {
       b.classList.toggle('on', b.getAttribute('data-mode') === mode);
@@ -2613,6 +2716,12 @@
         else if (tabView === 'stats') { renderStats(); showView('stats'); }
         break;
       }
+      case 'stats-today':
+        setStatsNavToToday();
+        renderHeat(state.daily || {});
+        renderMonth();
+        applyStatsMode();
+        break;
       case 'stats-view':
         state.settings.statsView = el.getAttribute('data-mode') === 'bars' ? 'bars' : 'heat';
         applyStatsMode();
@@ -2831,6 +2940,17 @@
   }
 
   function bindEvents() {
+    document.addEventListener('pointerover', function (e) {
+      var t = e.target && e.target.closest && e.target.closest('[data-tip]');
+      if (t && e.pointerType === 'mouse') showStatTip(t);
+    });
+    document.addEventListener('pointerout', function (e) {
+      if (e.pointerType === 'mouse' && e.target && e.target.closest && e.target.closest('[data-tip]')) hideStatTip();
+    });
+    document.addEventListener('pointerdown', function (e) {
+      var t = e.target && e.target.closest && e.target.closest('[data-tip]');
+      if (t) showStatTip(t);
+    });
     document.addEventListener('click', function (e) {
       var el = e.target.closest ? e.target.closest('[data-act]') : null;
       if (el) {
@@ -2929,6 +3049,8 @@
         onThemeChange(e.target.value);
       } else if (e.target.id === 'setLang') {
         onLangChange(e.target.value);
+      } else if (e.target.id === 'statsY' || e.target.id === 'statsM' || e.target.id === 'statsD') {
+        onStatsNavChange(e.target.id);
       }
     });
 
