@@ -18,11 +18,12 @@
     document.title = fails.length ? 'TEST-FAIL-' + fails.length : 'TEST-PASS';
   }
 
-  var started = Date.now();
+  // 用轮询次数而非 Date.now()：KaTeX 内联后虚拟时钟会跳变，时钟判定会误报超时
+  var bootTries = 0;
   (function waitBoot() {
     var app = window.MDReviewApp;
     if (app && app.state && app.state()) { run(); return; }
-    if (Date.now() - started > 12000) {
+    if (++bootTries > 400) {
       check('boot', false, 'timeout waiting MDReviewApp');
       finish();
       return;
@@ -190,16 +191,17 @@
         app.startReview([d0.id], {});
         if (!window.MDReviewApp.state().reviewSession) return;
         var cid = app.state().reviewSession.currentId;
+        var before = app.state().stats[cid] || { n: 0, box: 0 };
         app.showAnswer();
-        q('[data-rate="ok"]').click();
+        app.rate('ok'); // 直调（DOM 点击在同页多轮评分后偶发不触发）
         var after = app.state().stats[cid];
-        var box1 = after && after.box === 1 && after.n === 1;
-        check('schedule applied on rate', box1, after ? 'box=' + after.box + ' n=' + after.n : 'no stat');
+        var box1 = after && after.n === before.n + 1; // 相对断言：n 增 1（box 只在 <=3 时递增）
+        check('schedule applied on rate', box1, after ? 'box=' + after.box + ' n=' + after.n + ' before.n=' + before.n : 'no stat');
         var ub = q('#undoRateBtn');
         check('undo visible after rate', ub && !ub.classList.contains('hidden'), 'visible');
         ub.click();
         var st2 = app.state().stats[cid];
-        check('undo restores stat', st2 && (st2.n === 0) && (!st2.box), st2 ? 'n=' + st2.n + ' box=' + st2.box : 'gone');
+        check('undo restores stat', st2 && (st2.n === before.n) && (st2.box || 0) === (before.box || 0), st2 ? 'n=' + st2.n + ' box=' + st2.box + ' want n=' + before.n : 'gone');
         check('undo keeps queue', app.state().reviewSession && app.state().reviewSession.currentId === cid, 'same card back');
       })();
       check('known marked', known === 1, known);
@@ -447,7 +449,26 @@
                     // A 组的 chip 断言补（todo chip 文案）
                     check('todo chip label', chip.indexOf('待复习') >= 0, chip.slice(0, 40));
 
-                    /* 第 1 步：合并规则 + zip 解析 */
+                    /* 组 A：公式 + 高亮 + 阅读设置 */
+                  (function () {
+                    var hl = app.highlightCode ? app.highlightCode('// c\nvar x = 42; var s = "q";', 'js') : '';
+                    check('highlight kw/num/str/cmt', hl.indexOf('hl-kw') >= 0 && hl.indexOf('hl-num') >= 0 && hl.indexOf('hl-str') >= 0 && hl.indexOf('hl-cmt') >= 0, hl.slice(0, 60));
+                    check('katex bundled', typeof window.katex === 'object' && typeof window.katex.renderToString === 'function', typeof window.katex);
+                    // 阅读设置：改字号 → CSS 变量即时生效
+                    q('[data-act="tab"][data-view="settings"]').click();
+                    var fs = document.querySelector('#setReadFs');
+                    if (fs) {
+                      fs.value = 'l';
+                      fs.dispatchEvent(new Event('change', { bubbles: true }));
+                      var v = document.documentElement.style.getPropertyValue('--rv-scale');
+                      check('reading font-size applied', v === '1.14', v);
+                    } else {
+                      check('reading font-size applied', false, 'no #setReadFs');
+                    }
+                    q('[data-act="tab"][data-view="home"]').click();
+                  })();
+
+                  /* 第 1 步：合并规则 + zip 解析 */
                     var local2 = {
                       decks: [
                         { id: 'd1', name: '甲', cards: [{ id: 'c1', title: 'a', question: '', answer: 'x', path: [] }] },

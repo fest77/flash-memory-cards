@@ -199,6 +199,22 @@
           <option value="en" data-i18n="lang.en">English</option>
         </select>
       </div>
+      <div class="field">
+        <label for="setReadFs" data-i18n="read.fs">字号</label>
+        <select id="setReadFs">
+          <option value="s" data-i18n="read.small">小</option>
+          <option value="m" data-i18n="read.medium">中</option>
+          <option value="l" data-i18n="read.large">大</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="setReadLh" data-i18n="read.lh">行距</label>
+        <select id="setReadLh"><option value="1" data-i18n="read.tight">紧</option><option value="2" data-i18n="read.medium">中</option><option value="3" data-i18n="read.loose">松</option></select>
+      </div>
+      <div class="field">
+        <label for="setReadCw" data-i18n="read.cw">卡片宽度</label>
+        <select id="setReadCw"><option value="1" data-i18n="read.narrow">窄</option><option value="2" data-i18n="read.medium">中</option><option value="3" data-i18n="read.wide">宽</option></select>
+      </div>
     </details>
 
     <details class="settings" open>
@@ -303,6 +319,7 @@
     </button>
   </nav>
 
+  <div id="imgViewer" class="hidden"></div>
   <div id="statTip" class="stat-tip hidden"></div>
   <div id="toast" class="toast"></div>
 </div>
@@ -317,6 +334,7 @@
 <input type="file" id="cardsJsonInput" accept=".json,application/json" hidden>
 <input type="file" id="jsonInput" accept=".json,.zip,application/json,application/zip" hidden>
 
+<script>/*KATEX*/</script>
 <script>/*IMAGES*/</script>
 <script>/*BUNDLED*/</script>
 <script>/*CORE*/

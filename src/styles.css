@@ -785,3 +785,20 @@ body.light .heat-cell.h4 { background: #116329; }
   border-radius: 12px; padding: 8px 12px; margin: 10px 0 0; font-size: 13px; color: var(--rate-fuzzy-fg);
 }
 .backup-bar .backup-remind span { flex: 1; }
+
+/* 阅读设置变量（applyReading 注入） */
+.rv-card, .quick-body, .browse-list { font-size: calc(15.5px * var(--rv-scale, 1)); line-height: var(--rv-lh, 1.7); }
+.rv-card { max-width: var(--rv-cw, 640px); margin-left: auto; margin-right: auto; }
+.md-code { overflow-x: auto; }
+.md-table-wrap { overflow-x: auto; }
+.katex-display { overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+.hl-cmt { color: #7a8899; }
+.hl-str { color: #9ec98f; }
+.hl-num { color: #e5a663; }
+.hl-kw { color: #79b8ff; }
+body.light .hl-cmt { color: #8a97a8; }
+body.light .hl-str { color: #3d7a2c; }
+body.light .hl-num { color: #a05f1c; }
+body.light .hl-kw { color: #1a5fb4; }
+#imgViewer { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.92); display: grid; place-items: center; }
+#imgViewer img { max-width: 96vw; max-height: 92vh; transition: transform .12s; will-change: transform; }

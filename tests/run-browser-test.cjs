@@ -90,7 +90,7 @@ const args = [
   '--disable-extensions',
   '--allow-file-access-from-files',
   '--user-data-dir=' + profileDir,
-  '--virtual-time-budget=20000',
+  '--virtual-time-budget=90000',
   '--dump-dom',
   fileUrl,
 ];

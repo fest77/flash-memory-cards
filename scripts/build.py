@@ -36,6 +36,42 @@ def read_images(path: str) -> str:
     return p.read_text(encoding="utf-8")
 
 
+def read_katex() -> str:
+    """KaTeX 本地化：JS + CSS（字体转 base64 内联，保持单文件离线）。vendor 缺失时降级为空（公式原样显示）。"""
+    import base64, re as _re
+    vdir = PROJECT / "vendor" / "katex"
+    js_path = vdir / "katex.min.js"
+    css_path = vdir / "katex.min.css"
+    if not js_path.exists() or not css_path.exists():
+        return "window.katex = null;"
+    js = js_path.read_text(encoding="utf-8")
+    css = css_path.read_text(encoding="utf-8")
+    # fonts url(fonts/xxx.woff2) → data URI；缺失字体从 CSS 中剔除该 @font-face（子集化）
+    faces = css.split("@font-face")
+    keep = []
+    for face in faces:
+        m = _re.search(r"url\(fonts/([A-Za-z0-9_\-]+)\.woff2\)", face)
+        if not m:
+            if face.strip():
+                keep.append(face)
+            continue
+        f = vdir / "fonts" / (m.group(1) + ".woff2")
+        if not f.exists():
+            continue  # 未打包的字体：丢弃该 face（浏览器回退系统字体）
+        b64 = base64.b64encode(f.read_bytes()).decode("ascii")
+        face = face.replace(m.group(0), "url(data:font/woff2;base64," + b64 + ")")
+        keep.append(face)
+    css = "@font-face".join(keep)
+    return ("(function(){var d=document;var st=d.createElement('style');"
+            "st.textContent=" + json_js_string(css) + ";d.head.appendChild(st);\n"
+            + js + "\n})();")
+
+
+def json_js_string(text: str) -> str:
+    import json
+    return json.dumps(text)
+
+
 def build(images_path: str, out_path: str) -> pathlib.Path:
     tpl = read("index.tpl.html")
     css = read("styles.css")
@@ -43,6 +79,7 @@ def build(images_path: str, out_path: str) -> pathlib.Path:
     app = read("app.js")
     bundled = read_bundled()
     images = read_images(images_path)
+    katex = read_katex()
 
     for label, code in (("app.js", app), ("core.js", core), ("bundled-decks.js", bundled), ("images", images)):
         if "</script" in code.lower():
@@ -51,10 +88,11 @@ def build(images_path: str, out_path: str) -> pathlib.Path:
     out = tpl.replace("/*STYLES*/", css)
     out = out.replace("/*IMAGES*/", images)
     out = out.replace("/*BUNDLED*/", bundled)
+    out = out.replace("/*KATEX*/", katex)
     out = out.replace("/*CORE*/", core)
     out = out.replace("/*APP*/", app)
 
-    missing = [m for m in ("/*STYLES*/", "/*IMAGES*/", "/*BUNDLED*/", "/*CORE*/", "/*APP*/") if m in out]
+    missing = [m for m in ("/*STYLES*/", "/*IMAGES*/", "/*BUNDLED*/", "/*KATEX*/", "/*CORE*/", "/*APP*/") if m in out]
     if missing:
         raise SystemExit("template placeholders not replaced: %s" % missing)
 

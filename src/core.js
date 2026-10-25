@@ -831,7 +831,8 @@
       var blk = blocks[b];
       if (blk.type === 'code') {
         var langAttr = blk.lang ? ' data-lang="' + escapeHtml(blk.lang) + '"' : '';
-        html += '<pre class="md-code"' + langAttr + '><code>' + escapeHtml(blk.text) + '</code></pre>';
+        var hl = (typeof global.__mdfcHighlight === 'function') ? global.__mdfcHighlight(blk.text, blk.lang) : escapeHtml(blk.text);
+        html += '<pre class="md-code"' + langAttr + '><code>' + hl + '</code></pre>';
       } else if (blk.type === 'heading') {
         var lv = Math.min(blk.level + 1, 6);
         html += '<div class="md-h md-h' + lv + '">' + inline(blk.text) + '</div>';
@@ -840,7 +841,7 @@
       } else if (blk.type === 'quote') {
         html += '<blockquote>' + inline(blk.text).replace(/\n/g, '<br>') + '</blockquote>';
       } else if (blk.type === 'table') {
-        html += '<div class="md-table"><table>';
+        html += '<div class="md-table-wrap"><div class="md-table"><table>';
         for (var r = 0; r < blk.rows.length; r++) {
           var tag = r === 0 ? 'th' : 'td';
           var rowTag = r === 0 ? 'thead' : 'tbody';
@@ -853,7 +854,7 @@
           html += '</tr>';
           if (r === 0) html += '</thead>';
         }
-        html += '</tbody></table></div>';
+        html += '</tbody></table></div></div>';
       } else if (blk.type === 'list') {
         html += '<div class="md-list">';
         for (var it = 0; it < blk.items.length; it++) {

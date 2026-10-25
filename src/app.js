@@ -116,7 +116,7 @@
       'ai.testing': '请求中…（最长等 {s} 秒）', 'ai.testOk': '连接成功', 'ai.testFail': '连接失败', 'ai.modelReply': '模型回复：',
       'ai.title': 'AI 提炼提问', 'ai.desc': '用大模型读懂每张卡的答案，把标题改写成更像面试题的问题（<b>只改题面，不动答案</b>）。请求从你的手机直接发出，不经过任何服务器。',
       'ai.notConfigured': '还没有配置 AI：到「设置 → AI 供应商」添加供应商并填 Key。',
-      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.canceled': '已停止提炼', 'img.cleanup': '清理未引用图片', 'img.cleanupNone': '没有可清理的图片', 'img.cleanupConfirm': '发现 {n} 张未被任何卡片引用的图片（约 {kb} KB），删除？', 'img.cleanupDone': '已清理 {n} 张图片', 'backup.remind': '内容有改动且超过 7 天未备份，建议导出备份', 'backup.now': '立即备份', 'backup.nowBtn': '一键备份', 'backup.folderSet': '选择备份文件夹', 'backup.folderChange': '更换备份文件夹', 'backup.savedToFolder': '已写入备份文件夹：{name}', 'backup.fsaUnsupported': '当前浏览器不支持文件夹备份，已改为普通下载', 'ai.undo': '撤销本次提炼', 'ai.undone': '已恢复原题面', 'ai.undoFail': '无法撤销：笔记内容已变化', 'ai.start': '开始提炼',
+      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.canceled': '已停止提炼', 'img.cleanup': '清理未引用图片','read.fs': '字号', 'read.lh': '行距', 'read.cw': '卡片宽度', 'read.small': '小', 'read.medium': '中', 'read.large': '大', 'read.tight': '紧', 'read.loose': '松', 'read.narrow': '窄', 'read.wide': '宽', 'img.cleanupNone': '没有可清理的图片', 'img.cleanupConfirm': '发现 {n} 张未被任何卡片引用的图片（约 {kb} KB），删除？', 'img.cleanupDone': '已清理 {n} 张图片', 'backup.remind': '内容有改动且超过 7 天未备份，建议导出备份', 'backup.now': '立即备份', 'backup.nowBtn': '一键备份', 'backup.folderSet': '选择备份文件夹', 'backup.folderChange': '更换备份文件夹', 'backup.savedToFolder': '已写入备份文件夹：{name}', 'backup.fsaUnsupported': '当前浏览器不支持文件夹备份，已改为普通下载', 'ai.undo': '撤销本次提炼', 'ai.undone': '已恢复原题面', 'ai.undoFail': '无法撤销：笔记内容已变化', 'ai.start': '开始提炼',
       'ai.busy': '正在提炼，请稍等', 'ai.needConfig': '先配置 AI 地址和模型',
       'ai.progress': '提炼中… {done} / {total} 张（共 {batches} 批）',
       'ai.badFormat': '返回格式无法解析（需要 {"questions":[{"idx":..,"q":".."}]}）',
@@ -235,7 +235,7 @@
       'ai.testing': '請求中…（最長等 {s} 秒）', 'ai.testOk': '連線成功', 'ai.testFail': '連線失敗', 'ai.modelReply': '模型回覆：',
       'ai.title': 'AI 提煉提問', 'ai.desc': '用大模型讀懂每張卡的答案，把標題改寫成更像面試題的問題（<b>只改題面，不動答案</b>）。請求從你的手機直接發出，不經過任何伺服器。',
       'ai.notConfigured': '還沒有設定 AI：到「設定 → AI 供應商」新增供應商並填 Key。',
-      'ai.cardCount': '共 {n} 張卡', 'ai.ready': '已就緒', 'ai.notReady': '未設定', 'ai.canceled': '已停止提煉', 'img.cleanup': '清理未引用圖片', 'img.cleanupNone': '沒有可清理的圖片', 'img.cleanupConfirm': '發現 {n} 張未被任何卡片引用的圖片（約 {kb} KB），刪除？', 'img.cleanupDone': '已清理 {n} 張圖片', 'backup.remind': '內容有改動且超過 7 天未備份，建議匯出備份', 'backup.now': '立即備份', 'backup.nowBtn': '一鍵備份', 'backup.folderSet': '選擇備份資料夾', 'backup.folderChange': '更換備份資料夾', 'backup.savedToFolder': '已寫入備份資料夾：{name}', 'backup.fsaUnsupported': '當前瀏覽器不支持資料夾備份，已改為普通下載', 'ai.undo': '撤銷本次提煉', 'ai.undone': '已恢復原題面', 'ai.undoFail': '無法撤銷：筆記內容已變化', 'ai.start': '開始提煉',
+      'ai.cardCount': '共 {n} 張卡', 'ai.ready': '已就緒', 'ai.notReady': '未設定', 'ai.canceled': '已停止提煉', 'img.cleanup': '清理未引用圖片','read.fs': '字號', 'read.lh': '行距', 'read.cw': '卡片寬度', 'read.small': '小', 'read.medium': '中', 'read.large': '大', 'read.tight': '緊', 'read.loose': '鬆', 'read.narrow': '窄', 'read.wide': '寬', 'img.cleanupNone': '沒有可清理的圖片', 'img.cleanupConfirm': '發現 {n} 張未被任何卡片引用的圖片（約 {kb} KB），刪除？', 'img.cleanupDone': '已清理 {n} 張圖片', 'backup.remind': '內容有改動且超過 7 天未備份，建議匯出備份', 'backup.now': '立即備份', 'backup.nowBtn': '一鍵備份', 'backup.folderSet': '選擇備份資料夾', 'backup.folderChange': '更換備份資料夾', 'backup.savedToFolder': '已寫入備份資料夾：{name}', 'backup.fsaUnsupported': '當前瀏覽器不支持資料夾備份，已改為普通下載', 'ai.undo': '撤銷本次提煉', 'ai.undone': '已恢復原題面', 'ai.undoFail': '無法撤銷：筆記內容已變化', 'ai.start': '開始提煉',
       'ai.busy': '正在提煉，請稍等', 'ai.needConfig': '先設定 AI 位址和模型',
       'ai.progress': '提煉中… {done} / {total} 張（共 {batches} 批）',
       'ai.badFormat': '返回格式無法解析（需要 {"questions":[{"idx":..,"q":".."}]}）',
@@ -354,7 +354,7 @@
       'ai.testing': 'Requesting… (up to {s} s)', 'ai.testOk': 'Connected', 'ai.testFail': 'Connection failed', 'ai.modelReply': 'Model reply: ',
       'ai.title': 'AI question refine', 'ai.desc': 'Have an LLM rewrite each card\'s title into an interview-style question (<b>questions only, answers untouched</b>). Requests go straight from your phone to the API; no server in between.',
       'ai.notConfigured': 'AI is not configured: add a provider and fill in the key under Settings → AI providers.',
-      'ai.cardCount': '{n} cards', 'ai.ready': 'Ready', 'ai.notReady': 'Not configured', 'ai.canceled': 'Refining stopped', 'img.cleanup': 'Clean unused images', 'img.cleanupNone': 'No unused images', 'img.cleanupConfirm': '{n} images are not referenced by any card (~{kb} KB). Delete?', 'img.cleanupDone': 'Cleaned {n} images', 'backup.remind': 'Changes not backed up for 7+ days — export a backup', 'backup.now': 'Back up', 'backup.nowBtn': 'Back up now', 'backup.folderSet': 'Choose backup folder', 'backup.folderChange': 'Change backup folder', 'backup.savedToFolder': 'Saved to backup folder: {name}', 'backup.fsaUnsupported': 'Folder backup not supported here — using normal download', 'ai.undo': 'Undo this refine', 'ai.undone': 'Original questions restored', 'ai.undoFail': 'Cannot undo: the deck has changed', 'ai.start': 'Start refine',
+      'ai.cardCount': '{n} cards', 'ai.ready': 'Ready', 'ai.notReady': 'Not configured', 'ai.canceled': 'Refining stopped', 'img.cleanup': 'Clean unused images','read.fs': 'Font size', 'read.lh': 'Line height', 'read.cw': 'Card width', 'read.small': 'Small', 'read.medium': 'Medium', 'read.large': 'Large', 'read.tight': 'Tight', 'read.loose': 'Loose', 'read.narrow': 'Narrow', 'read.wide': 'Wide', 'img.cleanupNone': 'No unused images', 'img.cleanupConfirm': '{n} images are not referenced by any card (~{kb} KB). Delete?', 'img.cleanupDone': 'Cleaned {n} images', 'backup.remind': 'Changes not backed up for 7+ days — export a backup', 'backup.now': 'Back up', 'backup.nowBtn': 'Back up now', 'backup.folderSet': 'Choose backup folder', 'backup.folderChange': 'Change backup folder', 'backup.savedToFolder': 'Saved to backup folder: {name}', 'backup.fsaUnsupported': 'Folder backup not supported here — using normal download', 'ai.undo': 'Undo this refine', 'ai.undone': 'Original questions restored', 'ai.undoFail': 'Cannot undo: the deck has changed', 'ai.start': 'Start refine',
       'ai.busy': 'Refine in progress, please wait', 'ai.needConfig': 'Configure the API URL and model first',
       'ai.progress': 'Refining… {done} / {total} cards ({batches} batches)',
       'ai.badFormat': 'Unparseable response (expected {"questions":[{"idx":..,"q":".."}]})',
@@ -435,6 +435,24 @@
     }
     var v = $('#aboutVersion');
     if (v) v.textContent = 'v' + APP_VERSION;
+  }
+
+  function applyReading() {
+    var r = (state && state.settings && state.settings.reading) || {};
+    var fs = { s: '0.92', m: '1', l: '1.14' }[r.fs] || '1';
+    var lh = { 1: '1.5', 2: '1.7', 3: '1.95' }[r.lh] || '1.7';
+    var cw = { 1: '520px', 2: '640px', 3: '100%' }[r.cw] || '640px';
+    var root = document.documentElement;
+    root.style.setProperty('--rv-scale', fs);
+    root.style.setProperty('--rv-lh', lh);
+    root.style.setProperty('--rv-cw', cw);
+  }
+
+  function onReadingChange(key, val) {
+    if (!state.settings.reading) state.settings.reading = { fs: 'm', lh: 2, cw: 2 };
+    state.settings.reading[key] = val;
+    applyReading();
+    flushSave();
   }
 
   function applyTheme() {
@@ -805,6 +823,7 @@
         if (raw.settings[k] != null) s.settings[k] = raw.settings[k];
       });
     }
+    if (!s.settings.reading || typeof s.settings.reading !== 'object') s.settings.reading = { fs: 'm', lh: 2, cw: 2 };
     if (!GRAN[s.settings.gran]) s.settings.gran = 'mid';
     if (!MODE_LABELS[s.settings.mode]) s.settings.mode = 'auto';
     if (!QSTYLE_LABELS[s.settings.qstyle]) s.settings.qstyle = 'prompt';
@@ -1436,8 +1455,88 @@
     return all[deck.name] || null;
   }
 
+  /* ---------- 数学公式（KaTeX 本地内联；无公式不渲染；失败原样显示） ---------- */
+  function renderMathSegments(md) {
+    var segs = [];
+    if (!window.katex || String(md || '').indexOf('$') < 0) return { text: md, segs: segs };
+    var text = String(md);
+    // 先 $$...$$（display），再 $...$（inline，单行内、非 \$ 转义）
+    text = text.replace(/\$\$([\s\S]+?)\$\$/g, function (m, tex) {
+      var html = null;
+      try { html = window.katex.renderToString(tex, { displayMode: true, throwOnError: false }); } catch (e) { html = null; }
+      segs.push(html || ('<code>' + ESC(tex) + '</code>'));
+      return '\u0001M' + (segs.length - 1) + '\u0002';
+    });
+    text = text.replace(/(^|[^\\$])\$([^$\n]+?)\$/g, function (m, pre, tex) {
+      var html = null;
+      try { html = window.katex.renderToString(tex, { displayMode: false, throwOnError: false }); } catch (e) { html = null; }
+      segs.push(html || ('<code>' + ESC(tex) + '</code>'));
+      return pre + '\u0001M' + (segs.length - 1) + '\u0002';
+    });
+    return { text: text, segs: segs };
+  }
+
+  function restoreMath(html, segs) {
+    if (!segs || !segs.length) return html;
+    return html.replace(/\u0001M(\d+)\u0002/g, function (m, i) {
+      return segs[+i] != null ? segs[+i] : m;
+    });
+  }
+
+  /* ---------- 轻量代码高亮（常见语言；纯本地正则分词） ---------- */
+  var HL_KEYWORDS = {
+    js: 'var let const function return if else for while class new extends import export from default async await try catch throw typeof instanceof this null undefined true false break continue switch case do delete in of void yield static get set',
+    java: 'public private protected class interface extends implements static final void int long double float boolean char byte short new return if else for while do switch case break continue try catch finally throw throws import package this super null true false abstract synchronized volatile transient enum record var',
+    python: 'def class return if elif else for while break continue pass import from as try except finally raise with lambda yield global nonlocal assert del in is not and or None True False self async await print',
+    c: 'int char float double void long short unsigned signed struct union enum typedef static const return if else for while do switch case break continue goto sizeof public private protected class new namespace using template typename virtual override nullptr true false auto',
+    go: 'func package import var const type struct interface map chan go defer return if else for range switch case break continue select nil true false string int int64 float64 bool byte rune error make new len cap append',
+    sql: 'select from where and or not null is in like between join left right inner outer on group by order having limit offset insert into values update set delete create table drop alter index view as distinct count sum avg min max union all case when then else end exists primary key foreign references',
+    bash: 'if then else elif fi for while do done case esac in function return exit echo local export readonly shift trap set unset source alias sudo apt cd ls cp mv rm mkdir cat grep sed awk chmod curl wget git npm node python pip docker',
+    css: 'important media supports keyframes from to and not only screen print hover focus active before after root var calc rgb rgba hsl linear-gradient flex grid absolute relative fixed sticky',
+    html: ''
+  };
+  var HL_ALIAS = { javascript: 'js', ts: 'js', typescript: 'js', jsx: 'js', tsx: 'js', json: 'js', node: 'js',
+    py: 'python', cxx: 'c', cpp: 'c', 'c++': 'c', cs: 'c', csharp: 'c', kotlin: 'java', kt: 'java', dart: 'java', swift: 'c', rust: 'c', rs: 'c',
+    golang: 'go', mysql: 'sql', postgresql: 'sql', sqlite: 'sql', shell: 'bash', sh: 'bash', zsh: 'bash', powershell: 'bash' };
+
+  function highlightCode(code, lang) {
+    var key = HL_ALIAS[String(lang || '').toLowerCase()] || String(lang || '').toLowerCase();
+    var kws = (HL_KEYWORDS[key] || '').split(/\s+/).filter(Boolean);
+    // 注释正则（单正则内部 alternation，不要写成两个正则的位或）
+    var commentRe = (key === 'python' || key === 'bash')
+      ? /#[^\n]*/
+      : (key === 'sql')
+        ? /--[^\n]*|\/\*[\s\S]*?\*\//
+        : /\/\/[^\n]*|\/\*[\s\S]*?\*\//;
+    var parts = [];
+    var plain = function (t) { parts.push(ESC(t)); };
+    // src 已经 ESC 过：命中片段直接入 span，不再二次转义
+    var push = function (cls, t) { parts.push('<span class="hl-' + cls + '">' + t + '</span>'); };
+    var re = new RegExp(
+      (commentRe.source ? '(' + commentRe.source + ')' : '(\\u0000)') + // 1 注释
+      '|(&quot;(?:[^&\\n]|&(?!quot;))*?&quot;|&#39;[^\\n]*?&#39;|`[^`\\n]*`)' + // 2 字符串（已转义）
+      '|\\b(\\d+(?:\\.\\d+)?)\\b' + // 3 数字
+      (kws.length ? '|\\b(' + kws.join('|') + ')\\b' : '') // 4 关键字
+      , 'g');
+    var src = ESC(code);
+    var last = 0, m;
+    while ((m = re.exec(src)) !== null) {
+      if (m.index > last) plain(src.slice(last, m.index));
+      if (m[1]) push('cmt', m[1]);
+      else if (m[2]) push('str', m[2]);
+      else if (m[3]) push('num', m[3]);
+      else if (m[4]) push('kw', m[4]);
+      else plain(m[0]);
+      last = m.index + m[0].length;
+    }
+    if (last < src.length) plain(src.slice(last));
+    return parts.join('');
+  }
+
   function renderAnswerHtml(markdown, deck) {
-    var html = Core.renderMarkdown(markdown);
+    var mm = renderMathSegments(markdown);
+    var html = Core.renderMarkdown(mm.text);
+    html = restoreMath(html, mm.segs);
     var set = deckImageSet(deck);
     if (set) {
       html = html.replace(IMG_PLACEHOLDER, function (m, name) {
@@ -3437,6 +3536,7 @@
       state.reviewSession = prevSession;
       pruneDaily();
       applyTheme();
+      applyReading();
       applyI18nStatic();
       flushSave();
       closeModal();
@@ -3817,6 +3917,10 @@
     var fbtn = $('#backupFolderBtn');
     if (fbtn && fsaSupported()) fbtn.classList.remove('hidden');
     renderStorageSection();
+    var rd = state.settings.reading || { fs: 'm', lh: 2, cw: 2 };
+    if ($('#setReadFs')) $('#setReadFs').value = rd.fs || 'm';
+    if ($('#setReadLh')) $('#setReadLh').value = String(rd.lh || 2);
+    if ($('#setReadCw')) $('#setReadCw').value = String(rd.cw || 2);
     if ($('#setTheme')) $('#setTheme').value = state.settings.theme || 'dark';
     if ($('#setLang')) $('#setLang').value = state.settings.lang || 'zh-Hans';
     renderAiProviders();
@@ -3852,6 +3956,16 @@
       if (t) showStatTip(t);
     });
     document.addEventListener('click', function (e) {
+      var ivImg = e.target.closest ? e.target.closest('#imgViewer img') : null;
+      if (ivImg) return; // 大图自身的双击由 touchend 处理
+      var mdImg = e.target.closest ? e.target.closest('.md-img, .rv-title img, .rv-q img, .rv-answer img, .quick-a img') : null;
+      if (mdImg && mdImg.getAttribute('src')) { openImageViewer(mdImg.getAttribute('src')); return; }
+      var copyBtn = e.target.closest ? e.target.closest('[data-act="code-copy"]') : null;
+      if (copyBtn) {
+        var pre = copyBtn.closest('pre');
+        copyText(pre ? pre.dataset.raw || (pre.querySelector('code') || {}).textContent || '' : '');
+        return;
+      }
       var el = e.target.closest ? e.target.closest('[data-act]') : null;
       if (el) {
         var act = el.getAttribute('data-act');
@@ -3949,6 +4063,12 @@
         onThemeChange(e.target.value);
       } else if (e.target.id === 'setLang') {
         onLangChange(e.target.value);
+      } else if (e.target.id === 'setReadFs') {
+        onReadingChange('fs', e.target.value);
+      } else if (e.target.id === 'setReadLh') {
+        onReadingChange('lh', parseInt(e.target.value, 10));
+      } else if (e.target.id === 'setReadCw') {
+        onReadingChange('cw', parseInt(e.target.value, 10));
       } else if (e.target.id === 'statsY' || e.target.id === 'statsM' || e.target.id === 'statsD') {
         onStatsNavChange(e.target.id);
       }
@@ -4048,6 +4168,7 @@
     renderAiProviders: renderAiProviders,
     imgUrls: function () { return IMG_URLS; },
     flushCount: function () { return flushCount; },
+    highlightCode: (typeof highlightCode === 'function') ? highlightCode : null,
     parseBackupBuffer: parseBackupBuffer,
     referencedImageNames: referencedImageNames,
     unreferencedImages: unreferencedImages,
@@ -4059,8 +4180,50 @@
     version: APP_VERSION
   };
 
+  // 代码高亮钩子（core 渲染时调用）
+  window.__mdfcHighlight = highlightCode;
+
+  /* ---------- 图片放大（点开看大图：双击缩放、双指捏合、点遮罩关闭） ---------- */
+  function openImageViewer(src) {
+    var v = $('#imgViewer');
+    if (!v) return;
+    v.innerHTML = '<img src="' + ESC(src) + '" alt="">';
+    v.classList.remove('hidden');
+    var img = v.querySelector('img');
+    var scale = 1, tx = 0, ty = 0;
+    var apply = function () { img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')'; };
+    img._reset = function () { scale = 1; tx = 0; ty = 0; apply(); };
+    var lastTap = 0, lastDist = 0;
+    v.querySelector('img').addEventListener('touchend', function (e) {
+      var now = Date.now();
+      if (now - lastTap < 300) { // 双击：2x 复位切换
+        if (scale > 1) img._reset(); else { scale = 2; apply(); }
+      }
+      lastTap = now;
+    });
+    v.addEventListener('touchmove', function (e) {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        var dx = e.touches[0].clientX - e.touches[1].clientX;
+        var dy = e.touches[0].clientY - e.touches[1].clientY;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (lastDist) { scale = Math.min(6, Math.max(0.4, scale * dist / lastDist)); apply(); }
+        lastDist = dist;
+      } else if (e.touches.length === 1 && scale > 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+    v.addEventListener('touchend', function () { lastDist = 0; });
+    v.addEventListener('click', function (e) { if (e.target === v) closeImageViewer(); });
+  }
+  function closeImageViewer() {
+    var v = $('#imgViewer');
+    if (v) { v.classList.add('hidden'); v.innerHTML = ''; }
+  }
+
   function boot() {
     loadStoredImages();
+    applyReading();
     Store.load().then(function (raw) {
       var saved = null;
       if (raw) {
