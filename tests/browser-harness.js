@@ -349,24 +349,27 @@
                   var sy = q('#statsY');
                   check('year starts at 2020', sy.options.length > 0 && sy.options[0].value === '2020',
                     sy.options.length ? sy.options[0].value : 'empty');
-                  sy.value = sy.options[sy.options.length - 1].value;
-                  sy.dispatchEvent(new Event('change', { bubbles: true }));
-                  q('#statsM').value = q('#statsM').options[q('#statsM').options.length - 1].value;
+                  // 选昨天：热力图保持热力图 + 选中格描边；条形图窗口平移到以昨天为终点
+                  var yd = new Date(); yd.setDate(yd.getDate() - 1);
+                  var yk = yd.getFullYear() + '-' + ('0' + (yd.getMonth() + 1)).slice(-2) + '-' + ('0' + yd.getDate()).slice(-2);
+                  q('#statsY').value = String(yd.getFullYear());
+                  q('#statsY').dispatchEvent(new Event('change', { bubbles: true }));
+                  q('#statsM').value = String(yd.getMonth() + 1);
                   q('#statsM').dispatchEvent(new Event('change', { bubbles: true }));
-                  check('month view appears', !q('#statsMonth').classList.contains('hidden') && document.querySelectorAll('#statsMonth .mo-cell:not(.blank)').length >= 28,
-                    document.querySelectorAll('#statsMonth .mo-cell:not(.blank)').length);
-                  var sd = q('#statsD');
-                  sd.value = sd.options[sd.options.length - 1].value;
-                  sd.dispatchEvent(new Event('change', { bubbles: true }));
-                  check('selected day highlighted', !!q('#statsMonth .mo-cell.sel'), 'sel');
-                  var moSel = q('#statsMonth .mo-cell.sel');
-                  if (moSel) {
-                    moSel.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-                    check('month cell tip', !q('#statTip').classList.contains('hidden'), q('#statTip').textContent);
-                  }
+                  q('#statsD').value = String(yd.getDate());
+                  q('#statsD').dispatchEvent(new Event('change', { bubbles: true }));
+                  check('heat stays heatmap', !q('#statsHeat').classList.contains('hidden') && document.querySelectorAll('#statsHeat .heat-cell').length > 180,
+                    document.querySelectorAll('#statsHeat .heat-cell').length);
+                  check('anchor cell outlined', !!q('#statsHeat .heat-cell.sel'), 'sel');
+                  var lastBar = document.querySelectorAll('#statsBars .bar-col')[6];
+                  check('bars follow date search', !!lastBar && lastBar.getAttribute('data-tip').indexOf(yk) === 0,
+                    lastBar ? lastBar.getAttribute('data-tip') : 'none');
+                  check('anchor bar outlined', !!q('#statsBars .bar-col.sel'), 'sel');
                   q('[data-act="stats-today"]').click();
-                  check('back to today resets', q('#statsMonth').classList.contains('hidden') && !q('#statsHeat').classList.contains('hidden'),
-                    'reset');
+                  var todayBar = document.querySelectorAll('#statsBars .bar-col')[6];
+                  var tk = (function(){ var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); })();
+                  check('back to today resets', !q('#statsHeat').classList.contains('hidden') && !!todayBar && todayBar.getAttribute('data-tip').indexOf(tk) === 0,
+                    todayBar ? todayBar.getAttribute('data-tip') : 'none');
 
                   /* zip 按内容识别：改名为 .apk.1 的 zip 走「选择文件」按钮也能导入 */
                   var qBefore = app.importQueue().length;

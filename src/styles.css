@@ -762,21 +762,5 @@ body.light .heat-cell.h4 { background: #116329; }
   padding: 6px 10px; font-size: 12px; white-space: nowrap; pointer-events: none;
 }
 
-/* 月历热力视图 */
-.month-wds { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 4px; }
-.month-wds span { text-align: center; font-size: 10px; color: var(--muted); }
-.month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
-.mo-cell {
-  aspect-ratio: 1; border-radius: 6px; display: flex; align-items: center; justify-content: center;
-  font-size: 11px; color: var(--muted); background: var(--bar-track); font-style: normal;
-}
-.mo-cell.blank { background: none; }
-.mo-cell.h1 { background: #1a4d2e; color: rgba(255,255,255,.75); }
-.mo-cell.h2 { background: #1d7a3e; color: rgba(255,255,255,.85); }
-.mo-cell.h3 { background: #2da44e; color: #fff; }
-.mo-cell.h4 { background: #4ae168; color: #0a2d12; }
-.mo-cell.sel { outline: 2px solid #3b82f6; outline-offset: 1px; }
-body.light .mo-cell.h1 { background: #acf2b0; color: #116329; }
-body.light .mo-cell.h2 { background: #4ac265; color: #0e3a1a; }
-body.light .mo-cell.h3 { background: #2da44e; color: #fff; }
-body.light .mo-cell.h4 { background: #116329; color: #fff; }
+/* 日期搜索：选中格描边 */
+.heat-cell.sel, .bar-col.sel .bar { outline: 2px solid #3b82f6; outline-offset: 1px; }

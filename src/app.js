@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.8.1';
+  var APP_VERSION = '1.8.2';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -1005,9 +1005,8 @@
         '<span class="chip"><b>' + streak + '</b>' + t('stats.streak') + '</span>';
     }
     initStatsNav();
-    renderHeat(daily);
-    renderMonth();
-    renderBars(daily);
+    renderHeat(daily, statsAnchor);
+    renderBars(daily, statsAnchor);
     applyStatsMode();
   }
 
@@ -1034,10 +1033,11 @@
     if (t) t.classList.add('hidden');
   }
 
-  function renderHeat(daily) {
+  function renderHeat(daily, anchor) {
     var box = $('#statsHeat');
     if (!box) return;
-    var end = new Date(); end.setHours(0, 0, 0, 0);
+    var end = anchor ? new Date(anchor.y, anchor.m - 1, anchor.d) : new Date();
+    end.setHours(0, 0, 0, 0);
     var start = new Date(end);
     start.setDate(start.getDate() - (HEAT_WEEKS * 7 - 1));
     start.setDate(start.getDate() - start.getDay()); // 对齐到周日
@@ -1061,7 +1061,8 @@
         if (dd > end) { grid += '<i class="heat-cell ghost"></i>'; continue; }
         var n = daily[dateKey(dd)] || 0;
         var lv = n === 0 ? 0 : n < 3 ? 1 : n < 6 ? 2 : n < 10 ? 3 : 4;
-        grid += '<i class="heat-cell h' + lv + '" data-tip="' + dateKey(dd) + ' · ' + tipCount(n) + '"></i>';
+        var sel = anchor && dateKey(dd) === dateKey(new Date(anchor.y, anchor.m - 1, anchor.d)) ? ' sel' : '';
+        grid += '<i class="heat-cell h' + lv + sel + '" data-tip="' + dateKey(dd) + ' · ' + tipCount(n) + '"></i>';
       }
       grid += '</div>';
     }
@@ -1071,22 +1072,25 @@
     if (sc) sc.scrollLeft = sc.scrollWidth; // 默认停在最新一侧
   }
 
-  function renderBars(daily) {
+  function renderBars(daily, anchor) {
     var box = $('#statsBars');
     if (!box) return;
     var wds = t('stats.wds').split(',');
     var days = [];
-    var d = new Date(); d.setHours(0, 0, 0, 0);
+    var endD = anchor ? new Date(anchor.y, anchor.m - 1, anchor.d) : new Date();
+    endD.setHours(0, 0, 0, 0);
+    var todayK = todayKey();
     for (var i = 6; i >= 0; i--) {
-      var dd = new Date(d);
+      var dd = new Date(endD);
       dd.setDate(dd.getDate() - i);
-      days.push({ k: dateKey(dd), n: daily[dateKey(dd)] || 0, wd: dd.getDay(), today: i === 0 });
+      var k = dateKey(dd);
+      days.push({ k: k, n: daily[k] || 0, wd: dd.getDay(), today: k === todayK, sel: i === 0 && !!anchor });
     }
     var max = 1;
     days.forEach(function (x) { if (x.n > max) max = x.n; });
     var html = '<div class="bars-row">';
     days.forEach(function (x) {
-      html += '<div class="bar-col' + (x.today ? ' today' : '') + '" data-tip="' + x.k + ' · ' + tipCount(x.n) + '">' +
+      html += '<div class="bar-col' + (x.today ? ' today' : '') + (x.sel ? ' sel' : '') + '" data-tip="' + x.k + ' · ' + tipCount(x.n) + '">' +
         '<span class="bar-n">' + (x.n || '') + '</span>' +
         '<i class="bar" style="height:' + (x.n ? Math.max(Math.round(x.n / max * 100), 8) : 2) + '%"></i>' +
         '<span class="bar-wd">' + wds[x.wd] + '</span></div>';
@@ -1094,7 +1098,7 @@
     box.innerHTML = html + '</div>';
   }
 
-  var statsMonth = null; // null = 滚动热力图；{y,m,d} = 月历视图
+  var statsAnchor = null; // null = 窗口截至今天；{y,m,d} = 窗口截至所选日期
 
   function initStatsNav() {
     var ys = $('#statsY'), ms = $('#statsM'), ds = $('#statsD');
@@ -1117,7 +1121,7 @@
     ms.value = String(now.getMonth() + 1);
     fillStatsDays(now.getFullYear(), now.getMonth() + 1);
     ds.value = String(now.getDate());
-    statsMonth = null;
+    statsAnchor = null;
   }
 
   function fillStatsDays(y, m) {
@@ -1136,46 +1140,33 @@
     if (!ys || !ms || !ds) return;
     var y = parseInt(ys.value, 10), m = parseInt(ms.value, 10);
     if (changed !== 'statsD') fillStatsDays(y, m);
-    statsMonth = { y: y, m: m, d: parseInt(ds.value, 10) || 1 };
-    renderMonth();
-    applyStatsMode();
+    statsAnchor = { y: y, m: m, d: parseInt(ds.value, 10) || 1 };
+    renderStatsCharts();
   }
 
-  function renderMonth() {
-    var box = $('#statsMonth');
-    if (!box || !statsMonth) return;
-    var daily = state.daily || {};
-    var y = statsMonth.y, m = statsMonth.m;
-    var first = new Date(y, m - 1, 1);
-    var days = new Date(y, m, 0).getDate();
-    var wds = t('stats.wds').split(',');
-    var todayK = todayKey();
-    var html = '<div class="month-wds">';
-    for (var i = 0; i < 7; i++) html += '<span>' + wds[i] + '</span>';
-    html += '</div><div class="month-grid">';
-    for (var b = 0; b < first.getDay(); b++) html += '<i class="mo-cell blank"></i>';
-    for (var d2 = 1; d2 <= days; d2++) {
-      var k = y + '-' + pad2(m) + '-' + pad2(d2);
-      var n = daily[k] || 0;
-      var lv = n === 0 ? 0 : n < 3 ? 1 : n < 6 ? 2 : n < 10 ? 3 : 4;
-      var cls = 'mo-cell h' + lv;
-      if (statsMonth.d === d2) cls += ' sel';
-      if (k === todayK) cls += ' sel today';
-      html += '<i class="' + cls + '" data-tip="' + k + ' · ' + tipCount(n) + '"><span>' + d2 + '</span></i>';
-    }
-    box.innerHTML = html + '</div>';
+  function renderStatsCharts() {
+    renderHeat(state.daily || {}, statsAnchor);
+    renderBars(state.daily || {}, statsAnchor);
+    applyStatsMode();
   }
 
   function applyStatsMode() {
     var mode = state.settings.statsView === 'bars' ? 'bars' : 'heat';
-    var heat = $('#statsHeat'), bars = $('#statsBars'), month = $('#statsMonth');
-    var monthOn = !!statsMonth && mode === 'heat';
-    if (heat) heat.classList.toggle('hidden', mode !== 'heat' || monthOn);
-    if (month) month.classList.toggle('hidden', !monthOn);
+    var heat = $('#statsHeat'), bars = $('#statsBars');
+    if (heat) heat.classList.toggle('hidden', mode !== 'heat');
     if (bars) bars.classList.toggle('hidden', mode !== 'bars');
     $$('#view-stats .seg-btn').forEach(function (b) {
       b.classList.toggle('on', b.getAttribute('data-mode') === mode);
     });
+    // 图表在隐藏状态下渲染时滚动不生效，切回可见后把选中格/最新处滚进视野
+    if (mode === 'heat' && heat) {
+      var sc = heat.querySelector('.heat-scroll');
+      var selCell = heat.querySelector('.heat-cell.sel');
+      requestAnimationFrame(function () {
+        if (selCell && selCell.scrollIntoView) selCell.scrollIntoView({ block: 'nearest', inline: 'center' });
+        else if (sc) sc.scrollLeft = sc.scrollWidth;
+      });
+    }
   }
 
   function deckImageSet(deck) {
@@ -2718,9 +2709,7 @@
       }
       case 'stats-today':
         setStatsNavToToday();
-        renderHeat(state.daily || {});
-        renderMonth();
-        applyStatsMode();
+        renderStatsCharts();
         break;
       case 'stats-view':
         state.settings.statsView = el.getAttribute('data-mode') === 'bars' ? 'bars' : 'heat';
