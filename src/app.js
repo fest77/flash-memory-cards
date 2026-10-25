@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.8.7';
+  var APP_VERSION = '1.9.0';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -82,6 +82,10 @@
       'lang.zhHans': '简体中文', 'lang.zhHant': '繁體中文', 'lang.en': 'English',
       'about.name': 'MD闪记卡', 'about.author': '作者：fest',
       'about.feedback': '如有 bug 和建议反馈，可联系邮箱：<a href="mailto:fest1024@163.com">fest1024@163.com</a>',
+      'about.checkUpdate': '检查更新',
+      'update.checking': '检查中…', 'update.latest': '已经是最新版本',
+      'update.newTitle': '发现新版本 v{v}', 'update.newBody': '当前版本 v{cur}，是否前往更新？',
+      'update.yes': '是', 'update.no': '否', 'update.fail': '检查更新失败，请检查网络后重试',
       'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '只看没掌握 <b>{n}</b>', 'home.today': '今日已复习 <b>{n}</b>',
       'deck.meta': '{n} 张卡片 · <span class="ok">已掌握 {k}</span> · <span class="todo">待复习 {t}</span>',
       'deck.review': '随机复习', 'deck.knownOf': '已掌握 {k}', 'deck.quick': '分类速记', 'deck.browse': '浏览/编辑',
@@ -197,6 +201,10 @@
       'lang.zhHans': '简体中文', 'lang.zhHant': '繁體中文', 'lang.en': 'English',
       'about.name': 'MD閃記卡', 'about.author': '作者：fest',
       'about.feedback': '如有 bug 和建議回饋，可聯絡郵箱：<a href="mailto:fest1024@163.com">fest1024@163.com</a>',
+      'about.checkUpdate': '檢查更新',
+      'update.checking': '檢查中…', 'update.latest': '已經是最新版本',
+      'update.newTitle': '發現新版本 v{v}', 'update.newBody': '當前版本 v{cur}，是否前往更新？',
+      'update.yes': '是', 'update.no': '否', 'update.fail': '檢查更新失敗，請檢查網絡後重試',
       'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '只看沒掌握 <b>{n}</b>', 'home.today': '今日已複習 <b>{n}</b>',
       'deck.meta': '{n} 張卡片 · <span class="ok">已掌握 {k}</span> · <span class="todo">待複習 {t}</span>',
       'deck.review': '隨機複習', 'deck.knownOf': '已掌握 {k}', 'deck.quick': '分類速記', 'deck.browse': '瀏覽/編輯',
@@ -312,6 +320,10 @@
       'lang.zhHans': '简体中文', 'lang.zhHant': '繁體中文', 'lang.en': 'English',
       'about.name': 'MD闪记卡', 'about.author': 'Author: fest',
       'about.feedback': 'Bugs & suggestions: <a href="mailto:fest1024@163.com">fest1024@163.com</a>',
+      'about.checkUpdate': 'Check for updates',
+      'update.checking': 'Checking…', 'update.latest': 'You are up to date',
+      'update.newTitle': 'New version v{v} available', 'update.newBody': 'Current version is v{cur}. Update now?',
+      'update.yes': 'Yes', 'update.no': 'No', 'update.fail': 'Update check failed, please try again later',
       'home.allCards': 'All cards <b>{n}</b>', 'home.todoCards': 'Not mastered <b>{n}</b>', 'home.today': 'Reviewed today <b>{n}</b>',
       'deck.meta': '{n} cards · <span class="ok">{k} known</span> · <span class="todo">{t} to go</span>',
       'deck.review': 'Review', 'deck.knownOf': '{k} known', 'deck.quick': 'Quick read', 'deck.browse': 'Browse/Edit',
@@ -1196,6 +1208,58 @@
         else if (sc) sc.scrollLeft = sc.scrollWidth;
       });
     }
+  }
+
+  /* ---------- 检查更新（读仓库根目录的 latest.json，经 jsDelivr CDN，带 CORS） ---------- */
+  var UPDATE_JSON_URLS = [
+    'https://cdn.jsdelivr.net/gh/fest77/flash-memory-cards@main/latest.json',
+    'https://raw.githubusercontent.com/fest77/flash-memory-cards/main/latest.json'
+  ];
+  var RELEASES_URL = 'https://gitee.com/festeel/flash-memory-cards/releases';
+
+  function compareVer(a, b) {
+    var pa = String(a || '').replace(/^v/i, '').split('.');
+    var pb = String(b || '').replace(/^v/i, '').split('.');
+    for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
+      var x = parseInt(pa[i], 10) || 0;
+      var y = parseInt(pb[i], 10) || 0;
+      if (x !== y) return x > y ? 1 : -1;
+    }
+    return 0;
+  }
+
+  function fetchLatest(i) {
+    if (i >= UPDATE_JSON_URLS.length) return Promise.reject(new Error('unreachable'));
+    return fetch(UPDATE_JSON_URLS[i], { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('http ' + r.status);
+      return r.json();
+    }).catch(function () { return fetchLatest(i + 1); });
+  }
+
+  function checkUpdate() {
+    var btn = $('#checkUpdateBtn');
+    var oldTxt = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = t('update.checking'); }
+    fetchLatest(0).then(function (data) {
+      if (btn) { btn.disabled = false; btn.textContent = oldTxt; }
+      var remote = String((data && data.version) || '').replace(/^v/i, '').trim();
+      if (!/^\d+(\.\d+)*$/.test(remote)) throw new Error('bad version');
+      if (compareVer(remote, APP_VERSION) <= 0) {
+        toast(t('update.latest'), 3000);
+        return;
+      }
+      openModal(
+        '<h3>' + ESC(tf('update.newTitle', { v: remote })) + '</h3>' +
+        '<p class="modal-note">' + ESC(tf('update.newBody', { cur: APP_VERSION })) + '</p>' +
+        '<div class="modal-actions">' +
+          '<button class="btn" data-act="close-modal">' + t('update.no') + '</button>' +
+          '<button class="btn primary" data-act="update-go">' + t('update.yes') + '</button>' +
+        '</div>'
+      );
+    }).catch(function () {
+      if (btn) { btn.disabled = false; btn.textContent = oldTxt; }
+      toast(t('update.fail'), 4000);
+    });
   }
 
   function deckImageSet(deck) {
@@ -2769,6 +2833,15 @@
       case 'stats-today':
         setStatsNavToToday();
         renderStatsCharts();
+        break;
+      case 'check-update':
+        checkUpdate();
+        break;
+      case 'update-go':
+        closeModal();
+        var w = null;
+        try { w = window.open(RELEASES_URL, '_blank'); } catch (e) { /* 忽略 */ }
+        if (!w) { try { location.href = RELEASES_URL; } catch (e2) { /* WebView 走 shouldOverrideUrlLoading 转系统浏览器 */ } }
         break;
       case 'stats-view':
         state.settings.statsView = el.getAttribute('data-mode') === 'bars' ? 'bars' : 'heat';
