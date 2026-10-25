@@ -396,7 +396,8 @@
               title: sec.title + ' (' + (c + 1) + '/' + chunks.length + ')',
               question: frontFromChunk(chunks[c]),
               answer: chunks[c],
-              path: sec.path
+              path: sec.path,
+              chapter: sec.title
             });
           }
           continue;
@@ -520,7 +521,7 @@
 
     if (opts.mode === 'qa') {
       var qaAll = extractQA(lines, mask, 0, lines.length);
-      if (qaAll.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '概览', question: '', answer: qaAll.pre, path: [], chapter: docTitle || '' });
+      if (qaAll.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '概览', question: '', answer: qaAll.pre, path: [] });
       for (var i = 0; i < qaAll.pairs.length; i++) raw.push({ title: '', question: qaAll.pairs[i].q, answer: qaAll.pairs[i].a, path: [] });
     } else if (opts.mode === 'hr') {
       raw = cardsFromHr(lines, mask, opts);
@@ -540,7 +541,7 @@
       if (!raw.length && opts.mode === 'auto') {
         var qa2 = extractQA(lines, mask, 0, lines.length);
         if (qa2.pairs.length >= 1) {
-          if (qa2.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '概览', question: '', answer: qa2.pre, path: [], chapter: docTitle || '' });
+          if (qa2.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '概览', question: '', answer: qa2.pre, path: [] });
           for (var q2 = 0; q2 < qa2.pairs.length; q2++) raw.push({ title: '', question: qa2.pairs[q2].q, answer: qa2.pairs[q2].a, path: [] });
           modeUsed = 'qa';
         }
@@ -569,7 +570,8 @@
               title: soleTitle.title + (soloChunks.length > 1 ? ' (' + (sc + 1) + '/' + soloChunks.length + ')' : ''),
               question: '',
               answer: soloChunks[sc],
-              path: []
+              path: [],
+              chapter: soleTitle.title
             });
           }
           modeUsed = 'para';

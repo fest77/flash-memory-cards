@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.8.6';
+  var APP_VERSION = '1.8.7';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -2376,7 +2376,8 @@
   function chapterOf(card) {
     var ch = String(card.chapter || '').trim();
     if (ch) return ch;
-    // 旧数据没有 chapter：回退 path 末项（标题拆出的卡 path 末项即所属小节）
+    // 旧数据（v1.8.5 之前）没有 chapter：path 只存祖先标题链，末项回退是近似——
+    // 老笔记保持旧的粗粒度分组，重新导入同一文件即可获得精确的所属小节分组
     var p = card.path || [];
     for (var i = p.length - 1; i >= 0; i--) if (p[i]) return p[i];
     return t('quick.uncategorized');

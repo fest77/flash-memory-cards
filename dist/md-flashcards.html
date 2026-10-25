@@ -1446,7 +1446,8 @@ body.light .heat-cell.h4 { background: #116329; }
               title: sec.title + ' (' + (c + 1) + '/' + chunks.length + ')',
               question: frontFromChunk(chunks[c]),
               answer: chunks[c],
-              path: sec.path
+              path: sec.path,
+              chapter: sec.title
             });
           }
           continue;
@@ -1570,7 +1571,7 @@ body.light .heat-cell.h4 { background: #116329; }
 
     if (opts.mode === 'qa') {
       var qaAll = extractQA(lines, mask, 0, lines.length);
-      if (qaAll.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '概览', question: '', answer: qaAll.pre, path: [], chapter: docTitle || '' });
+      if (qaAll.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '概览', question: '', answer: qaAll.pre, path: [] });
       for (var i = 0; i < qaAll.pairs.length; i++) raw.push({ title: '', question: qaAll.pairs[i].q, answer: qaAll.pairs[i].a, path: [] });
     } else if (opts.mode === 'hr') {
       raw = cardsFromHr(lines, mask, opts);
@@ -1590,7 +1591,7 @@ body.light .heat-cell.h4 { background: #116329; }
       if (!raw.length && opts.mode === 'auto') {
         var qa2 = extractQA(lines, mask, 0, lines.length);
         if (qa2.pairs.length >= 1) {
-          if (qa2.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '概览', question: '', answer: qa2.pre, path: [], chapter: docTitle || '' });
+          if (qa2.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '概览', question: '', answer: qa2.pre, path: [] });
           for (var q2 = 0; q2 < qa2.pairs.length; q2++) raw.push({ title: '', question: qa2.pairs[q2].q, answer: qa2.pairs[q2].a, path: [] });
           modeUsed = 'qa';
         }
@@ -1619,7 +1620,8 @@ body.light .heat-cell.h4 { background: #116329; }
               title: soleTitle.title + (soloChunks.length > 1 ? ' (' + (sc + 1) + '/' + soloChunks.length + ')' : ''),
               question: '',
               answer: soloChunks[sc],
-              path: []
+              path: [],
+              chapter: soleTitle.title
             });
           }
           modeUsed = 'para';
@@ -2066,7 +2068,7 @@ body.light .heat-cell.h4 { background: #116329; }
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.8.6';
+  var APP_VERSION = '1.8.7';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -4413,7 +4415,8 @@ body.light .heat-cell.h4 { background: #116329; }
   function chapterOf(card) {
     var ch = String(card.chapter || '').trim();
     if (ch) return ch;
-    // 旧数据没有 chapter：回退 path 末项（标题拆出的卡 path 末项即所属小节）
+    // 旧数据（v1.8.5 之前）没有 chapter：path 只存祖先标题链，末项回退是近似——
+    // 老笔记保持旧的粗粒度分组，重新导入同一文件即可获得精确的所属小节分组
     var p = card.path || [];
     for (var i = p.length - 1; i >= 0; i--) if (p[i]) return p[i];
     return t('quick.uncategorized');

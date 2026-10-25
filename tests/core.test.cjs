@@ -351,10 +351,10 @@ const zipAB = zipBytes.buffer.slice(zipBytes.byteOffset, zipBytes.byteOffset + z
     assert.ok(deck.cards.length >= 2);
     assert.ok(deck.cards.every((c) => !c.chapter), 'chapter 应为空');
   });
-  test('qa 概览卡命名并归入文档标题', () => {
+  test('qa 概览卡命名（与题目同组，都未分类）', () => {
     const deck = Core.buildDeck('t', '# 我的笔记\n\n背景介绍，这是开头的说明内容。\n\nQ: 一加一？\nA: 二。', { mode: 'qa', maxCardLen: 1600, qstyle: 'prompt' });
-    assert.ok(deck.cards.some((c) => c.title === '我的笔记 · 概览' && c.chapter === '我的笔记'));
-    assert.ok(deck.cards.filter((c) => c.question.indexOf('一加一') >= 0).every((c) => !c.chapter));
+    assert.ok(deck.cards.some((c) => c.title === '我的笔记 · 概览'));
+    assert.ok(deck.cards.every((c) => !c.chapter), 'chapter 应为空');
   });
   test('超长小节下拆时父小节前言保留', () => {
     let filler = '';
@@ -368,6 +368,19 @@ const zipAB = zipBytes.buffer.slice(zipBytes.byteOffset, zipBytes.byteOffset + z
     for (let i = 0; i < 60; i++) filler += '填充说明文字，用于把小节撑到超过切块阈值。';
     const deck = Core.buildDeck('t', '# 大\n\n## 长小节\n前言第一行就一句话。\n' + filler + '\n\n### 子节一\n\n普通内容甲。\n\n### 子节二\n\n普通内容乙。\n\n## 短小节\n\n普通内容。', { mode: 'auto', maxCardLen: 800, qstyle: 'prompt' });
     assert.ok(deck.cards.some((c) => c.title === '长小节 · 概览' && c.answer.indexOf('前言第一行就一句话') >= 0));
+  });
+  test('段落切块分支的卡 chapter = 所属小节', () => {
+    let filler = '';
+    for (let i = 0; i < 30; i++) filler += '这是用来撑长度的段落内容，讲述该小节的核心知识点。';
+    const deck = Core.buildDeck('t', '# 大\n\n## 长小节\n\n' + filler + '\n\n更多补充段落，继续展开说明。\n\n## 短小节\n\n普通内容。', { mode: 'auto', maxCardLen: 500, qstyle: 'prompt' });
+    const chunks = deck.cards.filter((c) => /\(\d+\/\d+\)/.test(c.title));
+    assert.ok(chunks.length >= 2, '应有切块卡');
+    assert.ok(chunks.every((c) => c.chapter === '长小节'), chunks.map((c) => c.chapter).join(','));
+  });
+  test('qa 模式概览与题目同组（都未分类）', () => {
+    const deck = Core.buildDeck('t', '# 网络笔记\n\n背景介绍，这是开头的说明内容。\n\nQ: 什么是 TCP？\nA: 传输控制协议。', { mode: 'qa', maxCardLen: 1600, qstyle: 'prompt' });
+    assert.ok(deck.cards.every((c) => !c.chapter), 'chapter 应为空');
+    assert.ok(deck.cards.some((c) => c.title === '网络笔记 · 概览'));
   });
 
   // 构造 stored zip（无压缩）用于测试 unzipFiles 的过滤器
