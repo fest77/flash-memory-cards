@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.8.4';
+  var APP_VERSION = '1.8.5';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -816,7 +816,9 @@
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
     try {
       var pr = Store.save(JSON.stringify(state));
-      if (pr && typeof pr.catch === 'function') pr.catch(notifySaveFail);
+      if (pr && typeof pr.then === 'function') {
+        pr.then(function (ok) { if (ok === false) notifySaveFail(); }).catch(notifySaveFail);
+      }
     } catch (e) { notifySaveFail(); }
   }
 
@@ -1259,6 +1261,9 @@
             '<button class="btn sm" data-act="quick" data-deck="' + d.id + '">' + t('deck.quick') + '</button>' +
             '<button class="btn sm" data-act="browse" data-deck="' + d.id + '">' + t('deck.browse') + '</button>' +
             '<button class="btn sm" data-act="ai-deck" data-deck="' + d.id + '">' + t('deck.ai') + '</button>' +
+            (aiRun.lastRefine && aiRun.lastRefine.deckId === d.id && !aiRun.lastRefine.undone
+              ? '<button class="btn sm" data-act="ai-undo" data-deck="' + d.id + '">' + t('ai.undo') + '</button>'
+              : '') +
             '<button class="btn sm" data-act="export-deck" data-deck="' + d.id + '">' + t('deck.export') + '</button>' +
             '<button class="btn sm danger" data-act="delete-deck" data-deck="' + d.id + '">' + t('deck.delete') + '</button>' +
           '</div>' +
@@ -1957,6 +1962,9 @@
     function finish() {
       var canceled = aiRun.cancel;
       aiRun.active = false;
+      if (changed && aiRun.snapshot) {
+        aiRun.lastRefine = { deckId: d.id, snapshot: aiRun.snapshot, undone: false }; // 撤销入口放到首页，关掉弹窗仍可用
+      }
       scheduleSave();
       renderHome();
       var out = $('#aiOut');
@@ -1964,8 +1972,7 @@
         : (errors.length ? tf('ai.doneFail', { n: changed, m: errors.length }) : tf('ai.done', { n: changed }));
       if (out) {
         out.innerHTML = '<b class="' + (canceled ? 'warn' : 'ok') + '">' + ESC(msg) + '</b>' +
-          (errors.length ? '<br><span class="warn">' + ESC(errors[0]).replace(/\n/g, '<br>') + '</span>' : '') +
-          (changed && aiRun.snapshot ? '<div class="modal-actions" style="margin-top:10px"><button class="btn" data-act="ai-undo">' + t('ai.undo') + '</button></div>' : '');
+          (errors.length ? '<br><span class="warn">' + ESC(errors[0]).replace(/\n/g, '<br>') + '</span>' : '');
       }
       toast(msg, 3000);
     }
@@ -2366,6 +2373,8 @@
   /* ============================== 分类速记 ============================== */
 
   function chapterOf(card) {
+    var t = String(card.title || '').trim();
+    if (t) return t; // 标题拆出的卡，title 就是所属小节标题
     var p = card.path || [];
     for (var i = p.length - 1; i >= 0; i--) if (p[i]) return p[i];
     return t('quick.uncategorized');
@@ -2862,10 +2871,11 @@
         saveCard();
         break;
       case 'ai-undo': {
-        var snap = aiRun && aiRun.snapshot;
-        var ud = findDeck(modalPayload && modalPayload.deckId);
-        if (ud && snap && snap.length === ud.cards.length) {
-          ud.cards.forEach(function (uc, ui) { uc.question = snap[ui]; });
+        var lr = aiRun && aiRun.lastRefine;
+        var ud = findDeck((el && el.getAttribute('data-deck')) || (lr && lr.deckId));
+        if (ud && lr && lr.snapshot && lr.deckId === ud.id && lr.snapshot.length === ud.cards.length) {
+          ud.cards.forEach(function (uc, ui) { uc.question = lr.snapshot[ui]; });
+          lr.undone = true;
           scheduleSave();
           renderHome();
         }

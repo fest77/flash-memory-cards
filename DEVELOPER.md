@@ -255,7 +255,7 @@ Notes:
 ## 9. Tests
 
 ```bash
-node tests/core.test.cjs            # 32 assertions, Node 18+ (DecompressionStream)
+node tests/core.test.cjs            # 50 assertions, Node 18+ (DecompressionStream)
 node tests/run-browser-test.cjs     # static checks + 108 headless Edge assertions
 node tests/run-screenshots.cjs      # docs/images screenshots
 node tests/persist-test.cjs         # file:// persistence
@@ -299,4 +299,5 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.8.1 | stats: tap/hover tooltip (date + count) on heatmap cells, bars and month cells; Y/M/D picker (years from 2020) switching heatmap to a calendar-month heat view with selected-day highlight; back-to-today reset |
 | 1.8.2 | date search reworked after feedback: heatmap keeps its form (window shifts to selected date, cell outlined) instead of turning into a calendar; bars now follow the search too (7 days ending at the date); scroll-into-view fix for charts rendered while hidden |
 | 1.8.3 | Obsidian `![[...]]` image embeds render in cards (title/question/answer); mailto: links in About open the system email app instead of ERR_UNKNOWN_URL_SCHEME |
-| 1.8.4 | review fixes: Q/A markers now require a separator (QPS/API no longer misparsed), pre-marker prose kept as an overview card, lookbehind regex removed (old-WebView white screen), save failures surfaced via throttled toast, restore keeps local AI/theme/lang, deleting decks/cards prunes stats, GBK fallback for imported md, quick-read groups by last path level, fixed committed debug.keystore (覆盖安装-safe), external links open outside the app, allowBackup=false, unused androidx.webkit removed, test artifacts moved to tmpdir |
+| 1.8.4 | review fixes: Q/A markers now require a separator (QPS/API no longer misparsed), pre-marker prose kept as an overview card, lookbehind regex removed (old-WebView white screen), save failures surfaced via throttled toast, restore keeps local AI/theme/lang, deleting decks/cards prunes stats, GBK fallback for imported md, quick-read groups by owning section title (card.title; `path` only holds ancestors), fixed committed debug.keystore (覆盖安装-safe), external links open outside the app, allowBackup=false, unused androidx.webkit removed, test artifacts moved to tmpdir |
+| 1.8.5 | second-round review fixes: quick-read grouping actually works (chapter = card's owning section title, `path` only holds ancestors), overview cards titled `小节 · 概览`/`文档标题 · 概览` instead of 知识点 N, `flushSave` also surfaces resolved-false, AI undo reachable from home after closing the modal (`aiRun.lastRefine`), latent `kidQA[kq]` crash fixed, `Q1、`/`Q1.` numbering recognized again (digit + 顿号/句点), parent-section preface kept when an oversized section is split into children |

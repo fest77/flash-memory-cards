@@ -161,10 +161,10 @@
   var A_KEYS = 'Answer|答案|A|解答|解析|答';
 
   function marker(keySource) {
-    // 允许： "Q: ..." "**Q:** ..." "- Q：..." "> 问：..." "Q1: ..." "**题目：** ..."
-    // 分隔符（: 或 ：）必须存在：防止 QPS:/API:/A/B测试/A股 这类普通词被当成 Q/A 标记吃掉首字母
+    // 允许： "Q: ..." "**Q:** ..." "- Q：..." "> 问：..." "Q1、..." "Q1. ..." "**题目：** ..."
+    // 分隔符必须存在（: ： 或 数字+、.）：防止 QPS:/API:/A/B测试/A股/裸 "A. 选项" 被误识别吃掉首字母
     return new RegExp(
-      '^[ \\t>*-]{0,4}(?:\\*\\*|__)?[ \\t]*(?:' + keySource + ')[ \\t]*\\d*[ \\t]*(?::|：)[ \\t]*(?:\\*\\*|__)?[ \\t]*(?::|：)?[ \\t]*',
+      '^[ \\t>*-]{0,4}(?:\\*\\*|__)?[ \\t]*(?:' + keySource + ')[ \\t]*(?:(?::|：)|\\d+[、.])[ \\t]*(?:\\*\\*|__)?[ \\t]*(?::|：)?[ \\t]*',
       'i'
     );
   }
@@ -332,6 +332,8 @@
 
   function cardsFromLevel(lines, mask, headings, level, opts, out) {
     var secs = sectionsAt(lines, headings, level);
+    // 注：文档级前言（第一个小节之前的正文）按设计不成卡（见 core.test '前言部分，不该单独成卡'）；
+    // 但超长小节递归下拆时，父小节自己的前言会真正丢失，在下方子拆分支里保留为概览卡。
     for (var s = 0; s < secs.length; s++) {
       var sec = secs[s];
       var body = sec.body;
@@ -360,15 +362,23 @@
           var subOut = [];
           var subs = sectionsAt(lines, headings, childLevel, sec.start, sec.end);
           if (subs.length >= 2) {
+            // 父小节里、第一个子小节之前的导语保留为概览卡
+            var basePath = sec.path.concat([sec.title]);
+            var secPre = [];
+            for (var spi = sec.start + 1; spi < subs[0].start; spi++) {
+              var sl = lines[spi];
+              if (sl.trim() && !/^#{1,6}\s/.test(sl)) secPre.push(sl);
+            }
+            var secPreText = trimBlank(secPre.join('\n'));
+            if (secPreText) subOut.push({ title: sec.title + ' · 概览', question: '', answer: secPreText, path: basePath });
             for (var k = 0; k < subs.length; k++) {
               var kid = subs[k];
               if (!kid.body.trim()) continue;
               var kidQA = opts.useQA ? extractQA(lines, mask, kid.start, kid.end) : { pairs: [], pre: '' };
-              var basePath = sec.path.concat([sec.title]);
               if (kidQA.pairs.length >= 1) {
                 if (kidQA.pre) subOut.push({ title: kid.title, question: '', answer: kidQA.pre, path: basePath });
                 for (var kq = 0; kq < kidQA.pairs.length; kq++) {
-                  subOut.push({ title: kid.title, question: kidQA[kq].q, answer: kidQA[kq].a, path: basePath });
+                  subOut.push({ title: kid.title, question: kidQA.pairs[kq].q, answer: kidQA.pairs[kq].a, path: basePath });
                 }
               } else {
                 subOut.push({ title: kid.title, question: '', answer: kid.body, path: basePath });
@@ -508,7 +518,7 @@
 
     if (opts.mode === 'qa') {
       var qaAll = extractQA(lines, mask, 0, lines.length);
-      if (qaAll.pre) raw.push({ title: '', question: '', answer: qaAll.pre, path: [] });
+      if (qaAll.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '', question: '', answer: qaAll.pre, path: [] });
       for (var i = 0; i < qaAll.pairs.length; i++) raw.push({ title: '', question: qaAll.pairs[i].q, answer: qaAll.pairs[i].a, path: [] });
     } else if (opts.mode === 'hr') {
       raw = cardsFromHr(lines, mask, opts);
@@ -528,7 +538,7 @@
       if (!raw.length && opts.mode === 'auto') {
         var qa2 = extractQA(lines, mask, 0, lines.length);
         if (qa2.pairs.length >= 1) {
-          if (qa2.pre) raw.push({ title: '', question: '', answer: qa2.pre, path: [] });
+          if (qa2.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '', question: '', answer: qa2.pre, path: [] });
           for (var q2 = 0; q2 < qa2.pairs.length; q2++) raw.push({ title: '', question: qa2.pairs[q2].q, answer: qa2.pairs[q2].a, path: [] });
           modeUsed = 'qa';
         }

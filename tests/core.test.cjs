@@ -331,6 +331,23 @@ const zipAB = zipBytes.buffer.slice(zipBytes.byteOffset, zipBytes.byteOffset + z
     assert.ok(deck.cards.some((c) => c.answer.indexOf('四种') >= 0), '概述不应丢失');
     assert.ok(deck.cards.some((c) => c.question.indexOf('默认级别') >= 0));
   });
+  test('Q1、/Q1. 数字编号形式仍识别', () => {
+    const deck = Core.buildDeck('t', '## 练习\n\nQ1、什么是进程？\nA: 运行中的程序。\n\nQ2. 什么是线程？\nA: 调度单位。', { mode: 'auto', maxCardLen: 1600, qstyle: 'prompt' });
+    assert.ok(deck.cards.some((c) => c.question.indexOf('什么是进程') >= 0));
+    assert.ok(deck.cards.some((c) => c.question.indexOf('什么是线程') >= 0));
+  });
+  test('标题型卡的 title 是所属小节（快速阅读分组依据）', () => {
+    const deck = Core.buildDeck('t', '# 大标题\n\n## 第一章\n\nQ: a?\nA: b.\n\n## 第二章\n\nQ: c?\nA: d.', { mode: 'auto', maxCardLen: 1600, qstyle: 'prompt' });
+    const titles = deck.cards.map((c) => c.title);
+    assert.ok(titles.includes('第一章') && titles.includes('第二章'), titles.join(','));
+  });
+  test('超长小节下拆时父小节前言保留', () => {
+    let filler = '';
+    for (let i = 0; i < 40; i++) filler += '填充说明文字，用于把小节撑到超过切块阈值。';
+    const deck = Core.buildDeck('t', '# 大\n\n## 长小节\n' + filler + '\n\n### 子节一\n\nQ: 甲？\nA: 乙。\n\n### 子节二\n\nQ: 丙？\nA: 丁。\n\n## 短小节\n\n普通内容。', { mode: 'auto', maxCardLen: 800, qstyle: 'prompt' });
+    assert.ok(deck.cards.some((c) => c.title === '长小节' && c.answer.indexOf('填充说明') >= 0), '父小节前言不应丢失');
+    assert.ok(deck.cards.some((c) => c.question.indexOf('甲') >= 0) && deck.cards.some((c) => c.question.indexOf('丙') >= 0));
+  });
 
   // 构造 stored zip（无压缩）用于测试 unzipFiles 的过滤器
   function crc32(buf) {
