@@ -40,7 +40,7 @@ md-flashcards/
 │   ├── build_interview_decks.py  # interview md → bundled-decks.js
 │   └── build_interview_images.py # interview images/ → bundled-images.js
 ├── tests/
-│   ├── core.test.cjs          # 46 unit tests (Node, no browser)
+│   ├── core.test.cjs          # 53 unit tests (Node, no browser)
 │   ├── browser-harness.js     # injected into the built page
 │   ├── run-browser-test.cjs   # static checks + 108 headless-Edge assertions
 │   ├── run-screenshots.cjs    # writes docs/images/*
@@ -255,7 +255,7 @@ Notes:
 ## 9. Tests
 
 ```bash
-node tests/core.test.cjs            # 50 assertions, Node 18+ (DecompressionStream)
+node tests/core.test.cjs            # 53 tests, Node 18+ (DecompressionStream)
 node tests/run-browser-test.cjs     # static checks + 108 headless Edge assertions
 node tests/run-screenshots.cjs      # docs/images screenshots
 node tests/persist-test.cjs         # file:// persistence
@@ -301,3 +301,4 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.8.3 | Obsidian `![[...]]` image embeds render in cards (title/question/answer); mailto: links in About open the system email app instead of ERR_UNKNOWN_URL_SCHEME |
 | 1.8.4 | review fixes: Q/A markers now require a separator (QPS/API no longer misparsed), pre-marker prose kept as an overview card, lookbehind regex removed (old-WebView white screen), save failures surfaced via throttled toast, restore keeps local AI/theme/lang, deleting decks/cards prunes stats, GBK fallback for imported md, quick-read groups by owning section title (card.title; `path` only holds ancestors), fixed committed debug.keystore (覆盖安装-safe), external links open outside the app, allowBackup=false, unused androidx.webkit removed, test artifacts moved to tmpdir |
 | 1.8.5 | second-round review fixes: quick-read grouping actually works (chapter = card's owning section title, `path` only holds ancestors), overview cards titled `小节 · 概览`/`文档标题 · 概览` instead of 知识点 N, `flushSave` also surfaces resolved-false, AI undo reachable from home after closing the modal (`aiRun.lastRefine`), latent `kidQA[kq]` crash fixed, `Q1、`/`Q1.` numbering recognized again (digit + 顿号/句点), parent-section preface kept when an oversized section is split into children |
+| 1.8.6 | third-round review fixes: new `chapter` field (owning section) threaded through parsing/storage/normalizeState — quick-read groups by `chapterOf` reading `chapter` only (Q/A, hr and para modes stay uncategorized instead of one-chapter-per-card); off-by-one in parent-preface capture (`sec.start` is already the line after the heading); AI undo reports failure honestly when the deck changed; zh-Hant/en dictionaries got the missing undo strings |

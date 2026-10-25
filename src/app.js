@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.8.5';
+  var APP_VERSION = '1.8.6';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -112,7 +112,7 @@
       'ai.testing': '请求中…（最长等 {s} 秒）', 'ai.testOk': '连接成功', 'ai.testFail': '连接失败', 'ai.modelReply': '模型回复：',
       'ai.title': 'AI 提炼提问', 'ai.desc': '用大模型读懂每张卡的答案，把标题改写成更像面试题的问题（<b>只改题面，不动答案</b>）。请求从你的手机直接发出，不经过任何服务器。',
       'ai.notConfigured': '还没有配置 AI：到「设置 → AI 供应商」添加供应商并填 Key。',
-      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.canceled': '已停止提炼', 'ai.undo': '撤销本次提炼', 'ai.undone': '已恢复原题面', 'ai.start': '开始提炼',
+      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.canceled': '已停止提炼', 'ai.undo': '撤销本次提炼', 'ai.undone': '已恢复原题面', 'ai.undoFail': '无法撤销：笔记内容已变化', 'ai.start': '开始提炼',
       'ai.busy': '正在提炼，请稍等', 'ai.needConfig': '先配置 AI 地址和模型',
       'ai.progress': '提炼中… {done} / {total} 张（共 {batches} 批）',
       'ai.badFormat': '返回格式无法解析（需要 {"questions":[{"idx":..,"q":".."}]}）',
@@ -227,7 +227,7 @@
       'ai.testing': '請求中…（最長等 {s} 秒）', 'ai.testOk': '連線成功', 'ai.testFail': '連線失敗', 'ai.modelReply': '模型回覆：',
       'ai.title': 'AI 提煉提問', 'ai.desc': '用大模型讀懂每張卡的答案，把標題改寫成更像面試題的問題（<b>只改題面，不動答案</b>）。請求從你的手機直接發出，不經過任何伺服器。',
       'ai.notConfigured': '還沒有設定 AI：到「設定 → AI 供應商」新增供應商並填 Key。',
-      'ai.cardCount': '共 {n} 張卡', 'ai.ready': '已就緒', 'ai.notReady': '未設定', 'ai.start': '開始提煉',
+      'ai.cardCount': '共 {n} 張卡', 'ai.ready': '已就緒', 'ai.notReady': '未設定', 'ai.canceled': '已停止提煉', 'ai.undo': '撤銷本次提煉', 'ai.undone': '已恢復原題面', 'ai.undoFail': '無法撤銷：筆記內容已變化', 'ai.start': '開始提煉',
       'ai.busy': '正在提煉，請稍等', 'ai.needConfig': '先設定 AI 位址和模型',
       'ai.progress': '提煉中… {done} / {total} 張（共 {batches} 批）',
       'ai.badFormat': '返回格式無法解析（需要 {"questions":[{"idx":..,"q":".."}]}）',
@@ -342,7 +342,7 @@
       'ai.testing': 'Requesting… (up to {s} s)', 'ai.testOk': 'Connected', 'ai.testFail': 'Connection failed', 'ai.modelReply': 'Model reply: ',
       'ai.title': 'AI question refine', 'ai.desc': 'Have an LLM rewrite each card\'s title into an interview-style question (<b>questions only, answers untouched</b>). Requests go straight from your phone to the API; no server in between.',
       'ai.notConfigured': 'AI is not configured: add a provider and fill in the key under Settings → AI providers.',
-      'ai.cardCount': '{n} cards', 'ai.ready': 'Ready', 'ai.notReady': 'Not configured', 'ai.start': 'Start refine',
+      'ai.cardCount': '{n} cards', 'ai.ready': 'Ready', 'ai.notReady': 'Not configured', 'ai.canceled': 'Refining stopped', 'ai.undo': 'Undo this refine', 'ai.undone': 'Original questions restored', 'ai.undoFail': 'Cannot undo: the deck has changed', 'ai.start': 'Start refine',
       'ai.busy': 'Refine in progress, please wait', 'ai.needConfig': 'Configure the API URL and model first',
       'ai.progress': 'Refining… {done} / {total} cards ({batches} batches)',
       'ai.badFormat': 'Unparseable response (expected {"questions":[{"idx":..,"q":".."}]})',
@@ -745,7 +745,8 @@
             title: c.title || '',
             question: c.question || '',
             answer: c.answer,
-            path: Array.isArray(c.path) ? c.path : []
+            path: Array.isArray(c.path) ? c.path : [],
+            chapter: typeof c.chapter === 'string' ? c.chapter : ''
           };
         });
         if (!cards.length) return;
@@ -2373,8 +2374,9 @@
   /* ============================== 分类速记 ============================== */
 
   function chapterOf(card) {
-    var t = String(card.title || '').trim();
-    if (t) return t; // 标题拆出的卡，title 就是所属小节标题
+    var ch = String(card.chapter || '').trim();
+    if (ch) return ch;
+    // 旧数据没有 chapter：回退 path 末项（标题拆出的卡 path 末项即所属小节）
     var p = card.path || [];
     for (var i = p.length - 1; i >= 0; i--) if (p[i]) return p[i];
     return t('quick.uncategorized');
@@ -2873,15 +2875,15 @@
       case 'ai-undo': {
         var lr = aiRun && aiRun.lastRefine;
         var ud = findDeck((el && el.getAttribute('data-deck')) || (lr && lr.deckId));
-        if (ud && lr && lr.snapshot && lr.deckId === ud.id && lr.snapshot.length === ud.cards.length) {
+        if (ud && lr && lr.snapshot && lr.deckId === ud.id && lr.snapshot.length === ud.cards.length && !lr.undone) {
           ud.cards.forEach(function (uc, ui) { uc.question = lr.snapshot[ui]; });
           lr.undone = true;
           scheduleSave();
           renderHome();
+          toast(t('ai.undone'));
+        } else {
+          toast(t('ai.undoFail'), 4000);
         }
-        var uo = $('#aiOut');
-        if (uo) uo.innerHTML = '<b class="ok">' + ESC(t('ai.undone')) + '</b>';
-        toast(t('ai.undone'));
         break;
       }
       case 'delete-card':

@@ -341,9 +341,9 @@
 
       if (qa.pairs.length >= 1) {
         // 标记前的正文不能丢：作为概述卡保留
-        if (qa.pre) out.push({ title: sec.title, question: '', answer: qa.pre, path: sec.path });
+        if (qa.pre) out.push({ title: sec.title, question: '', answer: qa.pre, path: sec.path, chapter: sec.title });
         for (var q = 0; q < qa.pairs.length; q++) {
-          out.push({ title: sec.title, question: qa.pairs[q].q, answer: qa.pairs[q].a, path: sec.path });
+          out.push({ title: sec.title, question: qa.pairs[q].q, answer: qa.pairs[q].a, path: sec.path, chapter: sec.title });
         }
         continue;
       }
@@ -365,23 +365,23 @@
             // 父小节里、第一个子小节之前的导语保留为概览卡
             var basePath = sec.path.concat([sec.title]);
             var secPre = [];
-            for (var spi = sec.start + 1; spi < subs[0].start; spi++) {
+            for (var spi = sec.start; spi < subs[0].start; spi++) {
               var sl = lines[spi];
               if (sl.trim() && !/^#{1,6}\s/.test(sl)) secPre.push(sl);
             }
             var secPreText = trimBlank(secPre.join('\n'));
-            if (secPreText) subOut.push({ title: sec.title + ' · 概览', question: '', answer: secPreText, path: basePath });
+            if (secPreText) subOut.push({ title: sec.title + ' · 概览', question: '', answer: secPreText, path: basePath, chapter: sec.title });
             for (var k = 0; k < subs.length; k++) {
               var kid = subs[k];
               if (!kid.body.trim()) continue;
               var kidQA = opts.useQA ? extractQA(lines, mask, kid.start, kid.end) : { pairs: [], pre: '' };
               if (kidQA.pairs.length >= 1) {
-                if (kidQA.pre) subOut.push({ title: kid.title, question: '', answer: kidQA.pre, path: basePath });
+                if (kidQA.pre) subOut.push({ title: kid.title, question: '', answer: kidQA.pre, path: basePath, chapter: sec.title });
                 for (var kq = 0; kq < kidQA.pairs.length; kq++) {
-                  subOut.push({ title: kid.title, question: kidQA.pairs[kq].q, answer: kidQA.pairs[kq].a, path: basePath });
+                  subOut.push({ title: kid.title, question: kidQA.pairs[kq].q, answer: kidQA.pairs[kq].a, path: basePath, chapter: sec.title });
                 }
               } else {
-                subOut.push({ title: kid.title, question: '', answer: kid.body, path: basePath });
+                subOut.push({ title: kid.title, question: '', answer: kid.body, path: basePath, chapter: sec.title });
               }
             }
             for (var so = 0; so < subOut.length; so++) out.push(subOut[so]);
@@ -403,7 +403,7 @@
         }
       }
 
-      out.push({ title: sec.title, question: '', answer: body, path: sec.path });
+      out.push({ title: sec.title, question: '', answer: body, path: sec.path, chapter: sec.title });
     }
   }
 
@@ -481,12 +481,14 @@
           if (pv) path.push(pv);
         }
       }
+      var chapter = cleanInline(c.chapter || '');
       cards.push({
         id: id,
         title: title,
         question: question,
         answer: answer,
-        path: path
+        path: path,
+        chapter: chapter
       });
     }
     return cards;
@@ -518,7 +520,7 @@
 
     if (opts.mode === 'qa') {
       var qaAll = extractQA(lines, mask, 0, lines.length);
-      if (qaAll.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '', question: '', answer: qaAll.pre, path: [] });
+      if (qaAll.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '概览', question: '', answer: qaAll.pre, path: [], chapter: docTitle || '' });
       for (var i = 0; i < qaAll.pairs.length; i++) raw.push({ title: '', question: qaAll.pairs[i].q, answer: qaAll.pairs[i].a, path: [] });
     } else if (opts.mode === 'hr') {
       raw = cardsFromHr(lines, mask, opts);
@@ -538,7 +540,7 @@
       if (!raw.length && opts.mode === 'auto') {
         var qa2 = extractQA(lines, mask, 0, lines.length);
         if (qa2.pairs.length >= 1) {
-          if (qa2.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '', question: '', answer: qa2.pre, path: [] });
+          if (qa2.pre) raw.push({ title: docTitle ? docTitle + ' · 概览' : '概览', question: '', answer: qa2.pre, path: [], chapter: docTitle || '' });
           for (var q2 = 0; q2 < qa2.pairs.length; q2++) raw.push({ title: '', question: qa2.pairs[q2].q, answer: qa2.pairs[q2].a, path: [] });
           modeUsed = 'qa';
         }
@@ -558,7 +560,7 @@
         }
         var restBody = trimBlank(lines.slice(paraFrom).join('\n'));
         if (soleTitle && restBody.length <= opts.maxCardLen * 1.5) {
-          raw.push({ title: soleTitle.title, question: '', answer: restBody, path: [] });
+          raw.push({ title: soleTitle.title, question: '', answer: restBody, path: [], chapter: soleTitle.title });
           modeUsed = 'h1';
         } else if (soleTitle) {
           var soloChunks = chunkParagraphs(lines, mask, paraFrom, lines.length, opts.maxCardLen);

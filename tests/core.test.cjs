@@ -341,12 +341,33 @@ const zipAB = zipBytes.buffer.slice(zipBytes.byteOffset, zipBytes.byteOffset + z
     const titles = deck.cards.map((c) => c.title);
     assert.ok(titles.includes('第一章') && titles.includes('第二章'), titles.join(','));
   });
+  test('chapter 字段 = 所属小节（分组依据）', () => {
+    const deck = Core.buildDeck('t', '# 大标题\n\n## 第一章\n\nQ: a?\nA: b.\n\n## 第二章\n\nQ: c?\nA: d.', { mode: 'auto', maxCardLen: 1600, qstyle: 'prompt' });
+    assert.ok(deck.cards.every((c) => c.chapter === '第一章' || c.chapter === '第二章'));
+    assert.strictEqual(new Set(deck.cards.map((c) => c.chapter)).size, 2);
+  });
+  test('Q/A-only 笔记全部未分类（不一张卡一章）', () => {
+    const deck = Core.buildDeck('t', 'Q: 什么是 TCP？\nA: 传输控制协议。\n\nQ: 什么是 UDP？\nA: 用户数据报协议。', { mode: 'qa', maxCardLen: 1600, qstyle: 'prompt' });
+    assert.ok(deck.cards.length >= 2);
+    assert.ok(deck.cards.every((c) => !c.chapter), 'chapter 应为空');
+  });
+  test('qa 概览卡命名并归入文档标题', () => {
+    const deck = Core.buildDeck('t', '# 我的笔记\n\n背景介绍，这是开头的说明内容。\n\nQ: 一加一？\nA: 二。', { mode: 'qa', maxCardLen: 1600, qstyle: 'prompt' });
+    assert.ok(deck.cards.some((c) => c.title === '我的笔记 · 概览' && c.chapter === '我的笔记'));
+    assert.ok(deck.cards.filter((c) => c.question.indexOf('一加一') >= 0).every((c) => !c.chapter));
+  });
   test('超长小节下拆时父小节前言保留', () => {
     let filler = '';
     for (let i = 0; i < 40; i++) filler += '填充说明文字，用于把小节撑到超过切块阈值。';
     const deck = Core.buildDeck('t', '# 大\n\n## 长小节\n' + filler + '\n\n### 子节一\n\nQ: 甲？\nA: 乙。\n\n### 子节二\n\nQ: 丙？\nA: 丁。\n\n## 短小节\n\n普通内容。', { mode: 'auto', maxCardLen: 800, qstyle: 'prompt' });
     assert.ok(deck.cards.some((c) => c.title === '长小节' && c.answer.indexOf('填充说明') >= 0), '父小节前言不应丢失');
     assert.ok(deck.cards.some((c) => c.question.indexOf('甲') >= 0) && deck.cards.some((c) => c.question.indexOf('丙') >= 0));
+  });
+  test('父小节前言 off-by-one：标题后无空行的单行前言也保留', () => {
+    let filler = '';
+    for (let i = 0; i < 60; i++) filler += '填充说明文字，用于把小节撑到超过切块阈值。';
+    const deck = Core.buildDeck('t', '# 大\n\n## 长小节\n前言第一行就一句话。\n' + filler + '\n\n### 子节一\n\n普通内容甲。\n\n### 子节二\n\n普通内容乙。\n\n## 短小节\n\n普通内容。', { mode: 'auto', maxCardLen: 800, qstyle: 'prompt' });
+    assert.ok(deck.cards.some((c) => c.title === '长小节 · 概览' && c.answer.indexOf('前言第一行就一句话') >= 0));
   });
 
   // 构造 stored zip（无压缩）用于测试 unzipFiles 的过滤器
