@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.8.2';
+  var APP_VERSION = '1.8.3';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -2085,12 +2085,19 @@
     if (review.deckIds.length > 1) pathParts.push(q.deckName);
     (card.path || []).forEach(function (p) { pathParts.push(p); });
     $('#rvPath').textContent = pathParts.join('  /  ');
-    $('#rvTitle').textContent = card.title;
+    var tEl = $('#rvTitle');
+    var tText = card.title || '';
+    if (tText.indexOf('![[') >= 0 || /!\[[^\]]*\]\(/.test(tText)) {
+      // 标题本身是图片嵌入（Obsidian 看图题）→ 渲染成图片
+      tEl.innerHTML = resolveImgSrc(Core.renderMarkdown(tText));
+    } else {
+      tEl.textContent = tText;
+    }
 
     var qText = (card.question || '').trim();
     var qEl = $('#rvQuestion');
     if (qText) {
-      qEl.innerHTML = qText.indexOf('\n') >= 0 ? resolveImgSrc(Core.renderMarkdown(qText)) : Core.renderInline(qText);
+      qEl.innerHTML = qText.indexOf('\n') >= 0 ? resolveImgSrc(Core.renderMarkdown(qText)) : resolveImgSrc(Core.renderInline(qText));
       qEl.classList.remove('hidden');
     } else {
       qEl.innerHTML = '';

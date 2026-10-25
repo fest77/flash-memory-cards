@@ -299,6 +299,16 @@ const zipAB = zipBytes.buffer.slice(zipBytes.byteOffset, zipBytes.byteOffset + z
     assert.ok(/<img src="https:\/\/x\.test\/c\.png"/.test(Core.renderMarkdown('![](https://x.test/c.png)')));
   });
 
+  test('Obsidian wiki 图片 ![[..]] 渲染', () => {
+    assert.ok(/<img src="AI应用开发\/images\/image下（第5章）\/img001\.png"/.test(Core.renderMarkdown('![[AI应用开发/images/image下（第5章）/img001.png]]')));
+  });
+  test('wiki 图片带 |宽度 后缀', () => {
+    assert.ok(/<img src="a\.png"/.test(Core.renderMarkdown('![[a.png|300]]')));
+  });
+  test('renderInline 也支持 wiki 图片', () => {
+    assert.ok(/<img src="b\.png"/.test(Core.renderInline('看图 ![[b.png]]')));
+  });
+
   // 构造 stored zip（无压缩）用于测试 unzipFiles 的过滤器
   function crc32(buf) {
     let c = ~0;

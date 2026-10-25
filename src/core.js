@@ -5,7 +5,7 @@
 (function (global) {
   'use strict';
 
-  var CORE_VERSION = '1.1.0';
+  var CORE_VERSION = '1.2.0';
 
   /* ============================== 工具 ============================== */
 
@@ -618,8 +618,14 @@
     return inline;
   }
 
+  /* Obsidian wiki 图片嵌入 ![[path/img.png]]（可带 |宽度 后缀）→ 标准 ![](path/img.png) */
+  function convertWikiImages(s) {
+    var re = new RegExp('!\\[\\[([^\\]\\r\\n|]+)(?:\\|[^\\]\\r\\n]*)?\\]\\]', 'g');
+    return String(s || '').replace(re, '![]($1)');
+  }
+
   function renderMarkdown(markdown) {
-    var src = normalize(markdown).trim();
+    var src = convertWikiImages(normalize(markdown)).trim();
     if (!src) return '';
     var lines = src.split('\n');
     var inline = makeInline();
@@ -770,7 +776,7 @@
   }
 
   function renderInline(text) {
-    return makeInline()(String(text == null ? '' : text));
+    return makeInline()(convertWikiImages(String(text == null ? '' : text)));
   }
 
   function plainText(markdown) {

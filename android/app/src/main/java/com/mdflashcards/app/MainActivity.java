@@ -66,6 +66,22 @@ public class MainActivity extends Activity {
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                String scheme = uri == null ? null : uri.getScheme();
+                if (scheme != null && !"http".equals(scheme) && !"https".equals(scheme)) {
+                    // mailto: / tel: 等交给系统应用（WebView 自身不认识这些协议）
+                    try {
+                        startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "未找到可以处理该链接的应用", Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 if (uri != null && ASSET_HOST.equals(uri.getHost())) {
