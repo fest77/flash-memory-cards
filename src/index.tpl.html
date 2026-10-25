@@ -235,6 +235,25 @@
         </div>
         <button class="btn ghost hidden" id="backupFolderBtn" data-act="backup-folder" data-i18n="backup.folderSet">选择备份文件夹</button>
       </div>
+      <div class="field">
+        <label data-i18n="pin.title">应用锁（4 位 PIN）</label>
+        <div class="row-2">
+          <input type="password" id="pinInput" maxlength="4" inputmode="numeric" placeholder="0000" data-i18n-ph="pin.ph">
+          <button class="btn" data-act="pin-set" data-i18n="pin.set">设置 PIN</button>
+        </div>
+        <p class="modal-note" data-i18n="pin.note">仅本机存储；忘记 PIN 只能清除数据。</p>
+        <button class="btn ghost" data-act="pin-remove" data-i18n="pin.remove">移除 PIN</button>
+      </div>
+      <div class="field">
+        <label data-i18n="rem.title">每日复习提醒（安卓）</label>
+        <div class="row-2">
+          <input type="time" id="remTime" value="20:00">
+          <button class="btn" data-act="rem-set" data-i18n="rem.set">开启提醒</button>
+        </div>
+        <button class="btn ghost" data-act="rem-cancel" data-i18n="rem.cancel">关闭提醒</button>
+      </div>
+      <div class="field">
+      </div>
     </details>
 
     <details class="settings" open>

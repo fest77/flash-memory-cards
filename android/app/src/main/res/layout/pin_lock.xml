@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:padding="24dp">
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="输入 PIN 解锁" android:textSize="16sp" />
+    <EditText android:id="@+id/pinInput" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:inputType="numberPassword"
+        android:maxLength="4" android:hint="4 位数字" />
+    <Button android:id="@+id/pinGo" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="解锁" />
+    <Button android:id="@+id/pinForgot" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="忘记 PIN？"
+        android:background="@android:color/transparent" />
+</LinearLayout>

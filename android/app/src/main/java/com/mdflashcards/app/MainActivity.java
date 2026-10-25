@@ -27,6 +27,26 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.nio.charset.Charset;
+import android.app.AlarmManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
+import java.nio.charset.Charset;
+import android.app.AlarmManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 
 /**
  * 最小 WebView 壳（零第三方依赖）：
@@ -45,6 +65,10 @@ public class MainActivity extends Activity {
 
     private WebView webView;
     private ValueCallback<Uri[]> pendingFileCallback;
+    private long pausedAt = 0; // 后台时间戳：>5 分钟回前台要求解锁
+    private static final long LOCK_AFTER_MS = 5 * 60 * 1000;
+    private long pausedAt = 0; // 后台时间戳：>5 分钟回前台要求解锁
+    private static final long LOCK_AFTER_MS = 5 * 60 * 1000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,7 +171,142 @@ public class MainActivity extends Activity {
         });
 
         webView.addJavascriptInterface(new SaverBridge(), "AndroidSaver");
+        ensureNotificationChannel();
         webView.loadUrl(START_URL);
+        // PIN 已设置则先锁
+        if (pinIsSet()) showPinLock();
+        handleExternalIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleExternalIntent(intent);
+    }
+
+    /** ACTION_SEND / ACTION_VIEW：读出 .md/.zip 内容，base64 交给 Web 端导入预览。 */
+    private void handleExternalIntent(Intent intent) {
+        if (intent == null) return;
+        String action = intent.getAction();
+        Uri uri = null;
+        String name = "import.md";
+        if (Intent.ACTION_SEND.equals(action)) {
+            if (intent.getExtras() != null && intent.getStringExtra(Intent.EXTRA_TEXT) != null) {
+                String text = intent.getStringExtra(Intent.EXTRA_TEXT);
+                final String b64 = Base64.getEncoder().encodeToString(text.getBytes(StandardCharsets.UTF_8));
+                pushExternalImport(b64, "shared.md");
+                return;
+            }
+            uri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        } else if (Intent.ACTION_VIEW.equals(action)) {
+            uri = intent.getData();
+        }
+        if (uri == null) return;
+        try {
+            name = uri.getLastPathSegment();
+            if (name == null || !name.matches(".*\.(md|markdown|txt|zip)$")) name = "import.md";
+            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+            java.io.InputStream is = getContentResolver().openInputStream(uri);
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = is.read(buf)) > 0) bos.write(buf, 0, n);
+            is.close();
+            final String b64 = Base64.getEncoder().encodeToString(bos.toByteArray());
+            pushExternalImport(b64, name);
+        } catch (Exception e) {
+            Toast.makeText(this, "无法读取分享的文件", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void pushExternalImport(String b64, String name) {
+        final String call = "window.__externalImport && window.__externalImport('" + name + "','" + b64 + "')";
+        new Handler(Looper.getMainLooper()).postDelayed(() -> webView.evaluateJavascript(call, null), 1200);
+    }
+
+    /* ---------- PIN 应用锁（本地盐+SHA，Web 端存哈希；原生只做门帘） ---------- */
+    private SharedPreferences prefs() { return getSharedPreferences("mdfc", MODE_PRIVATE); }
+    private boolean pinIsSet() { return prefs().getString("pinHash", null) != null; }
+
+    private void showPinLock() {
+        // 极简锁屏：WebView 上盖系统对话框输入 PIN，正确才放行（哈希校验走 Web 端同一份存储不可行——原生侧独立存）
+        android.app.Dialog dlg = new android.app.Dialog(this);
+        dlg.setContentView(getLayoutInflater().inflate(R.layout.pin_lock, null));
+        dlg.setCancelable(false);
+        dlg.findViewById(R.id.pinGo).setOnClickListener(v -> {
+            String input = ((android.widget.EditText) dlg.findViewById(R.id.pinInput)).getText().toString();
+            String salt = prefs().getString("pinSalt", "");
+            String hash = pinHash(input, salt);
+            if (hash.equals(prefs().getString("pinHash", ""))) {
+                dlg.dismiss();
+            } else {
+                Toast.makeText(this, "PIN 错误", Toast.LENGTH_SHORT).show();
+            }
+        });
+        dlg.findViewById(R.id.pinForgot).setOnClickListener(v -> {
+            new android.app.AlertDialog.Builder(this)
+                .setMessage("忘记 PIN 将清除应用全部数据（含笔记与进度），确定？")
+                .setPositiveButton("清除", (d, w) -> {
+                    webView.evaluateJavascript("indexedDB.deleteDatabase('md-review');localStorage.clear();", null);
+                    prefs().edit().clear().apply();
+                    dlg.dismiss();
+                    recreate();
+                })
+                .setNegativeButton("取消", null).show();
+        });
+        dlg.show();
+    }
+
+    static String pinHash(String pin, String salt) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] h = md.digest((salt + ":" + pin).getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : h) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) { return ""; }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        pausedAt = System.currentTimeMillis();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (pinIsSet() && pausedAt > 0 && System.currentTimeMillis() - pausedAt > LOCK_AFTER_MS) {
+            showPinLock();
+        }
+        pausedAt = 0;
+    }
+
+    /* ---------- 每日提醒（AlarmManager + 通知，完全本地） ---------- */
+    private void ensureNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            nm.createNotificationChannel(new NotificationChannel("review", "复习提醒", NotificationManager.IMPORTANCE_DEFAULT));
+        }
+    }
+
+    private void scheduleReminder(int hour, int minute) {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.set(java.util.Calendar.HOUR_OF_DAY, hour);
+        cal.set(java.util.Calendar.MINUTE, minute);
+        cal.set(java.util.Calendar.SECOND, 0);
+        if (cal.getTimeInMillis() <= System.currentTimeMillis()) cal.add(java.util.Calendar.DATE, 1);
+        PendingIntent pi = PendingIntent.getBroadcast(this, 2001,
+            new Intent(this, ReminderReceiver.class), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+        am.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi);
+        prefs().edit().putString("reminder", hour + ":" + minute).apply();
+    }
+
+    private void cancelReminder() {
+        PendingIntent pi = PendingIntent.getBroadcast(this, 2001,
+            new Intent(this, ReminderReceiver.class), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        ((AlarmManager) getSystemService(ALARM_SERVICE)).cancel(pi);
+        prefs().edit().remove("reminder").apply();
     }
 
     @Override
@@ -266,6 +425,54 @@ public class MainActivity extends Activity {
                 return false;
             }
         }
+
+        /** Web 端设置/移除 PIN（原生侧存哈希用于门帘校验）。 */
+        @JavascriptInterface
+        public boolean pinSet(String pin) {
+            if (pin == null || !pin.matches("\\d{4}")) return false;
+            String salt = Long.toHexString(System.currentTimeMillis());
+            prefs().edit()
+                .putString("pinSalt", salt)
+                .putString("pinHash", MainActivity.pinHash(pin, salt))
+                .apply();
+            return true;
+        }
+
+        @JavascriptInterface
+        public void pinRemove() { prefs().edit().remove("pinHash").remove("pinSalt").apply(); }
+
+        @JavascriptInterface
+        public boolean reminderSet(int hour, int minute) {
+            scheduleReminder(hour, minute);
+            return true;
+        }
+
+        @JavascriptInterface
+        public void reminderCancel() { cancelReminder(); }
+
+        /** Web 端设置/移除 PIN（原生侧存哈希用于门帘校验）。 */
+        @JavascriptInterface
+        public boolean pinSet(String pin) {
+            if (pin == null || !pin.matches("\\d{4}")) return false;
+            String salt = Long.toHexString(System.currentTimeMillis());
+            prefs().edit()
+                .putString("pinSalt", salt)
+                .putString("pinHash", MainActivity.pinHash(pin, salt))
+                .apply();
+            return true;
+        }
+
+        @JavascriptInterface
+        public void pinRemove() { prefs().edit().remove("pinHash").remove("pinSalt").apply(); }
+
+        @JavascriptInterface
+        public boolean reminderSet(int hour, int minute) {
+            scheduleReminder(hour, minute);
+            return true;
+        }
+
+        @JavascriptInterface
+        public void reminderCancel() { cancelReminder(); }
 
         /** 保存后立即弹出系统分享（发送给微信/文件管理等）。 */
         @JavascriptInterface
