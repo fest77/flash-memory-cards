@@ -60,7 +60,6 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(false);
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
-        settings.setTextZoom(100);
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
 
@@ -69,12 +68,15 @@ public class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 String scheme = uri == null ? null : uri.getScheme();
-                if (scheme != null && !"http".equals(scheme) && !"https".equals(scheme)) {
-                    // mailto: / tel: 等交给系统应用（WebView 自身不认识这些协议）
+                String host = uri == null ? null : uri.getHost();
+                boolean internal = scheme != null && "https".equals(scheme) && ASSET_HOST.equals(host);
+                if (!internal) {
+                    // 本地页面以外的一切链接（mailto:/tel:/外部 http(s)）都交给系统：
+                    // ① WebView 认识 mailto 失败的问题；② 外部网页不得进入本 WebView（那里有 AndroidSaver 桥）
                     try {
                         startActivity(new Intent(Intent.ACTION_VIEW, uri));
                     } catch (Exception e) {
-                        Toast.makeText(MainActivity.this, "未找到可以处理该链接的应用", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "未找到可以打开该链接的应用", Toast.LENGTH_SHORT).show();
                     }
                     return true;
                 }

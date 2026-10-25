@@ -305,8 +305,31 @@ const zipAB = zipBytes.buffer.slice(zipBytes.byteOffset, zipBytes.byteOffset + z
   test('wiki 图片带 |宽度 后缀', () => {
     assert.ok(/<img src="a\.png"/.test(Core.renderMarkdown('![[a.png|300]]')));
   });
+  test('wiki 宽度转成 max-width 样式', () => {
+    assert.ok(Core.renderMarkdown('![[a.png|300]]').indexOf('max-width:300px') >= 0);
+    assert.ok(Core.renderMarkdown('![[a.png]]').indexOf('max-width') < 0);
+  });
   test('renderInline 也支持 wiki 图片', () => {
     assert.ok(/<img src="b\.png"/.test(Core.renderInline('看图 ![[b.png]]')));
+  });
+
+  // Q/A 标记必须带分隔符：QPS/API/A/B/选择题选项不能被吃掉首字母
+  test('QPS/API/A/B 不误识别为问答', () => {
+    const md = '## 性能指标\n\nQPS: 每秒查询数。\nAPI: 应用程序接口。\nA/B 测试显示提升。\nA. 进程';
+    const deck = Core.buildDeck('t', md, { mode: 'auto', maxCardLen: 1600, qstyle: 'prompt' });
+    assert.ok(deck.cards.some((c) => c.answer.indexOf('QPS') >= 0), '正文应完整保留');
+    assert.ok(!deck.cards.some((c) => c.question.indexOf('PS:') === 0), '不应吃掉 Q');
+    assert.ok(!deck.cards.some((c) => c.answer.indexOf('PI:') === 0), '不应吃掉 A');
+  });
+  test('正常 Q:/A:/问：/答案： 仍识别', () => {
+    const deck = Core.buildDeck('t', '## 事务\n\nQ: 默认隔离级别？\nA: 可重复读。\n\n问：MVCC 是什么？\n答案：多版本并发控制。', { mode: 'auto', maxCardLen: 1600, qstyle: 'prompt' });
+    assert.ok(deck.cards.some((c) => c.question.indexOf('默认隔离级别') >= 0));
+    assert.ok(deck.cards.some((c) => c.question.indexOf('MVCC') >= 0));
+  });
+  test('Q/A 前的正文保留为概述卡', () => {
+    const deck = Core.buildDeck('t', '## 事务隔离级别\n\n事务隔离级别共有四种，下面是重点：\n\nQ: 默认级别？\nA: 可重复读。', { mode: 'auto', maxCardLen: 1600, qstyle: 'prompt' });
+    assert.ok(deck.cards.some((c) => c.answer.indexOf('四种') >= 0), '概述不应丢失');
+    assert.ok(deck.cards.some((c) => c.question.indexOf('默认级别') >= 0));
   });
 
   // 构造 stored zip（无压缩）用于测试 unzipFiles 的过滤器

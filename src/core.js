@@ -161,9 +161,10 @@
   var A_KEYS = 'Answer|答案|A|解答|解析|答';
 
   function marker(keySource) {
-    // 允许： "Q: ..." "**Q:** ..." "- Q：..." "> 问：..." "Q1、..." "**题目：** ..."
+    // 允许： "Q: ..." "**Q:** ..." "- Q：..." "> 问：..." "Q1: ..." "**题目：** ..."
+    // 分隔符（: 或 ：）必须存在：防止 QPS:/API:/A/B测试/A股 这类普通词被当成 Q/A 标记吃掉首字母
     return new RegExp(
-      '^[ \\t>*-]{0,4}(?:\\*\\*|__)?[ \\t]*(?:' + keySource + ')[ \\t]*\\d*[ \\t]*(?::|：)?[ \\t]*(?:\\*\\*|__)?[ \\t]*(?::|：)?[ \\t]*',
+      '^[ \\t>*-]{0,4}(?:\\*\\*|__)?[ \\t]*(?:' + keySource + ')[ \\t]*\\d*[ \\t]*(?::|：)[ \\t]*(?:\\*\\*|__)?[ \\t]*(?::|：)?[ \\t]*',
       'i'
     );
   }
@@ -176,6 +177,8 @@
     var pairs = [];
     var cur = null;
     var target = null;
+    var preBuf = []; // 第一个 Q/A 标记之前的正文（不能丢）
+    var seenMarker = false;
 
     function flush() {
       if (cur && (cur.q.trim() || cur.a.trim())) pairs.push(cur);
@@ -187,22 +190,26 @@
       var line = lines[i];
       if (mask[i]) {
         if (cur && target) cur[target] += (cur[target] ? '\n' : '') + line;
+        else if (!seenMarker) preBuf.push(line);
         continue;
       }
       var m;
       if ((m = RE_Q.exec(line)) && (m[0].length > 0)) {
+        seenMarker = true;
         flush();
         cur = { q: line.slice(m[0].length), a: '' };
         target = 'q';
         continue;
       }
       if ((m = RE_A.exec(line)) && (m[0].length > 0)) {
+        seenMarker = true;
         if (!cur) cur = { q: '', a: '' };
         target = 'a';
         cur.a += (cur.a ? '\n' : '') + line.slice(m[0].length);
         continue;
       }
       if (cur && target) cur[target] += '\n' + line;
+      else if (!seenMarker) preBuf.push(line);
     }
     flush();
 
@@ -212,7 +219,9 @@
       var a = trimBlank(pairs[p].a);
       if (q && a) out.push({ q: q, a: a });
     }
-    return out;
+    // 前导正文里的小节标题行/空行是结构性的，不算内容
+    var preText = trimBlank(preBuf.filter(function (l) { return l.trim() && !/^#{1,6}\s/.test(l); }).join('\n'));
+    return { pairs: out, pre: preText };
   }
 
   /* ============================== 段落切块 ============================== */
@@ -326,11 +335,13 @@
     for (var s = 0; s < secs.length; s++) {
       var sec = secs[s];
       var body = sec.body;
-      var qa = opts.useQA ? extractQA(lines, mask, sec.start, sec.end) : [];
+      var qa = opts.useQA ? extractQA(lines, mask, sec.start, sec.end) : { pairs: [], pre: '' };
 
-      if (qa.length >= 1) {
-        for (var q = 0; q < qa.length; q++) {
-          out.push({ title: sec.title, question: qa[q].q, answer: qa[q].a, path: sec.path });
+      if (qa.pairs.length >= 1) {
+        // 标记前的正文不能丢：作为概述卡保留
+        if (qa.pre) out.push({ title: sec.title, question: '', answer: qa.pre, path: sec.path });
+        for (var q = 0; q < qa.pairs.length; q++) {
+          out.push({ title: sec.title, question: qa.pairs[q].q, answer: qa.pairs[q].a, path: sec.path });
         }
         continue;
       }
@@ -352,10 +363,11 @@
             for (var k = 0; k < subs.length; k++) {
               var kid = subs[k];
               if (!kid.body.trim()) continue;
-              var kidQA = opts.useQA ? extractQA(lines, mask, kid.start, kid.end) : [];
+              var kidQA = opts.useQA ? extractQA(lines, mask, kid.start, kid.end) : { pairs: [], pre: '' };
               var basePath = sec.path.concat([sec.title]);
-              if (kidQA.length >= 1) {
-                for (var kq = 0; kq < kidQA.length; kq++) {
+              if (kidQA.pairs.length >= 1) {
+                if (kidQA.pre) subOut.push({ title: kid.title, question: '', answer: kidQA.pre, path: basePath });
+                for (var kq = 0; kq < kidQA.pairs.length; kq++) {
                   subOut.push({ title: kid.title, question: kidQA[kq].q, answer: kidQA[kq].a, path: basePath });
                 }
               } else {
@@ -399,8 +411,9 @@
     for (var r = 0; r < ranges.length; r++) {
       var from = ranges[r][0], to = ranges[r][1];
       var qa = extractQA(lines, mask, from, to);
-      if (qa.length >= 1) {
-        for (var q = 0; q < qa.length; q++) out.push({ title: '', question: qa[q].q, answer: qa[q].a, path: [] });
+      if (qa.pairs.length >= 1) {
+        if (qa.pre) out.push({ title: '', question: '', answer: qa.pre, path: [] });
+        for (var q = 0; q < qa.pairs.length; q++) out.push({ title: '', question: qa.pairs[q].q, answer: qa.pairs[q].a, path: [] });
         continue;
       }
       var text = trimBlank(lines.slice(from, to).join('\n'));
@@ -495,7 +508,8 @@
 
     if (opts.mode === 'qa') {
       var qaAll = extractQA(lines, mask, 0, lines.length);
-      for (var i = 0; i < qaAll.length; i++) raw.push({ title: '', question: qaAll[i].q, answer: qaAll[i].a, path: [] });
+      if (qaAll.pre) raw.push({ title: '', question: '', answer: qaAll.pre, path: [] });
+      for (var i = 0; i < qaAll.pairs.length; i++) raw.push({ title: '', question: qaAll.pairs[i].q, answer: qaAll.pairs[i].a, path: [] });
     } else if (opts.mode === 'hr') {
       raw = cardsFromHr(lines, mask, opts);
     } else if (opts.mode === 'para') {
@@ -513,8 +527,9 @@
       }
       if (!raw.length && opts.mode === 'auto') {
         var qa2 = extractQA(lines, mask, 0, lines.length);
-        if (qa2.length >= 1) {
-          for (var q2 = 0; q2 < qa2.length; q2++) raw.push({ title: '', question: qa2[q2].q, answer: qa2[q2].a, path: [] });
+        if (qa2.pairs.length >= 1) {
+          if (qa2.pre) raw.push({ title: '', question: '', answer: qa2.pre, path: [] });
+          for (var q2 = 0; q2 < qa2.pairs.length; q2++) raw.push({ title: '', question: qa2.pairs[q2].q, answer: qa2.pairs[q2].a, path: [] });
           modeUsed = 'qa';
         }
       }
@@ -577,9 +592,17 @@
     var s = String(line).trim();
     if (s.charAt(0) === '|') s = s.slice(1);
     if (s.charAt(s.length - 1) === '|') s = s.slice(0, -1);
-    return s.split(/(?<!\\)\|/).map(function (c) {
-      return c.replace(/\\\|/g, '|').trim();
-    });
+    // 手写扫描处理转义竖线（\|）：不用正则后行断言 (?<!\\)，旧 WebView/Safari 解析期会直接抛错白屏
+    var cells = [];
+    var cur = '';
+    for (var i = 0; i < s.length; i++) {
+      var ch = s.charAt(i);
+      if (ch === '\\' && s.charAt(i + 1) === '|') { cur += '|'; i++; continue; }
+      if (ch === '|') { cells.push(cur); cur = ''; continue; }
+      cur += ch;
+    }
+    cells.push(cur);
+    return cells.map(function (c) { return c.trim(); });
   }
 
   function safeUrl(url) {
@@ -599,8 +622,11 @@
         codes.push(code);
         return '\u0001' + (codes.length - 1) + '\u0002';
       });
-      s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, function (m, alt, url) {
-        return safeUrl(url) ? '<img src="' + url + '" alt="' + alt + '" loading="lazy">' : alt;
+      s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;([^&]*)&quot;)?\)/g, function (m, alt, url, title) {
+        if (!safeUrl(url)) return alt;
+        // ![[img|300]] 转换来的宽度（title 为纯数字）→ 限制图片宽度
+        var style = (title && /^\d+$/.test(title)) ? ' style="max-width:' + title + 'px"' : '';
+        return '<img src="' + url + '" alt="' + alt + '" loading="lazy"' + style + '>';
       });
       s = s.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, function (m, label, url) {
         return safeUrl(url) ? '<a href="' + url + '" target="_blank" rel="noopener">' + label + '</a>' : label;
@@ -618,10 +644,12 @@
     return inline;
   }
 
-  /* Obsidian wiki 图片嵌入 ![[path/img.png]]（可带 |宽度 后缀）→ 标准 ![](path/img.png) */
+  /* Obsidian wiki 图片嵌入 ![[path/img.png]]（可带 |宽度 后缀）→ 标准 ![](path/img.png "w") */
   function convertWikiImages(s) {
-    var re = new RegExp('!\\[\\[([^\\]\\r\\n|]+)(?:\\|[^\\]\\r\\n]*)?\\]\\]', 'g');
-    return String(s || '').replace(re, '![]($1)');
+    var re = new RegExp('!\\[\\[([^\\]\\r\\n|]+)(?:\\|([^\\]\\r\\n]*))?\\]\\]', 'g');
+    return String(s || '').replace(re, function (m, p, w) {
+      return (w && /^\d+$/.test(String(w).trim())) ? '![](' + p + ' "' + String(w).trim() + '")' : '![](' + p + ')';
+    });
   }
 
   function renderMarkdown(markdown) {

@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.8.3';
+  var APP_VERSION = '1.8.4';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -48,7 +48,7 @@
       'stats.wds': '日,一,二,三,四,五,六',
       'stats.months': '1月,2月,3月,4月,5月,6月,7月,8月,9月,10月,11月,12月',
       'hero.title': '导入长篇笔记，拆成多张闪记卡', 'hero.sub': '随时复习，闪速记忆',
-      'btn.import': '📥 导入 md / zip', 'btn.paste': '✍️ 粘贴 Markdown 文本', 'btn.demo': '看看示例（10 张卡）',
+      'btn.import': '📥 导入 md / zip', 'btn.paste': '✍️ 粘贴 Markdown 文本', 'btn.demo': '看看示例（7 张卡）',
       'btn.importBatch': '📥 导入 md / zip（批量）', 'btn.pasteShort': '粘贴文本', 'btn.backup': '备份全部', 'btn.restoreBackup': '恢复备份',
       'set.importTitle': '导入与提问设置', 'set.aiTitle': 'AI 提炼设置（可选，需要你自己的 API）',
       'settings.ai': 'AI 供应商', 'ai.active': '当前使用', 'ai.addCustom': '＋ 自定义供应商（OpenAI 兼容）',
@@ -69,7 +69,7 @@
       'gran.fine': '细（≤800 字/张）', 'gran.mid': '中（≤1600 字/张）', 'gran.coarse': '粗（≤3000 字/张）',
       'set.importNote': '改动后，<b>下次导入</b>的笔记按新设置拆分；已导入的可以删掉重导。',
       'btn.aiTest': '测试连接', 'btn.aiImport': '导入 AI 卡片',
-      'set.aiNote': '不经过任何服务器，请求从本机直接发到你在上面填的地址。浏览器直连多数厂商 API 可能被跨域拦截（CORS）：可以用本机 <b>Ollama</b>（启动前设 <code>OLLAMA_ORIGINS=*</code>），或改用电脑上的 <code>tools/ai_cards.py</code> 生成卡片 JSON，再用「导入 AI 卡片」。',
+      'set.aiNote': '不经过任何服务器，请求从本机直接发到你在上面填的地址。浏览器直连多数厂商 API 可能被跨域拦截（CORS）：可以用本机 <b>Ollama</b>（启动前设 <code>OLLAMA_ORIGINS=*</code>），或改用电脑上的 <code>scripts/ai_cards.py</code> 生成卡片 JSON，再用「导入 AI 卡片」。',
       'foot.tips': '数据只保存在本机浏览器里，不上传任何服务器。<br>换手机 / 清理浏览器前，记得用「备份」导出 json，再到新手机「恢复」。<br>手机浏览器菜单里选「添加到主屏幕」，可以像 App 一样打开。',
       'aria.back': '返回', 'aria.reshuffle': '重新洗牌', 'aria.resetProgress': '重置本笔记进度',
       'aria.toc': '题目目录', 'aria.toggleAll': '展开/收起全部', 'aria.restoreBundled': '恢复内置题库',
@@ -84,7 +84,7 @@
       'about.feedback': '如有 bug 和建议反馈，可联系邮箱：<a href="mailto:fest1024@163.com">fest1024@163.com</a>',
       'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '只看没掌握 <b>{n}</b>', 'home.today': '今日已复习 <b>{n}</b>',
       'deck.meta': '{n} 张卡片 · <span class="ok">已掌握 {k}</span> · <span class="todo">待复习 {t}</span>',
-      'deck.review': '随机复习', 'deck.quick': '分类速记', 'deck.browse': '浏览/编辑',
+      'deck.review': '随机复习', 'deck.knownOf': '已掌握 {k}', 'deck.quick': '分类速记', 'deck.browse': '浏览/编辑',
       'deck.ai': 'AI 提炼', 'deck.export': '导出', 'deck.delete': '删除',
       'deck.reviewAll': '🎲 全部笔记混合随机复习',
       'toast.tooShort': '内容太短，没有导入', 'toast.noCards': '没有解析出卡片，试试换个「拆分方式」',
@@ -95,7 +95,7 @@
       'import.empty': '还没有选择文件', 'import.doAll': '导入全部', 'import.doAllCount': '导入全部（{n}）',
       'toast.onlyMd': '未识别的文件（支持 md / txt / 图片）', 'toast.noFile': '没有选择文件',
       'toast.imgTaken': '已导入 {n} 张图片', 'toast.imgNoStore': '本机存储不可用，图片没有保存', 'img.missing': '图片未导入',
-      'toast.notZip': '请选择 .zip 文件', 'toast.unzipping': '正在解压…', 'toast.zipEmpty': 'zip 里没有找到 md / 图片文件',
+      'toast.saveFail': '保存失败：本机存储不可用，进度可能丢失', 'toast.notZip': '请选择 .zip 文件', 'toast.unzipping': '正在解压…', 'toast.zipEmpty': 'zip 里没有找到 md / 图片文件',
       'toast.zipTaken': '已从 zip 中取出 {n} 篇笔记', 'toast.unzipFail': '解压失败：{msg}',
       'toast.queueEmpty': '先选择要导入的文件',
       'confirm.batchReplace': '有 {n} 个同名笔记，用新内容替换吗？（取消 = 跳过同名）',
@@ -107,12 +107,12 @@
       'ai.noBase': '还没填写 API 地址（例如 https://api.deepseek.com/v1）', 'ai.noModel': '还没填写模型名（例如 deepseek-chat）',
       'ai.timeout': '请求超时（{s}s）', 'ai.netFail': '网络/跨域(CORS)失败：浏览器直连这个 API 被拒绝',
       'ai.notJson': '返回内容不是 JSON：', 'ai.noContent': '返回里没有 choices[0].message.content',
-      'ai.corsHelp': '跨域说明：浏览器直连多数厂商 API 会被 CORS 拦。可以改用支持跨域的中转/网关、本机 Ollama（启动时设 OLLAMA_ORIGINS=*），或者用电脑上的 tools/ai_cards.py 生成卡片 JSON 再导入。',
+      'ai.corsHelp': '跨域说明：浏览器直连多数厂商 API 会被 CORS 拦。可以改用支持跨域的中转/网关、本机 Ollama（启动时设 OLLAMA_ORIGINS=*），或者用电脑上的 scripts/ai_cards.py 生成卡片 JSON 再导入。',
       'ai.testNeedBase': '先填写 API 地址，例如 https://api.deepseek.com/v1', 'ai.testTitle': '测试 AI 连接',
       'ai.testing': '请求中…（最长等 {s} 秒）', 'ai.testOk': '连接成功', 'ai.testFail': '连接失败', 'ai.modelReply': '模型回复：',
       'ai.title': 'AI 提炼提问', 'ai.desc': '用大模型读懂每张卡的答案，把标题改写成更像面试题的问题（<b>只改题面，不动答案</b>）。请求从你的手机直接发出，不经过任何服务器。',
-      'ai.notConfigured': '还没有配置 AI：先在首页展开「AI 提炼设置」填 API 地址、模型名和 key。',
-      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.start': '开始提炼',
+      'ai.notConfigured': '还没有配置 AI：到「设置 → AI 供应商」添加供应商并填 Key。',
+      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.canceled': '已停止提炼', 'ai.undo': '撤销本次提炼', 'ai.undone': '已恢复原题面', 'ai.start': '开始提炼',
       'ai.busy': '正在提炼，请稍等', 'ai.needConfig': '先配置 AI 地址和模型',
       'ai.progress': '提炼中… {done} / {total} 张（共 {batches} 批）',
       'ai.badFormat': '返回格式无法解析（需要 {"questions":[{"idx":..,"q":".."}]}）',
@@ -163,7 +163,7 @@
       'stats.wds': '日,一,二,三,四,五,六',
       'stats.months': '1月,2月,3月,4月,5月,6月,7月,8月,9月,10月,11月,12月',
       'hero.title': '匯入長篇筆記，拆成多張閃記卡', 'hero.sub': '隨時複習，閃速記憶',
-      'btn.import': '📥 匯入 md / zip', 'btn.paste': '✍️ 貼上 Markdown 文字', 'btn.demo': '看看範例（10 張卡）',
+      'btn.import': '📥 匯入 md / zip', 'btn.paste': '✍️ 貼上 Markdown 文字', 'btn.demo': '看看範例（7 張卡）',
       'btn.importBatch': '📥 匯入 md / zip（批次）', 'btn.pasteShort': '貼上文字', 'btn.backup': '備份全部', 'btn.restoreBackup': '還原備份',
       'set.importTitle': '匯入與提問設定', 'set.aiTitle': 'AI 提煉設定（可選，需要你自己的 API）',
       'settings.ai': 'AI 供應商', 'ai.active': '當前使用', 'ai.addCustom': '＋ 自訂供應商（OpenAI 相容）',
@@ -184,7 +184,7 @@
       'gran.fine': '細（≤800 字/張）', 'gran.mid': '中（≤1600 字/張）', 'gran.coarse': '粗（≤3000 字/張）',
       'set.importNote': '改動後，<b>下次匯入</b>的筆記按新設定拆分；已匯入的可以刪掉重匯。',
       'btn.aiTest': '測試連線', 'btn.aiImport': '匯入 AI 卡片',
-      'set.aiNote': '不經過任何伺服器，請求從本機直接發到你在上面填的位址。瀏覽器直連多數廠商 API 可能被跨域攔截（CORS）：可以用本機 <b>Ollama</b>（啟動前設 <code>OLLAMA_ORIGINS=*</code>），或改用電腦上的 <code>tools/ai_cards.py</code> 生成卡片 JSON，再用「匯入 AI 卡片」。',
+      'set.aiNote': '不經過任何伺服器，請求從本機直接發到你在上面填的位址。瀏覽器直連多數廠商 API 可能被跨域攔截（CORS）：可以用本機 <b>Ollama</b>（啟動前設 <code>OLLAMA_ORIGINS=*</code>），或改用電腦上的 <code>scripts/ai_cards.py</code> 生成卡片 JSON，再用「匯入 AI 卡片」。',
       'foot.tips': '資料只保存在本機瀏覽器裡，不上傳任何伺服器。<br>換手機 / 清理瀏覽器前，記得用「備份」匯出 json，再到新手機「還原」。<br>手機瀏覽器選單裡選「加到主畫面」，可以像 App 一樣開啟。',
       'aria.back': '返回', 'aria.reshuffle': '重新洗牌', 'aria.resetProgress': '重設本筆記進度',
       'aria.toc': '題目目錄', 'aria.toggleAll': '展開/收起全部', 'aria.restoreBundled': '還原內建題庫',
@@ -199,7 +199,7 @@
       'about.feedback': '如有 bug 和建議回饋，可聯絡郵箱：<a href="mailto:fest1024@163.com">fest1024@163.com</a>',
       'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '只看沒掌握 <b>{n}</b>', 'home.today': '今日已複習 <b>{n}</b>',
       'deck.meta': '{n} 張卡片 · <span class="ok">已掌握 {k}</span> · <span class="todo">待複習 {t}</span>',
-      'deck.review': '隨機複習', 'deck.quick': '分類速記', 'deck.browse': '瀏覽/編輯',
+      'deck.review': '隨機複習', 'deck.knownOf': '已掌握 {k}', 'deck.quick': '分類速記', 'deck.browse': '瀏覽/編輯',
       'deck.ai': 'AI 提煉', 'deck.export': '匯出', 'deck.delete': '刪除',
       'deck.reviewAll': '🎲 全部筆記混合隨機複習',
       'toast.tooShort': '內容太短，沒有匯入', 'toast.noCards': '沒有解析出卡片，試試換個「拆分方式」',
@@ -210,7 +210,7 @@
       'import.empty': '還沒有選擇檔案', 'import.doAll': '匯入全部', 'import.doAllCount': '匯入全部（{n}）',
       'toast.onlyMd': '未識別的檔案（支援 md / txt / 圖片）', 'toast.noFile': '沒有選擇檔案',
       'toast.imgTaken': '已匯入 {n} 張圖片', 'toast.imgNoStore': '本機儲存不可用，圖片沒有保存', 'img.missing': '圖片未匯入',
-      'toast.notZip': '請選擇 .zip 檔案', 'toast.unzipping': '正在解壓…', 'toast.zipEmpty': 'zip 裡沒有找到 md / 圖片檔案',
+      'toast.saveFail': '儲存失敗：本機儲存不可用，進度可能遺失', 'toast.notZip': '請選擇 .zip 檔案', 'toast.unzipping': '正在解壓…', 'toast.zipEmpty': 'zip 裡沒有找到 md / 圖片檔案',
       'toast.zipTaken': '已從 zip 中取出 {n} 篇筆記', 'toast.unzipFail': '解壓失敗：{msg}',
       'toast.queueEmpty': '先選擇要匯入的檔案',
       'confirm.batchReplace': '有 {n} 個同名筆記，用新內容替換嗎？（取消 = 跳過同名）',
@@ -222,11 +222,11 @@
       'ai.noBase': '還沒填寫 API 位址（例如 https://api.deepseek.com/v1）', 'ai.noModel': '還沒填寫模型名稱（例如 deepseek-chat）',
       'ai.timeout': '請求逾時（{s}s）', 'ai.netFail': '網路/跨域(CORS)失敗：瀏覽器直連這個 API 被拒絕',
       'ai.notJson': '返回內容不是 JSON：', 'ai.noContent': '返回裡沒有 choices[0].message.content',
-      'ai.corsHelp': '跨域說明：瀏覽器直連多數廠商 API 會被 CORS 攔。可以改用支援跨域的中轉/閘道、本機 Ollama（啟動時設 OLLAMA_ORIGINS=*），或者用電腦上的 tools/ai_cards.py 生成卡片 JSON 再匯入。',
+      'ai.corsHelp': '跨域說明：瀏覽器直連多數廠商 API 會被 CORS 攔。可以改用支援跨域的中轉/閘道、本機 Ollama（啟動時設 OLLAMA_ORIGINS=*），或者用電腦上的 scripts/ai_cards.py 生成卡片 JSON 再匯入。',
       'ai.testNeedBase': '先填寫 API 位址，例如 https://api.deepseek.com/v1', 'ai.testTitle': '測試 AI 連線',
       'ai.testing': '請求中…（最長等 {s} 秒）', 'ai.testOk': '連線成功', 'ai.testFail': '連線失敗', 'ai.modelReply': '模型回覆：',
       'ai.title': 'AI 提煉提問', 'ai.desc': '用大模型讀懂每張卡的答案，把標題改寫成更像面試題的問題（<b>只改題面，不動答案</b>）。請求從你的手機直接發出，不經過任何伺服器。',
-      'ai.notConfigured': '還沒有設定 AI：先在首頁展開「AI 提煉設定」填 API 位址、模型名稱和 key。',
+      'ai.notConfigured': '還沒有設定 AI：到「設定 → AI 供應商」新增供應商並填 Key。',
       'ai.cardCount': '共 {n} 張卡', 'ai.ready': '已就緒', 'ai.notReady': '未設定', 'ai.start': '開始提煉',
       'ai.busy': '正在提煉，請稍等', 'ai.needConfig': '先設定 AI 位址和模型',
       'ai.progress': '提煉中… {done} / {total} 張（共 {batches} 批）',
@@ -278,7 +278,7 @@
       'stats.wds': 'Su,Mo,Tu,We,Th,Fr,Sa',
       'stats.months': 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
       'hero.title': 'Import long notes, split into flashcards', 'hero.sub': 'Review anytime, remember fast',
-      'btn.import': '📥 Import md / zip', 'btn.paste': '✍️ Paste Markdown text', 'btn.demo': 'Try the sample (10 cards)',
+      'btn.import': '📥 Import md / zip', 'btn.paste': '✍️ Paste Markdown text', 'btn.demo': 'Try the sample (7 cards)',
       'btn.importBatch': '📥 Import md / zip (batch)', 'btn.pasteShort': 'Paste text', 'btn.backup': 'Backup all', 'btn.restoreBackup': 'Restore backup',
       'set.importTitle': 'Import & question settings', 'set.aiTitle': 'AI refine settings (optional, your own API)',
       'settings.ai': 'AI providers', 'ai.active': 'Active provider', 'ai.addCustom': '＋ Custom provider (OpenAI-compatible)',
@@ -299,7 +299,7 @@
       'gran.fine': 'Fine (≤800 chars/card)', 'gran.mid': 'Medium (≤1600 chars/card)', 'gran.coarse': 'Coarse (≤3000 chars/card)',
       'set.importNote': 'Changes apply to <b>the next import</b>; re-import existing notes to re-split them.',
       'btn.aiTest': 'Test connection', 'btn.aiImport': 'Import AI cards',
-      'set.aiNote': 'No server involved: requests go straight from this device to the API you enter. Most LLM APIs block browser calls via CORS — use local <b>Ollama</b> (set <code>OLLAMA_ORIGINS=*</code> before starting), or run <code>tools/ai_cards.py</code> on a PC to generate card JSON, then use "Import AI cards".',
+      'set.aiNote': 'No server involved: requests go straight from this device to the API you enter. Most LLM APIs block browser calls via CORS — use local <b>Ollama</b> (set <code>OLLAMA_ORIGINS=*</code> before starting), or run <code>scripts/ai_cards.py</code> on a PC to generate card JSON, then use "Import AI cards".',
       'foot.tips': 'All data stays in this browser; nothing is uploaded.<br>Before switching phones or clearing browser data, export a json backup and restore it on the new device.<br>Use your browser menu → "Add to Home Screen" to use it like an app.',
       'aria.back': 'Back', 'aria.reshuffle': 'Reshuffle', 'aria.resetProgress': 'Reset progress for this note',
       'aria.toc': 'Question outline', 'aria.toggleAll': 'Expand/collapse all', 'aria.restoreBundled': 'Restore bundled decks',
@@ -314,7 +314,7 @@
       'about.feedback': 'Bugs & suggestions: <a href="mailto:fest1024@163.com">fest1024@163.com</a>',
       'home.allCards': 'All cards <b>{n}</b>', 'home.todoCards': 'Not mastered <b>{n}</b>', 'home.today': 'Reviewed today <b>{n}</b>',
       'deck.meta': '{n} cards · <span class="ok">{k} known</span> · <span class="todo">{t} to go</span>',
-      'deck.review': 'Review', 'deck.quick': 'Quick read', 'deck.browse': 'Browse/Edit',
+      'deck.review': 'Review', 'deck.knownOf': '{k} known', 'deck.quick': 'Quick read', 'deck.browse': 'Browse/Edit',
       'deck.ai': 'AI refine', 'deck.export': 'Export', 'deck.delete': 'Delete',
       'deck.reviewAll': '🎲 Mixed review of all notes',
       'toast.tooShort': 'Content too short — not imported', 'toast.noCards': 'No cards parsed; try another split mode',
@@ -325,7 +325,7 @@
       'import.empty': 'No files selected yet', 'import.doAll': 'Import all', 'import.doAllCount': 'Import all ({n})',
       'toast.onlyMd': 'Unrecognized files (md / txt / images only)', 'toast.noFile': 'No file selected',
       'toast.imgTaken': 'Imported {n} images', 'toast.imgNoStore': 'Local storage unavailable, images not saved', 'img.missing': 'Image not imported',
-      'toast.notZip': 'Please choose a .zip file', 'toast.unzipping': 'Unpacking…', 'toast.zipEmpty': 'No .md / .txt files found in the zip',
+      'toast.saveFail': 'Save failed: local storage unavailable, progress may be lost', 'toast.notZip': 'Please choose a .zip file', 'toast.unzipping': 'Unpacking…', 'toast.zipEmpty': 'No .md / .txt files found in the zip',
       'toast.zipTaken': 'Extracted {n} notes from the zip', 'toast.unzipFail': 'Unpack failed: {msg}',
       'toast.queueEmpty': 'Select files to import first',
       'confirm.batchReplace': '{n} notes share names with existing ones. Replace them? (Cancel = skip those)',
@@ -337,11 +337,11 @@
       'ai.noBase': 'API URL is missing (e.g. https://api.deepseek.com/v1)', 'ai.noModel': 'Model name is missing (e.g. deepseek-chat)',
       'ai.timeout': 'Request timed out ({s}s)', 'ai.netFail': 'Network/CORS failure: the browser was blocked from calling this API',
       'ai.notJson': 'Response is not JSON: ', 'ai.noContent': 'Response has no choices[0].message.content',
-      'ai.corsHelp': 'About CORS: most LLM APIs block direct browser calls. Use a CORS-enabled proxy, local Ollama (set OLLAMA_ORIGINS=* when starting), or run tools/ai_cards.py on a PC to build card JSON and import it.',
+      'ai.corsHelp': 'About CORS: most LLM APIs block direct browser calls. Use a CORS-enabled proxy, local Ollama (set OLLAMA_ORIGINS=* when starting), or run scripts/ai_cards.py on a PC to build card JSON and import it.',
       'ai.testNeedBase': 'Enter the API URL first, e.g. https://api.deepseek.com/v1', 'ai.testTitle': 'Test AI connection',
       'ai.testing': 'Requesting… (up to {s} s)', 'ai.testOk': 'Connected', 'ai.testFail': 'Connection failed', 'ai.modelReply': 'Model reply: ',
       'ai.title': 'AI question refine', 'ai.desc': 'Have an LLM rewrite each card\'s title into an interview-style question (<b>questions only, answers untouched</b>). Requests go straight from your phone to the API; no server in between.',
-      'ai.notConfigured': 'AI is not configured: expand "AI refine settings" on the home screen and fill in the API URL, model and key.',
+      'ai.notConfigured': 'AI is not configured: add a provider and fill in the key under Settings → AI providers.',
       'ai.cardCount': '{n} cards', 'ai.ready': 'Ready', 'ai.notReady': 'Not configured', 'ai.start': 'Start refine',
       'ai.busy': 'Refine in progress, please wait', 'ai.needConfig': 'Configure the API URL and model first',
       'ai.progress': 'Refining… {done} / {total} cards ({batches} batches)',
@@ -792,18 +792,32 @@
     });
   }
 
+  var saveFailShown = 0;
+  function notifySaveFail() {
+    // 存储失败不能静默：节流到每 60 秒最多提示一次，避免刷屏
+    var now = Date.now();
+    if (now - saveFailShown < 60000) return;
+    saveFailShown = now;
+    toast(t('toast.saveFail'), 5000);
+  }
+
   function scheduleSave() {
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(function () {
       saveTimer = null;
       var json = JSON.stringify(state);
-      Store.save(json).catch(function () {});
+      Store.save(json).then(function (ok) {
+        if (ok === false) notifySaveFail();
+      }).catch(notifySaveFail);
     }, 250);
   }
 
   function flushSave() {
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
-    try { Store.save(JSON.stringify(state)); } catch (e) { /* ignore */ }
+    try {
+      var pr = Store.save(JSON.stringify(state));
+      if (pr && typeof pr.catch === 'function') pr.catch(notifySaveFail);
+    } catch (e) { notifySaveFail(); }
   }
 
   /* ============================== 派生数据 ============================== */
@@ -863,6 +877,7 @@
     $('#modalBox').innerHTML = '';
     modalPayload = null;
     document.body.style.overflow = '';
+    if (typeof aiRun !== 'undefined' && aiRun.active) aiRun.cancel = true; // 关掉进度弹窗 = 停止后续批次
   }
 
   function showView(name, noPush) {
@@ -892,7 +907,18 @@
     goHome();
   }
 
+  function decodeTextBytes(buf) {
+    var b = new Uint8Array(buf);
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(b); }
+    catch (e) { /* 不是合法 UTF-8：多半是 Windows GBK 中文笔记 */ }
+    try { return new TextDecoder('gbk').decode(b); } catch (e2) { /* 引擎不支持 gbk */ }
+    return new TextDecoder('utf-8').decode(b);
+  }
+
   function readFileText(file) {
+    if (file && typeof file.arrayBuffer === 'function') {
+      return file.arrayBuffer().then(decodeTextBytes);
+    }
     if (file && typeof file.text === 'function') return file.text();
     return new Promise(function (resolve, reject) {
       var fr = new FileReader();
@@ -1544,8 +1570,8 @@
     return base + '/chat/completions';
   }
 
-  function aiChat(messages, maxTokens) {
-    var p = activeProvider();
+  function aiChat(messages, maxTokens, useProvider) {
+    var p = useProvider || activeProvider();
     if (!p) return Promise.reject(new Error(t('ai.noneEnabled')));
     if (!p.base) return Promise.reject(new Error(t('ai.noBase')));
     if (!p.model) return Promise.reject(new Error(t('ai.noModel')));
@@ -1622,15 +1648,11 @@
       '<div class="ai-out" id="aiTestOut">' + tf('ai.testing', { s: AI_TIMEOUT / 1000 }) + '</div>' +
       '<div class="modal-actions"><button class="btn" data-act="close-modal">' + t('btn.close') + '</button></div>'
     );
-    // 临时以该供应商发起一次最小请求（不影响「当前使用」选择）
-    var prev = aiState().activeId;
-    aiState().activeId = p.id;
-    aiChat([{ role: 'user', content: '只回复两个字：可用' }], 32).then(function (text) {
-      aiState().activeId = prev;
+    // 显式以该供应商发起一次最小请求（不影响「当前使用」，停用的也能测）
+    aiChat([{ role: 'user', content: '只回复两个字：可用' }], 32, p).then(function (text) {
       var out = $('#aiTestOut');
       if (out) out.innerHTML = '<b class="ok">' + t('ai.testOk') + '</b><br>' + ESC(t('ai.modelReply')) + ESC(String(text).slice(0, 120));
     }).catch(function (err) {
-      aiState().activeId = prev;
       var out = $('#aiTestOut');
       if (out) out.innerHTML = '<b class="todo">' + t('ai.testFail') + '</b><br>' + ESC(aiErrorHelp(err)).replace(/\n/g, '<br>');
     });
@@ -1886,7 +1908,7 @@
     });
     if (cur.length) batches.push(cur);
 
-    aiRun = { active: true, cancel: false, done: 0, total: cards.length };
+    aiRun = { active: true, cancel: false, done: 0, total: cards.length, snapshot: cards.map(function (c) { return c.question; }) };
     var changed = 0;
     var errors = [];
 
@@ -1933,16 +1955,17 @@
     }
 
     function finish() {
+      var canceled = aiRun.cancel;
       aiRun.active = false;
       scheduleSave();
       renderHome();
       var out = $('#aiOut');
-      var msg = errors.length
-        ? tf('ai.doneFail', { n: changed, m: errors.length })
-        : tf('ai.done', { n: changed });
+      var msg = canceled ? t('ai.canceled')
+        : (errors.length ? tf('ai.doneFail', { n: changed, m: errors.length }) : tf('ai.done', { n: changed }));
       if (out) {
-        out.innerHTML = '<b class="ok">' + ESC(msg) + '</b>' +
-          (errors.length ? '<br><span class="warn">' + ESC(errors[0]).replace(/\n/g, '<br>') + '</span>' : '');
+        out.innerHTML = '<b class="' + (canceled ? 'warn' : 'ok') + '">' + ESC(msg) + '</b>' +
+          (errors.length ? '<br><span class="warn">' + ESC(errors[0]).replace(/\n/g, '<br>') + '</span>' : '') +
+          (changed && aiRun.snapshot ? '<div class="modal-actions" style="margin-top:10px"><button class="btn" data-act="ai-undo">' + t('ai.undo') + '</button></div>' : '');
       }
       toast(msg, 3000);
     }
@@ -2266,6 +2289,7 @@
     var d = findDeck(modalPayload.deckId);
     if (!d) return;
     if (!window.confirm(t('confirm.deleteCard'))) return;
+    if (modalPayload.cardId) delete state.stats[modalPayload.cardId];
     d.cards = d.cards.filter(function (c) { return c.id !== modalPayload.cardId; });
     if (!d.cards.length) {
       state.decks = state.decks.filter(function (x) { return x.id !== d.id; });
@@ -2342,7 +2366,9 @@
   /* ============================== 分类速记 ============================== */
 
   function chapterOf(card) {
-    return (card.path && card.path[0]) ? card.path[0] : t('quick.uncategorized');
+    var p = card.path || [];
+    for (var i = p.length - 1; i >= 0; i--) if (p[i]) return p[i];
+    return t('quick.uncategorized');
   }
 
   function quickChapterNames(deck) {
@@ -2575,14 +2601,23 @@
   }
 
   function backupJson(deckIds) {
+    var decks = deckIds
+      ? state.decks.filter(function (d) { return deckIds.indexOf(d.id) >= 0; })
+      : state.decks;
+    // 单 deck 导出只带该 deck 卡片的 stats，避免把其它笔记的进度也带过去
+    var stats = state.stats;
+    if (deckIds) {
+      var wanted = Object.create(null);
+      decks.forEach(function (d) { d.cards.forEach(function (c) { wanted[c.id] = 1; }); });
+      stats = {};
+      Object.keys(state.stats).forEach(function (k) { if (wanted[k]) stats[k] = state.stats[k]; });
+    }
     var payload = {
       app: 'md-review',
       version: 1,
       exportedAt: new Date().toISOString(),
-      decks: deckIds
-        ? state.decks.filter(function (d) { return deckIds.indexOf(d.id) >= 0; })
-        : state.decks,
-      stats: state.stats,
+      decks: decks,
+      stats: stats,
       daily: state.daily,
       settings: stripAiKeys(state.settings)
     };
@@ -2666,7 +2701,12 @@
       return;
     }
     if (!window.confirm(t('confirm.importBackup'))) return;
+    // 恢复只覆盖「笔记 + 进度 + 统计」；AI 供应商配置（备份里本来就没有 Key）、主题、语言保留本机当前的
+    var prevSettings = state.settings;
     state = normalizeState(obj);
+    state.settings.ai = prevSettings.ai;
+    state.settings.theme = prevSettings.theme;
+    state.settings.lang = prevSettings.lang;
     pruneDaily();
     applyTheme();
     applyI18nStatic();
@@ -2821,6 +2861,19 @@
       case 'save-card':
         saveCard();
         break;
+      case 'ai-undo': {
+        var snap = aiRun && aiRun.snapshot;
+        var ud = findDeck(modalPayload && modalPayload.deckId);
+        if (ud && snap && snap.length === ud.cards.length) {
+          ud.cards.forEach(function (uc, ui) { uc.question = snap[ui]; });
+          scheduleSave();
+          renderHome();
+        }
+        var uo = $('#aiOut');
+        if (uo) uo.innerHTML = '<b class="ok">' + ESC(t('ai.undone')) + '</b>';
+        toast(t('ai.undone'));
+        break;
+      }
       case 'delete-card':
         deleteCard();
         break;
@@ -2829,6 +2882,7 @@
         var d = findDeck(id);
         if (!d) break;
         if (!window.confirm(tf('confirm.deleteDeck', { name: d.name, n: d.cards.length }))) break;
+        d.cards.forEach(function (c) { delete state.stats[c.id]; }); // 清掉孤儿进度，避免重导后旧状态复活
         state.decks = state.decks.filter(function (x) { return x.id !== id; });
         scheduleSave();
         if ($('#view-manage').classList.contains('active')) { renderManage(); } else { renderHome(); }

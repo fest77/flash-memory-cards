@@ -29,7 +29,7 @@
 
 | 文件 | 体积 | 说明 |
 |---|---|---|
-| `dist/md-flashcards.html` | ~180 KB | 唯一的构建产物，功能完整 |
+| `dist/md-flashcards.html` | ~230 KB | 唯一的构建产物，功能完整 |
 
 **如果双击/预览打不开**，多半是预览器对中文路径有限制，改用本地 HTTP 服务：
 
@@ -38,7 +38,7 @@
 python -m http.server 8788 --directory dist
 ```
 
-浏览器访问 **http://127.0.0.1:8788/** （单文件仅 180 KB，Chrome/Edge 打开秒加载）。
+浏览器访问 **http://127.0.0.1:8788/** （单文件约 230 KB，Chrome/Edge 打开秒加载）。
 
 ### 方式 A：直接开网页（最简单）
 
@@ -47,7 +47,7 @@ python -m http.server 8788 --directory dist
 3. 点「📥 导入 md / zip（批量）」→ 选择文件 → 「导入全部」。
 4. 浏览器菜单 → **添加到主屏幕**，以后像 App 一样打开。
 
-> **打不开/白屏**：先换本地 HTTP 服务方式（方式 0）；文件很小（180 KB），基本不可能是体积问题。
+> **打不开/白屏**：先换本地 HTTP 服务方式（方式 0）；文件很小（约 230 KB），基本不可能是体积问题。
 
 > **图片**：导入时把 md 引用的图片一起选中即可（也支持 zip 打包、电脑端整文件夹）。支持标准 Markdown `![](images/a.png)` 和 **Obsidian 嵌入 `![[images/a.png]]`**（可带 `|宽度` 后缀），按**文件名**匹配引用（取 `a.png`），同名覆盖，只存本机；「备份全部」不含图片，换机后重新导入一次即可。
 >
@@ -285,7 +285,7 @@ python scripts/ai_cards.py --input <目录> --dry-run   # 只看切分，不调 
 
 `android/` 是一个最小 **WebView 壳**（Java，无第三方 UI 依赖，仅 `androidx.webkit`）：
 
-- 用 `WebViewAssetLoader` 以 `https://appassets.androidplatform.net/` 提供网页，让 IndexedDB / localStorage 有稳定 origin；
+- 通过手写 `shouldInterceptRequest` 以 `https://appassets.androidplatform.net/` 提供网页（不用 androidx），让 IndexedDB / localStorage 有稳定 origin；
 - 实现 `onShowFileChooser`，手机端可一次选多个 md / zip；
 - `AndroidSaver` 原生桥：备份 JSON 直接写进「下载/MD Flashcards」；
 - 返回键优先关弹层 / 回上一页，再退出。
@@ -354,7 +354,7 @@ python scripts/build.py                      # 内联 → dist/md-flashcards.htm
 | 1.7.2 | 导入支持图片：md+图片多选 / zip 含图 / 文件夹，图片存本机并按文件名渲染进卡面；Android 选择器放行图片 |
 | 1.7.3 | zip 按内容识别（PK 魔数），改过名的 zip 也能导；「选择文件」按钮也能收 zip；关于页加反馈邮箱 |
 | 1.6 | 设置视图（右上角 ⚙）：浅色主题（默认深色）、简繁英三语切换、关于页；dist 精简为单文件 |
-| 1.7 | 多供应商 AI（预置按需添加 + 自定义）、主页快捷切换、Claude 原生协议、预置模型刷新到 2026-10 现行版；图片导入（md+图片多选 / zip 含图 / 文件夹，按文件名渲染进卡面）；zip 按内容识别 |
 | 1.8 | 底部导航（主页 / 笔记管理 / 统计 / 设置，移除右上角入口）；新增「统计 · 闪记日志」：GitHub 风格热力图（默认）+ 最近 7 天条形图可切换 |
 | 1.8.3 | 支持 Obsidian `![[图片]]` 嵌入语法（含 `|宽度` 后缀）；卡面标题/题面/答案中的图片都能解析显示；Android 壳拦截 mailto: 等外部协议转交系统应用（修复点邮箱报 ERR_UNKNOWN_URL_SCHEME） |
+| 1.8.4 | 审查修复：Q/A 识别要求分隔符（QPS/API 等不再被误拆）、Q/A 前导正文保留为概述卡、移除旧 WebView 白屏的后行断言正则、保存失败明确提示、备份恢复保留 AI 配置与主题语言、删除笔记清理进度、GBK 编码回退、快速阅读按最后一级标题分组、固定 APK 签名（可覆盖安装）、外链转系统浏览器 |
 | 1.7 | AI 多供应商管理（预置 DeepSeek/Z.ai/Kimi/Bailian/ChatGPT/Claude 按需添加 + 自定义，启停/多模型/测试连接），主页模型快捷切换弹窗，Claude 原生协议适配，备份文件不再包含 API Key |

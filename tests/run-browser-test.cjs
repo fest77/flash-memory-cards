@@ -12,7 +12,9 @@ const ROOT = path.join(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
 const HTML = path.join(DIST, 'md-flashcards.html');
 const HARNESS = path.join(__dirname, 'browser-harness.js');
-const TEST_PAGE = path.join(DIST, '_test.html');
+// 测试产物写到系统临时目录，不污染 dist/
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'mdfc-test-'));
+const TEST_PAGE = path.join(TMP, '_test.html');
 
 const EDGE_CANDIDATES = [
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -76,7 +78,7 @@ if (!edge) {
   process.exit(0);
 }
 
-const profileDir = path.join(DIST, '_edge-profile');
+const profileDir = path.join(TMP, '_edge-profile');
 const fileUrl = 'file:///' + TEST_PAGE.replace(/\\/g, '/');
 const args = [
   '--headless=new',
@@ -94,8 +96,8 @@ const args = [
 ];
 
 let dom = '';
-const dumpPath = path.join(DIST, '_dump.html');
-const errPath = path.join(DIST, '_dump.err.txt');
+const dumpPath = path.join(TMP, '_dump.html');
+const errPath = path.join(TMP, '_dump.err.txt');
 try {
   // 说明：沙箱环境禁止用管道捕获子进程输出，这里直接把 stdout/stderr 写文件
   const fdOut = fs.openSync(dumpPath, 'w');
@@ -114,8 +116,8 @@ try {
 
 const m = /data-test-results="([^"]*)"/.exec(dom);
 if (!m) {
-  fs.writeFileSync(path.join(DIST, '_test-dom.html'), dom, 'utf8');
-  fail('测试结果未写入（页面可能启动失败），已保存 DOM 到 dist/_test-dom.html');
+  fs.writeFileSync(path.join(TMP, '_test-dom.html'), dom, 'utf8');
+  fail('测试结果未写入（页面可能启动失败），已保存 DOM 到 ' + path.join(TMP, '_test-dom.html'));
 }
 
 const results = m[1].split(' || ');
@@ -124,6 +126,7 @@ results.forEach((r) => console.log((r.indexOf('FAIL') === 0 ? 'FAIL ' : 'ok   ')
 
 try { fs.unlinkSync(TEST_PAGE); } catch (e) { /* ignore */ }
 try { fs.rmSync(profileDir, { recursive: true, force: true }); } catch (e) { /* ignore */ }
+try { fs.rmSync(TMP, { recursive: true, force: true }); } catch (e) { /* ignore */ }
 
 if (fails.length) {
   console.log('\n' + fails.length + ' / ' + results.length + ' 项失败');
