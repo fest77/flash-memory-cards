@@ -468,6 +468,18 @@
                       mg.decks.map(function (d) { return d.name; }).join(','));
                     check('merge: local stats kept', mg.stats.c1.n === 5, 'n=' + mg.stats.c1.n);
                     check('merge: missing stats filled', mg.stats.c9 && mg.stats.c9.n === 1, 'ok');
+                    // 第 2 步：引用名收集（三种引用语法）
+                    var stZ = app.state();
+                    var refDeck = { id: 'dref', name: '引用', cards: [
+                      { id: 'cr1', title: 't', question: '', answer: '![](images/a.png) 和 ![[dir/b.jpg]]', path: [] },
+                      { id: 'cr2', title: 't2', question: '（配图 c.gif）', answer: 'x', path: [] }
+                    ] };
+                    stZ.decks.push(refDeck);
+                    var refSet = app.referencedImageNames();
+                    check('img refs collected (3 syntaxes)', refSet['a.png'] === 1 && refSet['b.jpg'] === 1 && refSet['c.gif'] === 1,
+                      JSON.stringify(refSet));
+                    stZ.decks = stZ.decks.filter(function (d) { return d.id !== 'dref'; });
+
                     // zip roundtrip（页面内构造 → parseBackupBuffer）
                     var enc = new TextEncoder();
                     var zipB = window.MDReviewCore.zipStore([

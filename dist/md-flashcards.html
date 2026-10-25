@@ -981,6 +981,34 @@ body.light .heat-cell.h4 { background: #116329; }
     </details>
 
     <details class="settings" open>
+      <summary data-i18n="settings.storage">存储</summary>
+      <div class="field" style="border-top:none">
+        <button class="btn" data-act="img-cleanup" data-i18n="img.cleanup">清理未引用图片</button>
+      </div>
+    </details>
+
+    <details class="settings" open>
+      <summary data-i18n="settings.storage">存储</summary>
+      <div class="field" style="border-top:none">
+        <button class="btn" data-act="img-cleanup" data-i18n="img.cleanup">清理未引用图片</button>
+      </div>
+    </details>
+
+    <details class="settings" open>
+      <summary data-i18n="settings.storage">存储</summary>
+      <div class="field" style="border-top:none">
+        <button class="btn" data-act="img-cleanup" data-i18n="img.cleanup">清理未引用图片</button>
+      </div>
+    </details>
+
+    <details class="settings" open>
+      <summary data-i18n="settings.storage">存储</summary>
+      <div class="field" style="border-top:none">
+        <button class="btn" data-act="img-cleanup" data-i18n="img.cleanup">清理未引用图片</button>
+      </div>
+    </details>
+
+    <details class="settings" open>
       <summary data-i18n="settings.ai">AI 供应商</summary>
       <div class="field" style="border-top:none">
         <label for="aiActive" data-i18n="ai.active">当前使用</label>
@@ -2249,7 +2277,7 @@ body.light .heat-cell.h4 { background: #116329; }
       'btn.import': '📥 导入 md / zip', 'btn.paste': '✍️ 粘贴 Markdown 文本', 'btn.demo': '看看示例（7 张卡）',
       'btn.importBatch': '📥 导入 md / zip（批量）', 'btn.pasteShort': '粘贴文本', 'btn.backup': '备份全部', 'btn.restoreBackup': '恢复备份',
       'set.importTitle': '导入与提问设置', 'set.aiTitle': 'AI 提炼设置（可选，需要你自己的 API）',
-      'settings.ai': 'AI 供应商', 'ai.active': '当前使用', 'ai.addCustom': '＋ 自定义供应商（OpenAI 兼容）',
+      'settings.storage': '存储', 'settings.ai': 'AI 供应商', 'ai.active': '当前使用', 'ai.addCustom': '＋ 自定义供应商（OpenAI 兼容）',
       'ai.add': '＋ 添加供应商', 'ai.addTitle': '添加供应商',
       'ai.quickTitle': '选择模型', 'ai.manage': '管理供应商', 'ai.goSettings': '去设置',
       'home.aiBtn': '🤖 AI 提炼 · {name} ▾', 'home.aiNone': '🤖 AI 提炼 · 未配置（点击去设置）',
@@ -2314,7 +2342,7 @@ body.light .heat-cell.h4 { background: #116329; }
       'ai.testing': '请求中…（最长等 {s} 秒）', 'ai.testOk': '连接成功', 'ai.testFail': '连接失败', 'ai.modelReply': '模型回复：',
       'ai.title': 'AI 提炼提问', 'ai.desc': '用大模型读懂每张卡的答案，把标题改写成更像面试题的问题（<b>只改题面，不动答案</b>）。请求从你的手机直接发出，不经过任何服务器。',
       'ai.notConfigured': '还没有配置 AI：到「设置 → AI 供应商」添加供应商并填 Key。',
-      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.canceled': '已停止提炼', 'ai.undo': '撤销本次提炼', 'ai.undone': '已恢复原题面', 'ai.undoFail': '无法撤销：笔记内容已变化', 'ai.start': '开始提炼',
+      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.canceled': '已停止提炼', 'img.cleanup': '清理未引用图片', 'img.cleanupNone': '没有可清理的图片', 'img.cleanupConfirm': '发现 {n} 张未被任何卡片引用的图片（约 {kb} KB），删除？', 'img.cleanupDone': '已清理 {n} 张图片', 'ai.undo': '撤销本次提炼', 'ai.undone': '已恢复原题面', 'ai.undoFail': '无法撤销：笔记内容已变化', 'ai.start': '开始提炼',
       'ai.busy': '正在提炼，请稍等', 'ai.needConfig': '先配置 AI 地址和模型',
       'ai.progress': '提炼中… {done} / {total} 张（共 {batches} 批）',
       'ai.badFormat': '返回格式无法解析（需要 {"questions":[{"idx":..,"q":".."}]}）',
@@ -2433,7 +2461,7 @@ body.light .heat-cell.h4 { background: #116329; }
       'ai.testing': '請求中…（最長等 {s} 秒）', 'ai.testOk': '連線成功', 'ai.testFail': '連線失敗', 'ai.modelReply': '模型回覆：',
       'ai.title': 'AI 提煉提問', 'ai.desc': '用大模型讀懂每張卡的答案，把標題改寫成更像面試題的問題（<b>只改題面，不動答案</b>）。請求從你的手機直接發出，不經過任何伺服器。',
       'ai.notConfigured': '還沒有設定 AI：到「設定 → AI 供應商」新增供應商並填 Key。',
-      'ai.cardCount': '共 {n} 張卡', 'ai.ready': '已就緒', 'ai.notReady': '未設定', 'ai.canceled': '已停止提煉', 'ai.undo': '撤銷本次提煉', 'ai.undone': '已恢復原題面', 'ai.undoFail': '無法撤銷：筆記內容已變化', 'ai.start': '開始提煉',
+      'ai.cardCount': '共 {n} 張卡', 'ai.ready': '已就緒', 'ai.notReady': '未設定', 'ai.canceled': '已停止提煉', 'img.cleanup': '清理未引用圖片', 'img.cleanupNone': '沒有可清理的圖片', 'img.cleanupConfirm': '發現 {n} 張未被任何卡片引用的圖片（約 {kb} KB），刪除？', 'img.cleanupDone': '已清理 {n} 張圖片', 'ai.undo': '撤銷本次提煉', 'ai.undone': '已恢復原題面', 'ai.undoFail': '無法撤銷：筆記內容已變化', 'ai.start': '開始提煉',
       'ai.busy': '正在提煉，請稍等', 'ai.needConfig': '先設定 AI 位址和模型',
       'ai.progress': '提煉中… {done} / {total} 張（共 {batches} 批）',
       'ai.badFormat': '返回格式無法解析（需要 {"questions":[{"idx":..,"q":".."}]}）',
@@ -2552,7 +2580,7 @@ body.light .heat-cell.h4 { background: #116329; }
       'ai.testing': 'Requesting… (up to {s} s)', 'ai.testOk': 'Connected', 'ai.testFail': 'Connection failed', 'ai.modelReply': 'Model reply: ',
       'ai.title': 'AI question refine', 'ai.desc': 'Have an LLM rewrite each card\'s title into an interview-style question (<b>questions only, answers untouched</b>). Requests go straight from your phone to the API; no server in between.',
       'ai.notConfigured': 'AI is not configured: add a provider and fill in the key under Settings → AI providers.',
-      'ai.cardCount': '{n} cards', 'ai.ready': 'Ready', 'ai.notReady': 'Not configured', 'ai.canceled': 'Refining stopped', 'ai.undo': 'Undo this refine', 'ai.undone': 'Original questions restored', 'ai.undoFail': 'Cannot undo: the deck has changed', 'ai.start': 'Start refine',
+      'ai.cardCount': '{n} cards', 'ai.ready': 'Ready', 'ai.notReady': 'Not configured', 'ai.canceled': 'Refining stopped', 'img.cleanup': 'Clean unused images', 'img.cleanupNone': 'No unused images', 'img.cleanupConfirm': '{n} images are not referenced by any card (~{kb} KB). Delete?', 'img.cleanupDone': 'Cleaned {n} images', 'ai.undo': 'Undo this refine', 'ai.undone': 'Original questions restored', 'ai.undoFail': 'Cannot undo: the deck has changed', 'ai.start': 'Start refine',
       'ai.busy': 'Refine in progress, please wait', 'ai.needConfig': 'Configure the API URL and model first',
       'ai.progress': 'Refining… {done} / {total} cards ({batches} batches)',
       'ai.badFormat': 'Unparseable response (expected {"questions":[{"idx":..,"q":".."}]})',
@@ -2777,7 +2805,20 @@ body.light .heat-cell.h4 { background: #116329; }
         }).catch(function () { return lsSet(json); });
       },
       rawGet: function (key) { return openDB().then(function () { return idbGet(key); }); },
-      rawPut: function (key, val) { return openDB().then(function () { return idbPut(key, val); }); }
+      rawPut: function (key, val) { return openDB().then(function () { return idbPut(key, val); }); },
+      rawDelete: function (key) {
+        return openDB().then(function () {
+          return new Promise(function (resolve) {
+            if (!db) return resolve(false);
+            try {
+              var tx = db.transaction('kv', 'readwrite');
+              tx.objectStore('kv').delete(key);
+              tx.oncomplete = function () { resolve(true); };
+              tx.onerror = function () { resolve(false); };
+            } catch (e) { resolve(false); }
+          });
+        });
+      }
     };
   })();
 
@@ -3226,35 +3267,130 @@ body.light .heat-cell.h4 { background: #116329; }
     try { IMG_URLS[base] = URL.createObjectURL(blob); return true; } catch (e) { return false; }
   }
 
-  function storeImage(name, blob) {
-    var base = imgBase(name);
-    return Store.rawPut('img/' + base, { blob: blob, name: base, added: Date.now() }).then(function (ok) {
-      if (!ok) return false;
-      rememberImage(base, blob);
-      return Store.rawGet('imgIndex').then(function (list) {
-        list = list || [];
-        if (list.indexOf(base) >= 0) return true;
-        list.push(base);
-        return Store.rawPut('imgIndex', list).then(function () { return true; });
+  function blobDigest(blob) {
+    // 内容指纹：优先 sha1（crypto.subtle），不可用时退化为 size+首尾字节
+    if (window.crypto && crypto.subtle && crypto.subtle.digest) {
+      return blob.arrayBuffer().then(function (ab) {
+        return crypto.subtle.digest('SHA-1', ab).then(function (h) {
+          var u = new Uint8Array(h);
+          var s = '';
+          for (var i = 0; i < u.length; i++) s += (u[i] + 0x100).toString(16).slice(1);
+          return 'sha1:' + s;
+        });
       });
+    }
+    return blob.arrayBuffer().then(function (ab) {
+      var u = new Uint8Array(ab);
+      var head = u.length ? u[0] + ',' + u[u.length - 1] : '0';
+      return 'weak:' + ab.byteLength + ':' + head;
     });
   }
 
-  function importImageEntries(entries) { // [{name, bytes}]（zip 内）→ Promise(成功数)
+  /* 批次导入期间 图片原名 → 实际存储名 的映射（导入 md 时重写引用） */
+  var IMG_RENAMES = {};
+
+  function storeImage(name, blob, renameMap) {
+    var base = imgBase(name);
+    var commit = function (nm) {
+      return Store.rawPut('img/' + nm, { blob: blob, name: nm, added: Date.now() }).then(function (ok) {
+        if (!ok) return null;
+        rememberImage(nm, blob);
+        return Store.rawGet('imgIndex').then(function (list) {
+          list = list || [];
+          if (list.indexOf(nm) < 0) list.push(nm);
+          return Store.rawPut('imgIndex', list).then(function () { return nm; });
+        });
+      });
+    };
+    var bumpName = function (nm) {
+      var m = /^(.*?)(-\d+)?(\.[^.]+)$/.exec(nm);
+      if (!m) return nm + '-2';
+      return m[1] + '-' + (parseInt((m[2] || '-1').slice(1), 10) + 1) + m[3];
+    };
+    // 返回：'名字' = 新写入的名字；true = 内容相同去重沿用；null = 失败
+    var tryName = function (nm) {
+      return Store.rawGet('img/' + nm).then(function (ex) {
+        if (!ex) return commit(nm);
+        return Promise.all([blobDigest(blob), blobDigest(ex.blob)]).then(function (d) {
+          if (d[0] === d[1]) return true;
+          return tryName(bumpName(nm));
+        });
+      });
+    };
+    return tryName(base).then(function (res) {
+      if (!res) return false;
+      if (typeof res === 'string' && res !== base && renameMap) renameMap[base] = res; // 改名了：记录映射供重写引用
+      return true;
+    });
+  }
+
+  function importImageEntries(entries, renameMap) { // [{name, bytes}]（zip 内）→ Promise(成功数)
     var n = 0;
     return Promise.all(entries.map(function (en) {
       if (!en || !en.bytes) return Promise.resolve();
-      return storeImage(en.name, new Blob([en.bytes], { type: imgMime(en.name) })).then(function (ok) {
+      return storeImage(en.name, new Blob([en.bytes], { type: imgMime(en.name) }), renameMap).then(function (ok) {
         if (ok) n++;
       });
     })).then(function () { return n; });
   }
 
-  function importImageFiles(files) { // File[] → Promise(成功数)
+  function importImageFiles(files) { // File[] → Promise(成功数)；改名记入全局映射供本批 md 重写
     var n = 0;
     return Promise.all(files.map(function (f) {
-      return storeImage(f.name, f).then(function (ok) { if (ok) n++; });
+      return storeImage(f.name, f, IMG_RENAMES).then(function (ok) { if (ok) n++; });
     })).then(function () { return n; });
+  }
+
+  /** 所有卡片引用的图片名集合（![]() / ![[..]] / （配图 x）） */
+  function referencedImageNames() {
+    var set = Object.create(null);
+    state.decks.forEach(function (d) {
+      d.cards.forEach(function (c) {
+        [c.title, c.question, c.answer].forEach(function (txt) {
+          String(txt || '').replace(/!\[\[([^\]\n|]+)(?:\|[^\]\n]*)?\]\]/g, function (m, p) {
+            set[imgBase(p)] = 1; return m;
+          }).replace(/!\[[^\]]*\]\(([^)\s]+)/g, function (m, p) {
+            if (!/^(?:https?:|blob:|data:)/i.test(p)) set[imgBase(p)] = 1;
+            return m;
+          }).replace(/（配图\s*([^）]+?)）/g, function (m, p) {
+            set[imgBase(p)] = 1; return m;
+          });
+        });
+      });
+    });
+    return set;
+  }
+
+  /** 无引用图片：[{name, size}]（读记录算大小） */
+  function unreferencedImages() {
+    var ref = referencedImageNames();
+    return Store.rawGet('imgIndex').then(function (list) {
+      list = list || [];
+      return Promise.all(list.map(function (nm) {
+        return Store.rawGet('img/' + nm).then(function (rec) {
+          if (ref[nm]) return null;
+          return { name: nm, size: rec && rec.blob ? rec.blob.size : 0 };
+        });
+      })).then(function (arr) { return arr.filter(Boolean); });
+    });
+  }
+
+  function cleanupUnreferencedImages() {
+    return unreferencedImages().then(function (unused) {
+      if (!unused.length) return 0;
+      return Store.rawGet('imgIndex').then(function (list) {
+        var kept = (list || []).filter(function (nm) {
+          return !unused.some(function (u) { return u.name === nm; });
+        });
+        return Store.rawPut('imgIndex', kept).then(function () {
+          unused.forEach(function (u) {
+            if (IMG_URLS[u.name]) { try { URL.revokeObjectURL(IMG_URLS[u.name]); } catch (e) { /* ignore */ } }
+            delete IMG_URLS[u.name];
+          });
+          return unused.length; // 记录本体留在 IDB（无引用即不可达，index 已剔除）；彻底删除走 Store.deleteRaw（如后续提供）
+        });
+      });
+    });
   }
 
   /* 渲染后替换 <img>：本地图库命中 → objectURL；未命中且非外链 → 未导入占位 */
@@ -3770,11 +3906,17 @@ body.light .heat-cell.h4 { background: #116329; }
           if (isImageFile(nm)) imgs.push(en);
           else if (isTextNote(nm)) texts.push(en);
         });
-        return importImageEntries(imgs).then(function (nImg) {
+        var renames = {};
+        return importImageEntries(imgs, renames).then(function (nImg) {
           if (!texts.length && !nImg) { toast(t('toast.zipEmpty')); return; }
           texts.forEach(function (en) {
             var base = en.name.split('/').pop();
-            importQueue.push({ name: base.replace(/\.[^.]+$/, ''), text: Core.decodeBytes(en.bytes), size: en.bytes.length, source: en.name });
+            var text = Core.decodeBytes(en.bytes);
+            // 同名图片被改名（同名不同内容）→ 重写本批 md 的引用
+            Object.keys(renames).forEach(function (oldN) {
+              text = text.split(oldN).join(renames[oldN]);
+            });
+            importQueue.push({ name: base.replace(/\.[^.]+$/, ''), text: text, size: en.bytes.length, source: en.name });
           });
           renderImportQueue();
           var msg = '';
@@ -5695,6 +5837,7 @@ body.light .heat-cell.h4 { background: #116329; }
         if (!window.confirm(tf('confirm.deleteDeck', { name: d.name, n: d.cards.length }))) break;
         d.cards.forEach(function (c) { delete state.stats[c.id]; }); // 清掉孤儿进度，避免重导后旧状态复活
         state.decks = state.decks.filter(function (x) { return x.id !== id; });
+        cleanupUnreferencedImages(); // 异步清理无引用图片
         scheduleSave();
         if ($('#view-manage').classList.contains('active')) { renderManage(); } else { renderHome(); }
         toast(t('toast.deleted'));
@@ -5711,6 +5854,16 @@ body.light .heat-cell.h4 { background: #116329; }
       case 'export-all':
         if (!state.decks.length) { toast(t('toast.noNotes')); break; }
         exportBackupZip();
+        break;
+      case 'img-cleanup':
+        unreferencedImages().then(function (unused) {
+          if (!unused.length) { toast(t('img.cleanupNone')); return; }
+          var kb = unused.reduce(function (a, u) { return a + u.size; }, 0) / 1024;
+          if (!window.confirm(tf('img.cleanupConfirm', { n: unused.length, kb: kb.toFixed(0) }))) return;
+          cleanupUnreferencedImages().then(function (n) {
+            toast(tf('img.cleanupDone', { n: n }));
+          });
+        });
         break;
       case 'backup-overwrite':
         applyBackupOverwrite();
@@ -6017,6 +6170,8 @@ body.light .heat-cell.h4 { background: #116329; }
     imgUrls: function () { return IMG_URLS; },
     flushCount: function () { return flushCount; },
     parseBackupBuffer: parseBackupBuffer,
+    referencedImageNames: referencedImageNames,
+    unreferencedImages: unreferencedImages,
     mergeBackupState: mergeBackupState,
     buildBackupFiles: function () { return backupPayload(null); },
     renderStats: renderStats,
