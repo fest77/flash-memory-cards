@@ -42,7 +42,7 @@ md-flashcards/
 ├── tests/
 │   ├── core.test.cjs          # 58 unit tests (Node, no browser)
 │   ├── browser-harness.js     # injected into the built page
-│   ├── run-browser-test.cjs   # static checks + 108 headless-Edge assertions
+│   ├── run-browser-test.cjs   # static checks + 121 headless-Edge assertions
 │   ├── run-screenshots.cjs    # writes docs/images/*
 │   ├── persist-test.cjs       # file:// persistence check
 │   └── fixtures/notes.zip     # zip-parsing fixture
@@ -256,7 +256,7 @@ Notes:
 
 ```bash
 node tests/core.test.cjs            # 58 tests, Node 18+ (DecompressionStream)
-node tests/run-browser-test.cjs     # static checks + 108 headless Edge assertions
+node tests/run-browser-test.cjs     # static checks + 121 headless Edge assertions
 node tests/run-screenshots.cjs      # docs/images screenshots
 node tests/persist-test.cjs         # file:// persistence
 ```
@@ -304,3 +304,4 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.8.6 | third-round review fixes: new `chapter` field (owning section) threaded through parsing/storage/normalizeState — quick-read groups by `chapterOf` reading `chapter` only; off-by-one in parent-preface capture (`sec.start` is already the line after the heading); AI undo reports failure honestly when the deck changed; zh-Hant/en dictionaries got the missing undo strings |
 | 1.8.7 | fourth-round review fixes: chunked-card branches (paragraph chunks inside an oversized section, soleTitle chunks) also write `chapter`; qa-mode overview card shares the questions' (empty) chapter instead of a docTitle group; old-data fallback comment corrected — `path` only holds ancestors, old decks keep coarse grouping until re-imported |
 | 1.10.0 | spaced review: `Core.schedule` (Leitner 3-box 1/3/7d) + `isDue` (boxless = due today); stats gain `box/ivl/dueAt`; home due-chip; review setup modal (20/50/all, weak-first = has-errors-or-box-1, per-chapter via `chapterOf` full path); session persisted in `state.reviewSession` (queue/round2/current/undo as id lists, flushed on rate — 250ms debounce is not enough) and resumed via `#resumeBar`; undo restores stat + queue from pre-rating snapshot; quick-read groups by full `path+chapter` path (same-name sections under different parents no longer merge); qa-mode cards carry heading-chain `path`; About feedback email moved below repo links |
+| 1.10.1 | review-path fixes: todo filter now keeps due cards (`isTodoStat`: known-but-due counts; chip label 待复习, same counting); multi-deck 复习全部 opens the setup modal (count + scope, no chapter dim); weak is a strict filter (`isWeakStat`: has errors, or reviewed and still box-1 — fresh cards excluded; label 只看薄弱卡); starting a new review with an unfinished session asks first (`confirm.newSession`), resume still one-tap; empty sessions pruned on render/start; harness stubs window.confirm for headless |

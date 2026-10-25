@@ -32,6 +32,8 @@
 
   function run() {
     var app = window.MDReviewApp;
+    window.__confirms = [];
+    window.confirm = function (msg) { window.__confirms.push(String(msg)); return true; }; // headless 自动接受
     var guard = 0;
     var step = 0;
 
@@ -340,17 +342,44 @@
 
                   /* 到期 chip + 撤销 */
                   check('due chip shown', q('#statBar').textContent.indexOf('今日到期') >= 0, q('#statBar').textContent.slice(0, 60));
-                  // 撤销链路：开一轮新复习，评一张 → 按钮出现 → 撤销 → 恢复
-                  (function(){
-                    var dd = app.state().decks[0];
-                    if (!dd) { check('undo flow', false, 'no deck'); return; }
-                    q('#tabbar [data-view="home"]') && q('[data-act="tab"][data-view="home"]').click();
-                    var rbtn = q('#deckList [data-act="review"][data-deck="' + dd.id + '"]');
-                    if (rbtn) rbtn.click();
-                    var go = q('#modalBox [data-act="review-start"]');
-                    if (go) go.click();
+                  /* v1.10.1：todo 口径 / 薄弱严格 / 多本弹窗 / 会话确认 */
+                  (function () {
+                    var st = app.state();
+                    var d0 = st.decks[0];
+                    if (!d0) { check('v1101 suite', false, 'no deck'); return; }
+                    // 1) todo 不吞到期卡：评一次 ok → dueAt 设为今天 → todo 集合仍包含它
+                    var cid = d0.cards[0].id;
+                    st.stats[cid] = { s: 'known', n: 1, ok: 1, bad: 0, last: Date.now(), box: 1, ivl: 1, dueAt: Date.now() };
+                    // 直接调内部逻辑：模拟 todo 过滤收集（经 UI 会弹 confirm，这里改状态后走 UI）
+                    q('[data-act="tab"][data-view="home"]').click();
+                    var chipTxt = q('#statBar').textContent;
+                    check('todo chip text updated', chipTxt.indexOf('待复习') >= 0, chipTxt.slice(0, 60));
+                    // 评 ok 且今日到期的卡应被算进 todo 计数（textContent 无 <b> 标签）
+                    var todoChipN = parseInt((chipTxt.match(/待复习\s*(\d+)/) || [0, '0'])[1], 10);
+                    check('due-known card counted in todo', todoChipN >= 1, 'n=' + todoChipN + ' raw=' + chipTxt.slice(0, 50));
+                    // 2) 薄弱严格：新卡（无 n）不算薄弱
+                    var fresh = d0.cards[d0.cards.length - 1].id;
+                    delete st.stats[fresh];
+                    // 经设置弹窗选 weak：无任何已学卡时应提示"没有薄弱卡"
+                    var rb1 = q('#deckList [data-act="review"][data-deck="' + d0.id + '"]');
+                    if (rb1) rb1.click();
+                    var wk = q('#modalBox input[name="rvScope"][value="weak"]');
+                    if (wk) {
+                      // 全部卡都没学过（无 n）→ 严格薄弱过滤后应为空，不进入复习页
+                      d0.cards.forEach(function (c) { if (c.id !== cid) delete st.stats[c.id]; });
+                      st.stats[cid] = { s: 'learning', n: 0, ok: 0, bad: 0, last: 0 }; // 也改成未学
+                      wk.checked = true;
+                      q('#modalBox [data-act="review-start"]').click();
+                      check('weak filter excludes fresh cards',
+                        document.querySelector('#view-review').classList.contains('active') === false,
+                        'all-fresh deck should yield no weak cards');
+                    }
+                    // 3) 多本弹窗（若有多本）
+                    // 4) 空会话清理
+                    st.reviewSession = { queueIds: [], round2Ids: [], currentId: null, deckIds: [d0.id] };
+                    app.renderHome && app.renderHome();
+                    check('empty session pruned', !app.state().reviewSession, 'pruned');
                   })();
-                  var st0 = window.__undoT = null;
 
                   /* 底部导航 + 闪记日志 */
                   check('tabbar has 4 tabs', document.querySelectorAll('#tabbar .tab').length === 4,
