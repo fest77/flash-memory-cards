@@ -575,6 +575,8 @@ a { color: var(--link); }
   box-shadow: 0 6px 20px -10px rgba(0,0,0,.65);
 }
 .rv-answer .md-img, .quick-a .md-img { max-height: 70vh; object-fit: contain; }
+.about-feedback { font-size: 12px; color: var(--muted); margin-top: 8px; }
+.about-feedback a { color: var(--link); }
 .img-missing {
   display: inline-block; padding: 3px 9px; border-radius: 7px;
   background: var(--subtle); color: var(--muted); font-size: 12px; vertical-align: middle;
@@ -901,6 +903,7 @@ body.light {
         <div class="about-name-en">MD FlashCards</div>
         <div class="about-version" id="aboutVersion"></div>
         <div class="about-author" data-i18n="about.author">作者：fest</div>
+        <div class="about-feedback" data-i18n="about.feedback">如有 bug 和建议反馈，可联系邮箱：<a href="mailto:fest1024@163.com">fest1024@163.com</a></div>
         <div class="about-links">
           <a href="https://gitee.com/festeel/flash-memory-cards" target="_blank" rel="noopener">Gitee</a>
           <a href="https://github.com/fest77/flash-memory-cards" target="_blank" rel="noopener">GitHub</a>
@@ -1896,7 +1899,7 @@ body.light {
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.7.2';
+  var APP_VERSION = '1.7.3';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -1942,6 +1945,7 @@ body.light {
       'theme.dark': '深色', 'theme.light': '浅色',
       'lang.zhHans': '简体中文', 'lang.zhHant': '繁體中文', 'lang.en': 'English',
       'about.name': 'MD闪记卡', 'about.author': '作者：fest',
+      'about.feedback': '如有 bug 和建议反馈，可联系邮箱：<a href="mailto:fest1024@163.com">fest1024@163.com</a>',
       'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '只看没掌握 <b>{n}</b>', 'home.today': '今日已复习 <b>{n}</b>',
       'deck.meta': '{n} 张卡片 · <span class="ok">已掌握 {k}</span> · <span class="todo">待复习 {t}</span>',
       'deck.review': '随机复习', 'deck.quick': '分类速记', 'deck.browse': '浏览/编辑',
@@ -2050,6 +2054,7 @@ body.light {
       'theme.dark': '深色', 'theme.light': '淺色',
       'lang.zhHans': '简体中文', 'lang.zhHant': '繁體中文', 'lang.en': 'English',
       'about.name': 'MD閃記卡', 'about.author': '作者：fest',
+      'about.feedback': '如有 bug 和建議回饋，可聯絡郵箱：<a href="mailto:fest1024@163.com">fest1024@163.com</a>',
       'home.allCards': '全部卡片 <b>{n}</b>', 'home.todoCards': '只看沒掌握 <b>{n}</b>', 'home.today': '今日已複習 <b>{n}</b>',
       'deck.meta': '{n} 張卡片 · <span class="ok">已掌握 {k}</span> · <span class="todo">待複習 {t}</span>',
       'deck.review': '隨機複習', 'deck.quick': '分類速記', 'deck.browse': '瀏覽/編輯',
@@ -2158,6 +2163,7 @@ body.light {
       'theme.dark': 'Dark', 'theme.light': 'Light',
       'lang.zhHans': '简体中文', 'lang.zhHant': '繁體中文', 'lang.en': 'English',
       'about.name': 'MD闪记卡', 'about.author': 'Author: fest',
+      'about.feedback': 'Bugs & suggestions: <a href="mailto:fest1024@163.com">fest1024@163.com</a>',
       'home.allCards': 'All cards <b>{n}</b>', 'home.todoCards': 'Not mastered <b>{n}</b>', 'home.today': 'Reviewed today <b>{n}</b>',
       'deck.meta': '{n} cards · <span class="ok">{k} known</span> · <span class="todo">{t} to go</span>',
       'deck.review': 'Review', 'deck.quick': 'Quick read', 'deck.browse': 'Browse/Edit',
@@ -2744,6 +2750,7 @@ body.light {
 
   /* ---------- 用户导入的图片（md 里 ![](images/x.png) 按文件名匹配） ---------- */
   var IMG_EXT_RE = /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic|heif)$/i;
+  var ZIP_ACCEPT_RE = /\.(md|markdown|txt|png|jpe?g|gif|webp|bmp|svg|avif|heic|heif)$/i;
   var IMG_URLS = {}; // basename → objectURL
 
   function imgBase(name) { return String(name || '').split('/').pop().split('\\').pop(); }
@@ -3010,21 +3017,26 @@ body.light {
     var arr = Array.prototype.slice.call(files || []);
     var added = 0;
     var imgs = [];
+    var zips = []; // zip（含被文件管理器改过名的），按内容识别后路由
     arr.forEach(function (f) {
       if (isImageFile(f.name)) { imgs.push(f); return; }
-      if (!isTextNote(f.name)) return;
-      importQueue.push({ name: String(f.name).replace(/\.[^.]+$/, ''), file: f, size: f.size, source: f.name });
-      added++;
+      if (isTextNote(f.name)) {
+        importQueue.push({ name: String(f.name).replace(/\.[^.]+$/, ''), file: f, size: f.size, source: f.name });
+        added++;
+        return;
+      }
+      zips.push(f);
     });
     var p = imgs.length ? importImageFiles(imgs) : Promise.resolve(0);
     p.then(function (nImg) {
       if (nImg) toast(tf('toast.imgTaken', { n: nImg }), 2600);
       else if (imgs.length) toast(t('toast.imgNoStore'), 4200);
-      if (!added && !imgs.length) {
+      if (!added && !imgs.length && !zips.length) {
         toast(arr.length ? t('toast.onlyMd') : t('toast.noFile'));
         return;
       }
       renderImportQueue();
+      zips.forEach(function (z) { addQueueZip(z); });
     });
   }
 
@@ -3040,10 +3052,19 @@ body.light {
 
   function addQueueZip(file) {
     if (!file) return;
-    if (!/\.zip$/i.test(file.name || '')) { toast(t('toast.notZip')); return; }
     toast(t('toast.unzipping'), 4000);
     readFileBuffer(file)
-      .then(function (buf) { return Core.unzipFiles(buf); })
+      .then(function (buf) {
+        // zip 识别按内容（PK 魔数），不认后缀——手机文件管理器/微信常把后缀改掉
+        var b = new Uint8Array(buf);
+        if (!(b.length > 3 && b[0] === 0x50 && b[1] === 0x4b)) {
+          var e = new Error(t('toast.notZip'));
+          e.handled = true;
+          throw e;
+        }
+        // 注意传过滤器：core 的 unzipFiles 默认只收 md/txt，图片要一并放行
+        return Core.unzipFiles(buf, ZIP_ACCEPT_RE);
+      })
       .then(function (list) {
         var texts = [];
         var imgs = [];

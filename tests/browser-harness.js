@@ -312,7 +312,19 @@
                   check('img missing placeholder', !!window.__imgTest && window.__imgTest.missing && window.__imgTest.missing.indexOf('img-missing') >= 0,
                     window.__imgTest ? window.__imgTest.missing : 'no-run');
 
-                  finish();
+                  /* zip 按内容识别：改名为 .apk.1 的 zip 走「选择文件」按钮也能导入 */
+                  var qBefore = app.importQueue().length;
+                  app.addQueueFiles([new File([zipArr], 'notes.apk.1', { type: 'application/octet-stream' })]);
+                  setTimeout(function () {
+                    try {
+                      var qn = app.importQueue();
+                      var names = qn.map(function (x) { return x.source; }).join(',');
+                      check('zip routed by content', qn.length >= qBefore + 2 && names.indexOf('tcp.md') >= 0, names || ('count=' + qn.length));
+                    } catch (e) {
+                      check('zip-route-error', false, e && e.message);
+                    }
+                    finish();
+                  }, 600);
                 } catch (e) {
                   check('final-step-error', false, e && e.message);
                   finish();

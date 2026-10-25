@@ -342,5 +342,6 @@ python scripts/build.py                      # 内联 → dist/md-flashcards.htm
 |---|---|
 | 1.5 | 首个发布版：拆卡 / 随机复习 / 分类速记 / 管理 / 备份 / AI 提炼（BYO-key）/ Android 壳 |
 | 1.7.2 | 导入支持图片：md+图片多选 / zip 含图 / 文件夹，图片存本机并按文件名渲染进卡面；Android 选择器放行图片 |
+| 1.7.3 | zip 按内容识别（PK 魔数），改过名的 zip 也能导；「选择文件」按钮也能收 zip；关于页加反馈邮箱 |
 | 1.6 | 设置视图（右上角 ⚙）：浅色主题（默认深色）、简繁英三语切换、关于页；dist 精简为单文件 |
 | 1.7 | AI 多供应商管理（预置 DeepSeek/Z.ai/Kimi/Bailian/ChatGPT/Claude 按需添加 + 自定义，启停/多模型/测试连接），主页模型快捷切换弹窗，Claude 原生协议适配，备份文件不再包含 API Key |

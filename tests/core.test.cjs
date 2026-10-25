@@ -299,6 +299,50 @@ const zipAB = zipBytes.buffer.slice(zipBytes.byteOffset, zipBytes.byteOffset + z
     assert.ok(/<img src="https:\/\/x\.test\/c\.png"/.test(Core.renderMarkdown('![](https://x.test/c.png)')));
   });
 
+  // 构造 stored zip（无压缩）用于测试 unzipFiles 的过滤器
+  function crc32(buf) {
+    let c = ~0;
+    for (let i = 0; i < buf.length; i++) {
+      c ^= buf[i];
+      for (let j = 0; j < 8; j++) c = (c >>> 1) ^ (0xEDB88320 & -(c & 1));
+    }
+    return ~c >>> 0;
+  }
+  function storedZip(files) {
+    const parts = []; const central = []; let off = 0;
+    for (const [name, data] of files) {
+      const nb = Buffer.from(name);
+      const h = Buffer.alloc(30);
+      h.writeUInt32LE(0x04034b50, 0); h.writeUInt16LE(20, 4); h.writeUInt16LE(0, 8);
+      h.writeUInt32LE(crc32(data), 14); h.writeUInt32LE(data.length, 18); h.writeUInt32LE(data.length, 22);
+      h.writeUInt16LE(nb.length, 26);
+      parts.push(h, nb, data);
+      const ch = Buffer.alloc(46);
+      ch.writeUInt32LE(0x02014b50, 0); ch.writeUInt16LE(20, 4); ch.writeUInt16LE(20, 6); ch.writeUInt16LE(0, 8);
+      ch.writeUInt32LE(crc32(data), 16); ch.writeUInt32LE(data.length, 20); ch.writeUInt32LE(data.length, 24);
+      ch.writeUInt16LE(nb.length, 28); ch.writeUInt32LE(off, 42);
+      central.push(ch, nb);
+      off += 30 + nb.length + data.length;
+    }
+    const cd = Buffer.concat(central); const cdOff = off;
+    const eocd = Buffer.alloc(22);
+    eocd.writeUInt32LE(0x06054b50, 0); eocd.writeUInt16LE(files.length, 10); eocd.writeUInt16LE(files.length, 8) ;
+    eocd.writeUInt32LE(cdOff, 16); eocd.writeUInt32LE(cd.length, 12);
+    return Buffer.concat([...parts, cd, eocd]);
+  }
+
+  test('unzipFiles 默认过滤器只收文本', async () => {
+    const zip = storedZip([['images/p1.png', Buffer.from([1, 2, 3])], ['note.md', Buffer.from('hi')]]);
+    const list = await Core.unzipFiles(zip.buffer.slice(zip.byteOffset, zip.byteOffset + zip.byteLength));
+    assert.deepStrictEqual(list.map((x) => x.name), ['note.md']);
+  });
+  test('unzipFiles 传过滤器时图片也解出', async () => {
+    const zip = storedZip([['images/p1.png', Buffer.from([1, 2, 3])], ['note.md', Buffer.from('hi')]]);
+    const re = /\.(md|markdown|txt|png|jpe?g|gif|webp|bmp|svg|avif|heic|heif)$/i;
+    const list = await Core.unzipFiles(zip.buffer.slice(zip.byteOffset, zip.byteOffset + zip.byteLength), re);
+    assert.deepStrictEqual(list.map((x) => x.name).sort(), ['images/p1.png', 'note.md']);
+  });
+
   console.log('\n============================');
   console.log('通过 ' + pass + ' / ' + (pass + failures.length));
   if (failures.length) {
