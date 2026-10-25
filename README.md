@@ -72,8 +72,8 @@ python -m http.server 8000
 
 **最简单：仓库根目录就有现成的 APK，直接下载安装**（debug 签名，安装时允许「未知来源」）：
 
-- GitHub：`https://raw.githubusercontent.com/fest77/flash-memory-cards/main/MDFlashCards-v1.8.7.apk`
-- Gitee：`https://gitee.com/festeel/flash-memory-cards/raw/main/MDFlashCards-v1.8.7.apk`
+- GitHub：`https://raw.githubusercontent.com/fest77/flash-memory-cards/main/MDFlashCards-v1.9.0.apk`
+- Gitee：`https://gitee.com/festeel/flash-memory-cards/raw/main/MDFlashCards-v1.9.0.apk`
 
 自己打包的其他方式：
 
@@ -196,7 +196,7 @@ cd android && gradle assembleDebug # 产物：app/build/outputs/apk/debug/app-de
 
 **主页快捷切换**：首页的「🤖 AI 提炼 · 当前供应商 ▾」按钮点开即弹窗选择「供应商 · 模型」组合，不用进设置页；未配置时点它会引导去设置。
 
-- **关于**：应用图标与名称（MD闪记卡 / MD FlashCards）、版本号、作者、反馈邮箱（fest1024@163.com）、Gitee / GitHub 仓库地址。
+- **关于**：应用图标与名称（MD闪记卡 / MD FlashCards）、版本号、作者、反馈邮箱（fest1024@163.com）、**检查更新**（比对仓库版本清单，有新版询问是否前往下载）、Gitee / GitHub 仓库地址。
 
 主题与语言保存在本机设置里，重启后保持。
 
@@ -362,4 +362,5 @@ python scripts/build.py                      # 内联 → dist/md-flashcards.htm
 | 1.8.5 | 二轮复核修复：快速阅读分组、概述卡命名（小节 · 概览）、flushSave 失败也提示、AI 提炼撤销入口移到首页（关窗后仍可撤销）、修复 kidQA 潜在崩溃、恢复识别 `Q1、`/`Q1.` 编号 |
 | 1.8.6 | 三轮复核修复：新增 `chapter` 字段（所属小节）贯穿解析与存储，快速阅读分组不再把题面当章节；父小节前言 off-by-one 修复；AI 撤销失败如实提示；繁英补齐撤销文案 |
 | 1.8.7 | 四轮复核修复：段落切块与整节切块分支的卡也写入 `chapter`（超长小节按段落切开后分组不再落回文档标题）；问答模式概览卡与题目卡统一归未分类；旧数据回退说明纠正（老笔记保持原有分组粒度，重导同一文件获得精确分组） |
+| 1.9.0 | 应用内图标与桌面图标统一（渐变底白色闪电 SVG）；设置 → 关于新增「检查更新」（读仓库 latest.json 版本清单，「是」跳转 Gitee Releases 下载） |
 
