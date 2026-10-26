@@ -37,16 +37,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
-import java.nio.charset.Charset;
-import android.app.AlarmManager;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.os.Handler;
-import android.os.Looper;
 
 /**
  * 最小 WebView 壳（零第三方依赖）：
@@ -260,6 +250,11 @@ public class MainActivity extends Activity {
             boolean ok = v.contains("ok");
             boolean err = v.contains("err");
             if (ok) {
+                // 清库成功：先撤掉已排期的每日提醒与通知栏旧通知，再清偏好并重建
+                cancelReminder();
+                try {
+                    ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).cancel(1001);
+                } catch (Exception ignored) { /* 通知服务不可用不影响清库 */ }
                 prefs().edit().clear().apply();
                 dlg.dismiss();
                 recreate();
