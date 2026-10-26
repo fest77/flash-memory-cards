@@ -218,7 +218,7 @@ details.settings > summary::-webkit-details-marker { display: none; }
 details.settings > summary::after { content: "▾"; float: right; opacity: .7; }
 .field { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--subtle); }
 .field label { font-size: 14px; color: var(--muted); }
-.field select, .field input[type="text"] {
+.field select, .field input[type="text"], .field input[type="password"], .field input[type="time"] {
   background: var(--bg-2);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -813,7 +813,7 @@ body.light .hl-kw { color: #1a5fb4; }
 .gs-q { margin: 6px 0; color: var(--muted); font-size: 13px; }
 .gs-a { max-height: 40vh; overflow-y: auto; }
 .tagbar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.sortbar { margin: 8px 0 0; display: flex; justify-content: flex-end; }
+.sortbar { margin: 10px 0 12px; display: flex; justify-content: flex-end; }
 .sortbar select { background: var(--subtle); border: 1px solid var(--dashed); border-radius: 8px; color: var(--text-soft); font-size: 12px; padding: 4px 6px; }
 .citem-mod { font-size: 10px; color: var(--rate-fuzzy-fg); border: 1px solid rgba(255,216,138,.4); border-radius: 6px; padding: 0 4px; vertical-align: 1px; }
 .citem-ops { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
@@ -834,3 +834,13 @@ body.light .hl-kw { color: #1a5fb4; }
 .md-code-bar { position: absolute; top: 4px; right: 6px; z-index: 2; }
 .code-copy { background: var(--subtle); border: 1px solid var(--dashed); border-radius: 6px; color: var(--muted); font-size: 13px; line-height: 1; padding: 4px 7px; cursor: pointer; }
 .code-copy:active { color: var(--text-head); }
+
+/* 存储区：纵向排布，控件不挤压（手机窄屏可读） */
+.field.stack { display: block; }
+.field.stack > label { display: block; margin-bottom: 8px; }
+.stack-btns { display: grid; gap: 8px; }
+.stack-btns .btn { width: 100%; white-space: normal; }
+.inline-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.field.stack .inline-row input { flex: 1 1 110px; min-width: 0; max-width: 160px; }
+.inline-row .btn { flex: 0 0 auto; white-space: nowrap; }
+.field.stack .modal-note { margin: 8px 0 0; }

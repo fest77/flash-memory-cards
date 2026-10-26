@@ -231,7 +231,7 @@ details.settings > summary::-webkit-details-marker { display: none; }
 details.settings > summary::after { content: "▾"; float: right; opacity: .7; }
 .field { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--subtle); }
 .field label { font-size: 14px; color: var(--muted); }
-.field select, .field input[type="text"] {
+.field select, .field input[type="text"], .field input[type="password"], .field input[type="time"] {
   background: var(--bg-2);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -826,7 +826,7 @@ body.light .hl-kw { color: #1a5fb4; }
 .gs-q { margin: 6px 0; color: var(--muted); font-size: 13px; }
 .gs-a { max-height: 40vh; overflow-y: auto; }
 .tagbar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.sortbar { margin: 8px 0 0; display: flex; justify-content: flex-end; }
+.sortbar { margin: 10px 0 12px; display: flex; justify-content: flex-end; }
 .sortbar select { background: var(--subtle); border: 1px solid var(--dashed); border-radius: 8px; color: var(--text-soft); font-size: 12px; padding: 4px 6px; }
 .citem-mod { font-size: 10px; color: var(--rate-fuzzy-fg); border: 1px solid rgba(255,216,138,.4); border-radius: 6px; padding: 0 4px; vertical-align: 1px; }
 .citem-ops { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
@@ -847,6 +847,16 @@ body.light .hl-kw { color: #1a5fb4; }
 .md-code-bar { position: absolute; top: 4px; right: 6px; z-index: 2; }
 .code-copy { background: var(--subtle); border: 1px solid var(--dashed); border-radius: 6px; color: var(--muted); font-size: 13px; line-height: 1; padding: 4px 7px; cursor: pointer; }
 .code-copy:active { color: var(--text-head); }
+
+/* 存储区：纵向排布，控件不挤压（手机窄屏可读） */
+.field.stack { display: block; }
+.field.stack > label { display: block; margin-bottom: 8px; }
+.stack-btns { display: grid; gap: 8px; }
+.stack-btns .btn { width: 100%; white-space: normal; }
+.inline-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.field.stack .inline-row input { flex: 1 1 110px; min-width: 0; max-width: 160px; }
+.inline-row .btn { flex: 0 0 auto; white-space: nowrap; }
+.field.stack .modal-note { margin: 8px 0 0; }
 </style>
 </head>
 <body>
@@ -1064,29 +1074,29 @@ body.light .hl-kw { color: #1a5fb4; }
 
     <details class="settings" open>
       <summary data-i18n="settings.storage">存储</summary>
-      <div class="field" style="border-top:none">
-        <div class="row-2">
+      <div class="field stack" style="border-top:none">
+        <div class="stack-btns">
           <button class="btn" data-act="img-cleanup" data-i18n="img.cleanup">清理未引用图片</button>
           <button class="btn" data-act="backup-now" data-i18n="backup.nowBtn">一键备份</button>
+          <button class="btn ghost hidden" id="backupFolderBtn" data-act="backup-folder" data-i18n="backup.folderSet">选择备份文件夹</button>
         </div>
-        <button class="btn ghost hidden" id="backupFolderBtn" data-act="backup-folder" data-i18n="backup.folderSet">选择备份文件夹</button>
       </div>
-      <div class="field">
+      <div class="field stack">
         <label data-i18n="pin.title">应用锁（4 位 PIN）</label>
-        <div class="row-2">
+        <div class="inline-row">
           <input type="password" id="pinInput" maxlength="4" inputmode="numeric" placeholder="0000" data-i18n-ph="pin.ph">
           <button class="btn" data-act="pin-set" data-i18n="pin.set">设置 PIN</button>
+          <button class="btn ghost" data-act="pin-remove" data-i18n="pin.remove">移除 PIN</button>
         </div>
         <p class="modal-note" data-i18n="pin.note">仅本机存储；忘记 PIN 只能清除数据。</p>
-        <button class="btn ghost" data-act="pin-remove" data-i18n="pin.remove">移除 PIN</button>
       </div>
-      <div class="field">
+      <div class="field stack">
         <label data-i18n="rem.title">每日复习提醒（安卓）</label>
-        <div class="row-2">
+        <div class="inline-row">
           <input type="time" id="remTime" value="20:00">
           <button class="btn" data-act="rem-set" data-i18n="rem.set">开启提醒</button>
+          <button class="btn ghost" data-act="rem-cancel" data-i18n="rem.cancel">关闭提醒</button>
         </div>
-        <button class="btn ghost" data-act="rem-cancel" data-i18n="rem.cancel">关闭提醒</button>
       </div>
     </details>
 
@@ -2416,7 +2426,7 @@ body.light .hl-kw { color: #1a5fb4; }
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.4';
+  var APP_VERSION = '1.12.5';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -2557,7 +2567,7 @@ body.light .hl-kw { color: #1a5fb4; }
       'btn.import': '📥 匯入 md / zip', 'btn.paste': '✍️ 貼上 Markdown 文字', 'btn.demo': '看看範例（7 張卡）',
       'btn.importBatch': '📥 匯入 md / zip（批次）', 'btn.pasteShort': '貼上文字', 'btn.backup': '備份全部', 'btn.restoreBackup': '還原備份',
       'set.importTitle': '匯入與提問設定', 'set.aiTitle': 'AI 提煉設定（可選，需要你自己的 API）',
-      'settings.ai': 'AI 供應商', 'ai.active': '當前使用', 'ai.addCustom': '＋ 自訂供應商（OpenAI 相容）',
+      'settings.storage': '儲存', 'settings.ai': 'AI 供應商', 'ai.active': '當前使用', 'ai.addCustom': '＋ 自訂供應商（OpenAI 相容）',
       'ai.add': '＋ 新增供應商', 'ai.addTitle': '新增供應商',
       'ai.quickTitle': '選擇模型', 'ai.manage': '管理供應商', 'ai.goSettings': '去設定',
       'home.aiBtn': '🤖 AI 提煉 · {name} ▾', 'home.aiNone': '🤖 AI 提煉 · 未設定（點擊去設定）',
@@ -2676,7 +2686,7 @@ body.light .hl-kw { color: #1a5fb4; }
       'btn.import': '📥 Import md / zip', 'btn.paste': '✍️ Paste Markdown text', 'btn.demo': 'Try the sample (7 cards)',
       'btn.importBatch': '📥 Import md / zip (batch)', 'btn.pasteShort': 'Paste text', 'btn.backup': 'Backup all', 'btn.restoreBackup': 'Restore backup',
       'set.importTitle': 'Import & question settings', 'set.aiTitle': 'AI refine settings (optional, your own API)',
-      'settings.ai': 'AI providers', 'ai.active': 'Active provider', 'ai.addCustom': '＋ Custom provider (OpenAI-compatible)',
+      'settings.storage': 'Storage', 'settings.ai': 'AI providers', 'ai.active': 'Active provider', 'ai.addCustom': '＋ Custom provider (OpenAI-compatible)',
       'ai.add': '＋ Add provider', 'ai.addTitle': 'Add provider',
       'ai.quickTitle': 'Choose model', 'ai.manage': 'Manage providers', 'ai.goSettings': 'Open settings',
       'home.aiBtn': '🤖 AI refine · {name} ▾', 'home.aiNone': '🤖 AI refine · not set (tap to configure)',

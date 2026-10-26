@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.4';
+  var APP_VERSION = '1.12.5';
   var LANGS = ['zh-Hans', 'zh-Hant', 'en'];
   var THEMES = ['dark', 'light'];
 
@@ -170,7 +170,7 @@
       'btn.import': '📥 匯入 md / zip', 'btn.paste': '✍️ 貼上 Markdown 文字', 'btn.demo': '看看範例（7 張卡）',
       'btn.importBatch': '📥 匯入 md / zip（批次）', 'btn.pasteShort': '貼上文字', 'btn.backup': '備份全部', 'btn.restoreBackup': '還原備份',
       'set.importTitle': '匯入與提問設定', 'set.aiTitle': 'AI 提煉設定（可選，需要你自己的 API）',
-      'settings.ai': 'AI 供應商', 'ai.active': '當前使用', 'ai.addCustom': '＋ 自訂供應商（OpenAI 相容）',
+      'settings.storage': '儲存', 'settings.ai': 'AI 供應商', 'ai.active': '當前使用', 'ai.addCustom': '＋ 自訂供應商（OpenAI 相容）',
       'ai.add': '＋ 新增供應商', 'ai.addTitle': '新增供應商',
       'ai.quickTitle': '選擇模型', 'ai.manage': '管理供應商', 'ai.goSettings': '去設定',
       'home.aiBtn': '🤖 AI 提煉 · {name} ▾', 'home.aiNone': '🤖 AI 提煉 · 未設定（點擊去設定）',
@@ -289,7 +289,7 @@
       'btn.import': '📥 Import md / zip', 'btn.paste': '✍️ Paste Markdown text', 'btn.demo': 'Try the sample (7 cards)',
       'btn.importBatch': '📥 Import md / zip (batch)', 'btn.pasteShort': 'Paste text', 'btn.backup': 'Backup all', 'btn.restoreBackup': 'Restore backup',
       'set.importTitle': 'Import & question settings', 'set.aiTitle': 'AI refine settings (optional, your own API)',
-      'settings.ai': 'AI providers', 'ai.active': 'Active provider', 'ai.addCustom': '＋ Custom provider (OpenAI-compatible)',
+      'settings.storage': 'Storage', 'settings.ai': 'AI providers', 'ai.active': 'Active provider', 'ai.addCustom': '＋ Custom provider (OpenAI-compatible)',
       'ai.add': '＋ Add provider', 'ai.addTitle': 'Add provider',
       'ai.quickTitle': 'Choose model', 'ai.manage': 'Manage providers', 'ai.goSettings': 'Open settings',
       'home.aiBtn': '🤖 AI refine · {name} ▾', 'home.aiNone': '🤖 AI refine · not set (tap to configure)',
