@@ -57,6 +57,8 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> pendingFileCallback;
     private long pausedAt = 0; // 后台时间戳：>5 分钟回前台要求解锁
     private static final long LOCK_AFTER_MS = 5 * 60 * 1000;
+    // 应用锁总开关（与 Web 端 FEATURE_APP_LOCK 对应）。关闭时不再弹锁屏；相关实现保留。
+    private static final boolean APP_LOCK_ENABLED = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -163,7 +165,7 @@ public class MainActivity extends Activity {
         requestNotificationPermissionIfNeeded();
         webView.loadUrl(START_URL);
         // PIN 已设置则先锁
-        if (pinIsSet()) showPinLock();
+        if (APP_LOCK_ENABLED && pinIsSet()) showPinLock();
         handleExternalIntent(getIntent());
     }
 
@@ -320,7 +322,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (pinIsSet() && pausedAt > 0 && System.currentTimeMillis() - pausedAt > LOCK_AFTER_MS) {
+        if (APP_LOCK_ENABLED && pinIsSet() && pausedAt > 0 && System.currentTimeMillis() - pausedAt > LOCK_AFTER_MS) {
             showPinLock();
         }
         pausedAt = 0;
