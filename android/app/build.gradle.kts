@@ -13,7 +13,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 29
-        versionName = "1.12.6"
+        versionName = "1.12.5"
     }
 
     // 固定的调试签名：debug.keystore 随仓库提交（debug 密钥按惯例不是机密），
