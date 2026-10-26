@@ -775,6 +775,7 @@ body.light .heat-cell.h4 { background: #116329; }
 .seg-opt { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--text-soft); cursor: pointer; }
 .statbar .chip.due { color: var(--rate-ok-fg); border-color: rgba(55,214,122,.4); }
 .resume-bar { margin: 10px 0 0; }
+.resume-bar:not(:empty) { margin-bottom: 10px; }
 .resume-bar .btn { width: 100%; }
 .rv-undo { display: flex; justify-content: center; margin-top: 8px; }
 .about-feedback { margin-top: 10px; }

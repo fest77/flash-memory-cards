@@ -788,6 +788,7 @@ body.light .heat-cell.h4 { background: #116329; }
 .seg-opt { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--text-soft); cursor: pointer; }
 .statbar .chip.due { color: var(--rate-ok-fg); border-color: rgba(55,214,122,.4); }
 .resume-bar { margin: 10px 0 0; }
+.resume-bar:not(:empty) { margin-bottom: 10px; }
 .resume-bar .btn { width: 100%; }
 .rv-undo { display: flex; justify-content: center; margin-top: 8px; }
 .about-feedback { margin-top: 10px; }
@@ -2426,7 +2427,7 @@ body.light .hl-kw { color: #1a5fb4; }
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.5';
+  var APP_VERSION = '1.12.6';
   // 应用锁开关：手机系统普遍自带应用锁，默认隐藏该设置项（相关代码与原生桥全部保留）。
   // 需要恢复时把 false 改成 true（原生侧 APP_LOCK_ENABLED 同步改），选项即重新出现在「设置 → 存储」。
   var FEATURE_APP_LOCK = false;
