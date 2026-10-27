@@ -1,0 +1,176 @@
+name: Release
+
+# 打 v* tag 即自动发版：
+#   校验版本号一致性 → 构建 dist/APK → 建 GitHub Release 传附件
+#   → 提交根目录 APK + README 直链 + latest.json 到 main（[skip ci] 不再触发构建）
+#   → 镜像推送 main + tag 到 Gitee → 建 Gitee Release 传附件
+# 仓库 Secrets 需配置 GITEE_TOKEN（Gitee 私人令牌，需 projects + releases 权限）。
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 需要历史找上一个 tag 生成发布说明，并比对 main HEAD
+
+      - name: Check version consistency with tag
+        run: |
+          set -euo pipefail
+          VER="${GITHUB_REF_NAME#v}"
+          echo "VER=$VER" >> "$GITHUB_ENV"
+          echo "tag=$GITHUB_REF_NAME version=$VER"
+          grep -q "APP_VERSION = '$VER'" src/app.js || { echo "::error::src/app.js 的 APP_VERSION 与 tag 不一致"; exit 1; }
+          grep -q "\"version\": \"$VER\"" package.json || { echo "::error::package.json 的 version 与 tag 不一致"; exit 1; }
+          grep -q "versionName = \"$VER\"" android/app/build.gradle.kts || { echo "::error::build.gradle.kts 的 versionName 与 tag 不一致"; exit 1; }
+          grep -Eq "versionCode = [1-9][0-9]*" android/app/build.gradle.kts || { echo "::error::build.gradle.kts 缺少合法 versionCode"; exit 1; }
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build single-file HTML
+        run: |
+          set -euo pipefail
+          python scripts/build.py
+          grep -q "APP_VERSION = '$VER'" dist/md-flashcards.html
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # 与 build-apk.yml 保持一致：runner 预装 cmdline-tools，按需接受许可并安装 SDK 包
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - name: Install Android SDK packages
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0" > /dev/null'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Verify APK embeds the tagged version
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          unzip -p "$APK" assets/index.html | grep -q "APP_VERSION = '$VER'" \
+            || { echo "::error::APK 内嵌页版本与 tag 不一致"; exit 1; }
+
+      - name: Prepare release notes
+        run: |
+          set -euo pipefail
+          PREV="$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^1" 2>/dev/null || true)"
+          {
+            echo "## ${GITHUB_REF_NAME}"
+            echo
+            if [ -n "$PREV" ]; then
+              echo "自 $PREV 以来的提交："
+              echo
+              git log --oneline "$PREV..$GITHUB_REF_NAME" | sed 's/^/- /'
+            else
+              git log --oneline -15 | sed 's/^/- /'
+            fi
+          } > notes.md
+          cat notes.md
+
+      - name: Create GitHub Release and upload APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          APK="MDFlashCards-${GITHUB_REF_NAME}.apk"
+          cp android/app/build/outputs/apk/debug/app-debug.apk "$APK"
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md || true
+          gh release upload "$GITHUB_REF_NAME" "$APK" --clobber
+
+      # 仅当 tag 恰好指向 origin/main HEAD 时才回写仓库文件，避免把旧树提交上去
+      - name: Commit root APK, README links and latest.json to main
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "::warning::tag 不在 origin/main HEAD 上，跳过仓库回写（仅发 Release）"
+            echo "BOT_COMMIT=skip" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          git checkout -B main origin/main
+          git rm -q --ignore-unmatch 'MDFlashCards-v*.apk'
+          rm -f MDFlashCards-v*.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk "MDFlashCards-${GITHUB_REF_NAME}.apk"
+          sed -i "s/MDFlashCards-v[0-9][0-9.]*\.apk/MDFlashCards-${GITHUB_REF_NAME}.apk/g" README.md
+          grep -q "MDFlashCards-${GITHUB_REF_NAME}.apk" README.md || { echo "::error::README 直链替换失败"; exit 1; }
+          printf '{\n  "version": "%s"\n}\n' "$VER" > latest.json
+          git add -A
+          git commit -q -m "Release ${GITHUB_REF_NAME}：根目录 APK、README 直链、latest.json [skip ci]"
+          git push origin HEAD:main
+          echo "BOT_COMMIT=ok" >> "$GITHUB_ENV"
+
+      - name: Push main and tag to Gitee
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$GITEE_TOKEN" ]; then echo "::error::缺少 Secret GITEE_TOKEN"; exit 1; fi
+          GITEE_URL="https://festeel:${GITEE_TOKEN}@gitee.com/festeel/flash-memory-cards.git"
+          if [ "${BOT_COMMIT:-skip}" = "ok" ]; then
+            git push "$GITEE_URL" HEAD:main
+          fi
+          git push "$GITEE_URL" "$GITHUB_REF_NAME"
+
+      - name: Create Gitee release and upload APK
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: |
+          set -euo pipefail
+          APK="MDFlashCards-${GITHUB_REF_NAME}.apk"
+          API="https://gitee.com/api/v5/repos/festeel/flash-memory-cards"
+          # 已有同名 tag 的 Release 就复用（支持失败后重跑）。
+          # 注意：Gitee 该端点对不存在的 tag 返回 HTTP 200 + null，必须容错
+          curl -sS -m 30 --ssl-no-revoke "$API/releases/tags/$GITHUB_REF_NAME" -o gitee-rel.json
+          REL_ID="$(python3 -c "import json; print((json.load(open('gitee-rel.json')) or {}).get('id') or '')")"
+          if [ -z "$REL_ID" ]; then
+            curl -sS -m 30 --ssl-no-revoke -X POST "$API/releases" \
+              --data-urlencode "access_token=$GITEE_TOKEN" \
+              --data-urlencode "tag_name=$GITHUB_REF_NAME" \
+              --data-urlencode "target_commitish=main" \
+              --data-urlencode "name=$GITHUB_REF_NAME" \
+              --data-urlencode "body@notes.md" \
+              --data-urlencode "prerelease=false" \
+              --data-urlencode "draft=false" \
+              -o gitee-rel.json
+            REL_ID="$(python3 -c "import json; print((json.load(open('gitee-rel.json')) or {}).get('id') or '')")"
+          fi
+          if [ -z "$REL_ID" ]; then echo "::error::Gitee Release 创建失败"; cat gitee-rel.json; exit 1; fi
+          echo "Gitee Release id=$REL_ID"
+          # Gitee 的附件列表不返回 id，无法按 id 删旧附件；
+          # 改为「同名附件已存在即视为已上传成功，跳过」（需重传请到网页端手动删）
+          if python3 -c "import json,sys; d=json.load(open('gitee-rel.json')) or {}; sys.exit(0 if any(a.get('name') == '$APK' for a in d.get('assets') or []) else 1)"; then
+            echo "Gitee 附件 $APK 已存在，跳过上传"
+          else
+            HTTP_CODE="$(curl -sS -m 300 --ssl-no-revoke -X POST "$API/releases/$REL_ID/attach_files" \
+              -F "access_token=$GITEE_TOKEN" \
+              -F "file=@$APK" \
+              -o gitee-upload.json -w '%{http_code}')"
+            python3 -c "import json; d=json.load(open('gitee-upload.json')); assert d.get('browser_download_url'), d"
+            echo "Gitee 附件上传完成 (HTTP $HTTP_CODE)"
+          fi

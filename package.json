@@ -1,6 +1,6 @@
 {
   "name": "md-flashcards",
-  "version": "1.12.6",
+  "version": "1.12.7",
   "private": true,
   "description": "Offline markdown flashcards: import notes, split them into cards, review randomly or read by chapter.",
   "license": "MIT",

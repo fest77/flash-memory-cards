@@ -72,8 +72,8 @@ python -m http.server 8000
 
 **最简单：仓库根目录就有现成的 APK，直接下载安装**（debug 签名，安装时允许「未知来源」）：
 
-- GitHub：`https://raw.githubusercontent.com/fest77/flash-memory-cards/main/MDFlashCards-v1.12.6.apk`
-- Gitee：`https://gitee.com/festeel/flash-memory-cards/raw/main/MDFlashCards-v1.12.6.apk`
+- GitHub：`https://raw.githubusercontent.com/fest77/flash-memory-cards/main/MDFlashCards-v1.12.7.apk`
+- Gitee：`https://gitee.com/festeel/flash-memory-cards/raw/main/MDFlashCards-v1.12.7.apk`
 
 自己打包的其他方式：
 
@@ -392,5 +392,6 @@ python scripts/build.py                      # 内联 → dist/md-flashcards.htm
 | 1.12.4 | 修复：忘记 PIN 清库成功后同时取消已排期的每日提醒与通知栏旧通知；文档测试数/体积/版本号统一 |
 | 1.12.5 | 界面修复：首页排序下拉与筛选按钮留出间距；「存储」标题补繁體/英文翻译；设置-存储区改为纵向排布（按钮整行、输入框定宽），窄屏不再挤压；「应用锁」文案 PIN→密码（三语），该功能默认隐藏（手机系统自带应用锁，代码保留可恢复） |
 | 1.12.6 | 界面修复：「继续上次复习」与「导入 md / zip（批量）」两个按钮之间留出 10px 间距（原来紧贴在一起）；没有未完成复习会话时该间距不出现，不额外占位 |
+| 1.12.7 | 工程改进：发版流程自动化——推送 `v*` 标签后 CI 自动构建 APK、在 GitHub 与 Gitee 同时创建 Release 并上传附件、更新仓库根目录 APK 与版本清单（latest.json），发版不再需要手工八步 |
 | 1.12.0 | 内容体验与平台能力：KaTeX 公式（本地内联子集字体）、代码高亮/复制、图片点击缩放、阅读设置（字号/行距/卡宽）；全局搜索、卡片编辑/拆分/合并/移动+撤销、标签与排序；Obsidian callout 与 wikilink 跳转、题目语言跟随界面；安卓接收分享导入、PIN 应用锁、每日本地提醒 |
 

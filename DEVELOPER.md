@@ -50,8 +50,27 @@ md-flashcards/
 │   ├── images/                # screenshots used by README
 │   └── research/              # comparable tools research
 ├── android/                   # WebView APK project (Gradle)
-└── .github/workflows/build-apk.yml
+└── .github/workflows/
+    ├── build-apk.yml          # push to main → debug APK artifact
+    └── release.yml            # push tag v* → auto release on GitHub + Gitee
 ```
+
+---
+
+## Release automation (v1.12.7+)
+
+Pushing a `v*` tag runs `.github/workflows/release.yml`, which does everything the old manual 8-step flow did:
+
+1. **Version guard**: `APP_VERSION` (app.js), `package.json`, `versionName` (gradle) must all equal the tag (`v1.2.3` → `1.2.3`), and `versionCode` must be present — otherwise the run fails before building.
+2. Build dist (`scripts/build.py`) + debug APK (same SDK/gradle steps as `build-apk.yml`), verify the APK's embedded `assets/index.html` contains the tagged version.
+3. Release notes generated from `git log <prev-tag>..<tag> --oneline`.
+4. **GitHub Release** created (`gh release create` + `upload --clobber`, idempotent on re-run).
+5. **Bot commit to main** (only when the tag points at `origin/main` HEAD): root `MDFlashCards-v*.apk` replaced (old removed), README download links sed-ed to the new filename, `latest.json` written — commit message ends with `[skip ci]` so it doesn't re-trigger `build-apk.yml`. These files aren't in its `paths:` filter anyway.
+6. **Gitee mirror**: push `main` + the tag to Gitee with the `GITEE_TOKEN` secret, then create the Gitee Release via API (form-encoded, body from notes.md) and upload the APK via `attach_files`.
+
+Gitee quirks baked into the script: release lookup is `/releases/tags/{tag}` (NOT `/releases/tag/`), a missing release returns **HTTP 200 + `null`** (hence the `(json.load(...) or {})` guard), and the asset list never includes attachment `id`s — so re-runs **skip** the upload when a same-name attachment already exists instead of deleting it (delete manually on the web UI if a re-upload is ever needed).
+
+**So a release is now: bump the three version files (app.js / package.json / gradle versionCode+versionName) → commit → push main → `git tag v1.x.y && git push origin v1.x.y`.** Do NOT touch `latest.json` or the root APK manually — the workflow writes them. Requires the repo secret `GITEE_TOKEN` (Gitee personal token).
 
 ---
 
@@ -313,3 +332,4 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.12.5 | UI fixes: sort dropdown spacing (`.sortbar` margin-bottom 12px); `settings.storage` added to zh-Hant/en dictionaries (was falling back to Simplified); settings Storage section re-laid out with `.field.stack` + `.stack-btns` (full-width buttons) + `.inline-row` (fixed-width inputs) so labels/controls no longer squeeze on narrow screens |
 | 1.12.5 (upd) | same release cycle: app-lock hidden by default (`FEATURE_APP_LOCK=false` / `APP_LOCK_ENABLED=false`, `#fieldAppLock` hidden, lock screen skipped; all PIN code/bridge/wipe path kept — flip both booleans to restore); UI wording PIN → 密码/密碼/password |
 | 1.12.6 | UI fix: `.resume-bar` gets `margin-bottom: 10px` through `:not(:empty)`, so the resume button no longer touches the import button right below it; with no unfinished session the bar stays empty and contributes no space (measured `.btn` rect gap 0px → 10px, empty state unchanged) |
+| 1.12.7 | release automation: new `.github/workflows/release.yml` — pushing a `v*` tag builds dist+APK, creates the GitHub Release with the APK, bot-commits root APK + README links + `latest.json` to main (`[skip ci]`), mirror-pushes main+tag to Gitee with the `GITEE_TOKEN` secret, and creates the Gitee Release + uploads the APK via `attach_files`; version guard fails the run if tag ≠ version files. See "Release automation" section above |
