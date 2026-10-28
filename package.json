@@ -1,12 +1,12 @@
 {
   "name": "md-flashcards",
-  "version": "1.12.7",
+  "version": "1.12.8",
   "private": true,
   "description": "Offline markdown flashcards: import notes, split them into cards, review randomly or read by chapter.",
   "license": "MIT",
   "scripts": {
     "build": "python scripts/build.py",
-    "test": "node tests/core.test.cjs && node tests/run-browser-test.cjs",
+    "test": "node tests/core.test.cjs && node tests/run-browser-test.cjs && node tests/run-idb-test.cjs",
     "test:core": "node tests/core.test.cjs",
     "test:e2e": "node tests/run-browser-test.cjs",
     "screenshots": "node tests/run-screenshots.cjs",

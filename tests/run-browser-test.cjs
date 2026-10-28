@@ -43,6 +43,7 @@ const REQUIRED_IDS = [
   'quickSearch', 'manageList', 'manageMeta',
   'view-settings', 'setTheme', 'setLang', 'aiActive', 'aiProviderList', 'aboutVersion',
   'tabbar', 'view-stats', 'statsChips', 'statsHeat', 'statsBars', 'statsY', 'statsM', 'statsD',
+  'imgRepairBtn',
 ];
 const missingIds = REQUIRED_IDS.filter((id) => !new RegExp('id="' + id + '"').test(html));
 if (missingIds.length) fail('缺少必需元素 id: ' + missingIds.join(', '));
