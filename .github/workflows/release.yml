@@ -88,8 +88,8 @@ jobs:
             else
               git log --oneline -15 | sed 's/^/- /'
             fi
-          } > notes.md
-          cat notes.md
+          } > "$RUNNER_TEMP/notes.md"
+          cat "$RUNNER_TEMP/notes.md"
 
       - name: Create GitHub Release and upload APK
         env:
@@ -98,7 +98,7 @@ jobs:
           set -euo pipefail
           APK="MDFlashCards-${GITHUB_REF_NAME}.apk"
           cp android/app/build/outputs/apk/debug/app-debug.apk "$APK"
-          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md || true
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md" || true
           gh release upload "$GITHUB_REF_NAME" "$APK" --clobber
 
       # 仅当 tag 恰好指向 origin/main HEAD 时才回写仓库文件，避免把旧树提交上去
@@ -120,7 +120,8 @@ jobs:
           sed -i "s/MDFlashCards-v[0-9][0-9.]*\.apk/MDFlashCards-${GITHUB_REF_NAME}.apk/g" README.md
           grep -q "MDFlashCards-${GITHUB_REF_NAME}.apk" README.md || { echo "::error::README 直链替换失败"; exit 1; }
           printf '{\n  "version": "%s"\n}\n' "$VER" > latest.json
-          rm -f notes.md gitee-rel.json gitee-upload.json   # 临时文件不能被 git add -A 扫进仓库
+          # 临时的 API 响应文件不能留在工作区（git add -A 会扫进去）；notes.md 在 $RUNNER_TEMP，不在仓库里
+          rm -f gitee-rel.json gitee-upload.json
           git add -A
           git commit -q -m "Release ${GITHUB_REF_NAME}：根目录 APK、README 直链、latest.json [skip ci]"
           git push origin HEAD:main
@@ -155,7 +156,7 @@ jobs:
               --data-urlencode "tag_name=$GITHUB_REF_NAME" \
               --data-urlencode "target_commitish=main" \
               --data-urlencode "name=$GITHUB_REF_NAME" \
-              --data-urlencode "body@notes.md" \
+              --data-urlencode "body@$RUNNER_TEMP/notes.md" \
               --data-urlencode "prerelease=false" \
               --data-urlencode "draft=false" \
               -o gitee-rel.json
