@@ -72,8 +72,8 @@ python -m http.server 8000
 
 **最简单：仓库根目录就有现成的 APK，直接下载安装**（debug 签名，安装时允许「未知来源」）：
 
-- GitHub：`https://raw.githubusercontent.com/fest77/flash-memory-cards/main/MDFlashCards-v1.12.8.apk`
-- Gitee：`https://gitee.com/festeel/flash-memory-cards/raw/main/MDFlashCards-v1.12.8.apk`
+- GitHub：`https://raw.githubusercontent.com/fest77/flash-memory-cards/main/MDFlashCards-v1.12.9.apk`
+- Gitee：`https://gitee.com/festeel/flash-memory-cards/raw/main/MDFlashCards-v1.12.9.apk`
 
 自己打包的其他方式：
 
