@@ -72,8 +72,8 @@ python -m http.server 8000
 
 **最简单：仓库根目录就有现成的 APK，直接下载安装**（debug 签名，安装时允许「未知来源」）：
 
-- GitHub：`https://raw.githubusercontent.com/fest77/flash-memory-cards/main/MDFlashCards-v1.12.9.apk`
-- Gitee：`https://gitee.com/festeel/flash-memory-cards/raw/main/MDFlashCards-v1.12.9.apk`
+- GitHub：`https://raw.githubusercontent.com/fest77/flash-memory-cards/main/MDFlashCards-v1.12.10.apk`
+- Gitee：`https://gitee.com/festeel/flash-memory-cards/raw/main/MDFlashCards-v1.12.10.apk`
 
 自己打包的其他方式：
 
@@ -212,6 +212,7 @@ cd android && gradle assembleDebug # 产物：app/build/outputs/apk/debug/app-de
 - **「导出备份」产出 zip**：`backup.json`（卡片 + 复习进度 + 每日统计）+ `images/`（本机全部图片）；不含 API Key。单篇笔记的导出仍是 json（带 `kind: deck` 标记，导入只新增该笔记）。
 - **导入支持 zip 和旧 json**：先显示预览（笔记/卡片/图片数、导出时间），再选**覆盖**（二次确认，整体替换）或**合并**（笔记按 id 匹配，冲突建「xx(导入)」副本；本地复习进度**不会被备份里的覆盖**，只补缺失）。任何一步失败都保留原数据。
 - **图片同名不覆盖**：不同笔记里同名但内容不同的图片会自动改名（如 `img.png → img-2.png`）并重写当批笔记的引用；「设置 → 存储 → 清理未引用图片」可删掉没有任何卡片引用的图片（显示数量与占用）。删除笔记时也会自动清理。
+- **图片显示不出来怎么办**：卡面出现「图片未导入：xxx」= 本地图库里没有这张图（重新导入 md + 图片）；出现「图片无法显示：xxx」= 文件在本地但浏览器解不出来（例如 HEIC，或 svg 的类型信息丢失）。「设置 → 存储 → 修复图片索引」会按本地实际存储重建索引并纠正图片格式信息，旧版本导入的 svg 多数可以这样一键恢复，无需删笔记重导。
 - **备份提醒**：内容有改动且超过 7 天未备份时，首页出现可关闭的提醒条；支持的浏览器可在「设置 → 存储」选固定备份文件夹，之后一键写入带时间戳的 zip（不支持则退回普通下载；安卓端备份/分享走系统下载目录与分享面板）。
 
 ### 本期验收自测清单（v1.11.0）
@@ -266,6 +267,7 @@ md-flashcards/
 ├── tests/
 │   ├── core.test.cjs         # 63 项单元测试
 │   ├── run-browser-test.cjs  # 164 项 headless Edge 端到端
+│   ├── run-idb-test.cjs      # 7 项 IndexedDB 真实时钟回归（图片索引/类型）
 │   ├── run-screenshots.cjs   # 生成 docs/images 截图
 │   └── fixtures/             # 测试用 zip
 ├── docs/
@@ -396,4 +398,5 @@ python scripts/build.py                      # 内联 → dist/md-flashcards.htm
 | 1.12.8 | 修复图片「未导入」：批量导入时并行写图会并发更新图片索引，导致索引丢失大部分条目，重启/更新后图片全部显示「图片未导入」，且重导同一个 zip 因「内容已存在」被静默跳过而修不回来。现在索引更新串行化、去重命中时自动补索引，并在启动时与「设置 → 存储 → 修复图片索引」里按本地实际存储重建索引（已损坏的图库可一键修回，无需删笔记重导） |
 | 1.12.0 | 内容体验与平台能力：KaTeX 公式（本地内联子集字体）、代码高亮/复制、图片点击缩放、阅读设置（字号/行距/卡宽）；全局搜索、卡片编辑/拆分/合并/移动+撤销、标签与排序；Obsidian callout 与 wikilink 跳转、题目语言跟随界面；安卓接收分享导入、PIN 应用锁、每日本地提醒 |
 | 1.12.9 | 与 1.12.8 同一批功能（图片索引修复）；此外修好了自动发版流程里发布说明文件被提前删除、导致 Gitee Release 上传失败的问题 |
+| 1.12.10 | 修复图片「内容异常」（卡面变成文件名）：Android 文件选择器/网盘/微信目录常把 svg 等文件报成 `application/octet-stream` 或空类型。浏览器对 PNG/JPEG 会按文件头嗅探照常显示，SVG 却只认 `image/svg+xml`，类型不对就整张解不出来。现在导入时按扩展名纠正存储的图片类型、启动/修复时按扩展名重建图片地址（旧数据无需重导即可恢复），「修复图片索引」会报告纠正了多少张；浏览器确实解不出的图改为显示「图片无法显示：文件名」占位，而不是把文件名撑成一张假图 |
 
