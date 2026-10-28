@@ -224,6 +224,21 @@ async function main() {
   check('旧记录的空 MIME 在加载/修复时被纠正（图片恢复、带文件名标记）',
     typedLegacy.retyped >= 1 && typedLegacy.loads === true && typedLegacy.hasName === true, typedLegacy);
 
+  // 7) 真正解不出来的图 → 换成「图片无法显示：名字」占位，而不是让浏览器把 alt 撑成假图
+  const brokenChip = await evalJs(`(async function () {
+    var host = document.createElement('div');
+    host.innerHTML = '<img data-img="probe.svg" alt="probe.svg" src="data:text/plain;base64,PGh0bWw+YmFk">';
+    document.body.appendChild(host);
+    await new Promise(function (r) { setTimeout(r, 800); });
+    var chip = host.querySelector('.img-missing');
+    var left = host.querySelector('img');
+    var text = chip ? chip.textContent : '';
+    host.remove();
+    return { hasChip: !!chip, stillImg: !!left, hasName: text.indexOf('probe.svg') >= 0 };
+  })()`);
+  check('解码失败的图片显示明确占位（保留文件名）',
+    brokenChip.hasChip === true && brokenChip.stillImg === false && brokenChip.hasName === true, brokenChip);
+
   // 收尾：按名字删除探针数据，不污染用户图库
   await evalJs(`(async function () {
     var A = window.MDReviewApp, names = ${JSON.stringify(probeNames)};

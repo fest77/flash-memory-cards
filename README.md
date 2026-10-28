@@ -267,7 +267,7 @@ md-flashcards/
 ├── tests/
 │   ├── core.test.cjs         # 63 项单元测试
 │   ├── run-browser-test.cjs  # 164 项 headless Edge 端到端
-│   ├── run-idb-test.cjs      # 7 项 IndexedDB 真实时钟回归（图片索引/类型）
+│   ├── run-idb-test.cjs      # 8 项 IndexedDB 真实时钟回归（图片索引/类型/坏图占位）
 │   ├── run-screenshots.cjs   # 生成 docs/images 截图
 │   └── fixtures/             # 测试用 zip
 ├── docs/
