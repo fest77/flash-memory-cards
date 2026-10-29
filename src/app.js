@@ -529,10 +529,18 @@
       if (wiping) return Promise.resolve(null); // 清库中：读写直接失败，不再新建连接
       // 缓存同一个连接 Promise：并发调用（boot 加载中又来写图片）不再拿到未就绪的 db
       if (dbPromise) return dbPromise;
-      dbPromise = new Promise(function (resolve) {
+      window.__mdfcOpenAttempts = (window.__mdfcOpenAttempts || 0) + 1;
+      var p = new Promise(function (resolve) {
         if (typeof indexedDB === 'undefined') return resolve(null);
         var settled = false;
-        var finish = function (v) { if (!settled) { settled = true; db = v; resolve(v); } };
+        var timer = 0;
+        var finish = function (v) {
+          if (settled) return;
+          settled = true;
+          if (timer) { clearTimeout(timer); timer = 0; }
+          db = v;
+          resolve(v);
+        };
         var req;
         try {
           req = indexedDB.open('md-review', 1);
@@ -545,9 +553,17 @@
         req.onsuccess = function () { finish(req.result); };
         req.onerror = function () { finish(null); };
         req.onblocked = function () { finish(null); };
-        setTimeout(function () { finish(null); }, 1200);
+        // 大图库/慢设备首次打开可能超过 1 秒，给到 3 秒
+        timer = setTimeout(function () { finish(null); }, 3000);
       });
-      return dbPromise;
+      dbPromise = p;
+      // 失败/超时不要把 null 永久缓存：否则本次会话所有图片读写静默失败，只有清库/重开才能恢复
+      p.then(function (v) {
+        if (!v && dbPromise === p) dbPromise = null;
+      }, function () {
+        if (dbPromise === p) dbPromise = null;
+      });
+      return p;
     }
 
     function idbGet(key) {
@@ -1129,6 +1145,7 @@
     return repairImageIndex().then(function (rep) {
       return Store.rawGet('imgIndex').then(function (list) {
         var retyped = 0;
+        var loaded = 0;
         // 必须等 URL 全部就绪才返回：否则修复后立刻重绘仍是「未导入」占位
         return Promise.all((list || []).map(function (n) {
           if (IMG_URLS[n]) return null;
@@ -1136,12 +1153,12 @@
             if (rec && rec.blob) {
               var b = normalizeImageBlob(rec.blob, n);
               if (b !== rec.blob) retyped++;
-              try { IMG_URLS[n] = URL.createObjectURL(b); } catch (e) { /* ignore */ }
+              try { IMG_URLS[n] = URL.createObjectURL(b); loaded++; } catch (e) { /* ignore */ }
             }
             return null;
           });
         })).then(function () {
-          if (rep) rep.retyped = retyped;
+          if (rep) { rep.retyped = retyped; rep.loaded = loaded; }
           return rep;
         });
       });
@@ -1154,6 +1171,8 @@
   }
 
   function blobDigest(blob) {
+    // 坏记录（历史数据里 img/<name> 没有 blob）不能让整批导入 reject
+    if (!blob || typeof blob.arrayBuffer !== 'function') return Promise.resolve(null);
     // 内容指纹：优先 sha1（crypto.subtle），不可用时退化为 size+首尾字节
     if (window.crypto && crypto.subtle && crypto.subtle.digest) {
       return blob.arrayBuffer().then(function (ab) {
@@ -1172,8 +1191,11 @@
     });
   }
 
-  /* 批次导入期间 图片原名 → 实际存储名 的映射（导入 md 时重写引用） */
-  var IMG_RENAMES = {};
+  /* 批次导入期间 图片相对路径 → 实际存储名 的映射（导入 md 时按路径重写引用）
+   值为 null 表示该路径下有同名不同图的歧义（例如手机多选没有目录信息），此时宁可不重写 */
+  var IMG_PATH_MAP = {};
+  /* 图片入库是异步的：多次「选择文件」要串行，导入 md 前必须等它完成 */
+  var pendingImageWork = Promise.resolve();
 
   /* imgIndex 的所有读-改-写必须串行：并行导入 40 张图时，并发更新曾丢掉 39 条索引
      → 重启后这些图全部显示「图片未导入」，且重导同样的 zip 也修不回来 */
@@ -1233,7 +1255,7 @@
     // 返回：最终存储名（可能是 -2/-3 改名）；null = 失败
     var tryName = function (nm) {
       return Store.rawGet('img/' + nm).then(function (ex) {
-        if (!ex) return commit(nm);
+        if (!ex || !ex.blob) return commit(nm); // 无记录 / 坏记录（没有 blob）都直接重写
         return Promise.all([blobDigest(blob), blobDigest(ex.blob)]).then(function (d) {
           if (d[0] === d[1]) {
             // 内容已存在（去重）：顺手把索引和内存 URL 补上——
@@ -1273,13 +1295,30 @@
     }, Promise.resolve()).then(function () { return n; });
   }
 
-  function importImageFiles(files) { // File[] → Promise(成功数)；改名记入全局映射供本批 md 重写
-    var n = 0;
-    return files.reduce(function (p, f) {
-      return p.then(function () {
-        return storeImage(f.name, f, IMG_RENAMES).then(function (nm) { if (nm) n++; });
-      });
-    }, Promise.resolve()).then(function () { return n; });
+  /**
+   * File[] → Promise(成功数)。用 webkitRelativePath（文件夹选择）或文件名作相对路径，
+   * 把「相对路径 → 实际存储名」写进 outMap，供本批 md 按路径重写引用。
+   * 串到 pendingImageWork 上：同一次导入里「分几次选文件」也要共享同一份顺序。
+   */
+  function importImageFiles(files, outMap) {
+    var map = outMap || IMG_PATH_MAP;
+    var job = pendingImageWork.then(function () {
+      var n = 0;
+      return files.reduce(function (p, f) {
+        return p.then(function () {
+          var rel = String(f.webkitRelativePath || f.name || '').replace(/\\/g, '/');
+          var had = Object.prototype.hasOwnProperty.call(map, rel) ? map[rel] : undefined;
+          return storeImage(rel, f, null, map).then(function (nm) {
+            if (!nm) return;
+            n++;
+            // 没有目录信息时两个同名不同图会落到同一个 rel：标记歧义，重写时不动它
+            if (had !== undefined && had !== nm) map[rel] = null;
+          });
+        });
+      }, Promise.resolve()).then(function () { return n; });
+    });
+    pendingImageWork = job.then(function () {}, function () {});
+    return job;
   }
 
   /* zip 内相对路径归一：md 所在目录 + 引用路径 → zip 里的完整路径 */
@@ -2152,6 +2191,8 @@
     $('#setMode').value = state.settings.mode || 'auto';
     $('#setGran').value = state.settings.gran || 'mid';
     if ($('#setQstyle')) $('#setQstyle').value = state.settings.qstyle || 'prompt';
+    // 首页排序下拉必须跟随已保存的设置，否则刷新后列表按名称排序、下拉却显示「最近导入」
+    if ($('#deckSort')) $('#deckSort').value = state.settings.deckSort || 'recent';
   }
 
   /* ============================== 导入 ============================== */
@@ -2229,6 +2270,8 @@
 
   function openImportModal() {
     importQueue = [];
+    IMG_PATH_MAP = {};              // 新一批导入：清空上一批的图片路径映射
+    pendingImageWork = Promise.resolve();
     openModal(
       '<h3>' + t('import.title') + '</h3>' +
       '<div class="imp-actions">' +
@@ -2274,13 +2317,15 @@
     arr.forEach(function (f) {
       if (isImageFile(f.name)) { imgs.push(f); return; }
       if (isTextNote(f.name)) {
-        importQueue.push({ name: String(f.name).replace(/\.[^.]+$/, ''), file: f, size: f.size, source: f.name });
+        var rel = String(f.webkitRelativePath || f.name || '').replace(/\\/g, '/');
+        var dir = rel.lastIndexOf('/') >= 0 ? rel.slice(0, rel.lastIndexOf('/') + 1) : '';
+        importQueue.push({ name: String(f.name).replace(/\.[^.]+$/, ''), file: f, size: f.size, source: f.name, relDir: dir });
         added++;
         return;
       }
       zips.push(f);
     });
-    var p = imgs.length ? importImageFiles(imgs) : Promise.resolve(0);
+    var p = imgs.length ? importImageFiles(imgs, IMG_PATH_MAP) : Promise.resolve(0);
     p.then(function (nImg) {
       if (nImg) toast(tf('toast.imgTaken', { n: nImg }), 2600);
       else if (imgs.length) toast(t('toast.imgNoStore'), 4200);
@@ -2365,6 +2410,12 @@
     var total = importQueue.length;
     var okCount = 0;
     var idx = 0;
+    // 本批图片是否发生过改名（同名不同图）：只有发生时才需要重写文件导入的 md
+    var imagesRenamed = function () {
+      return Object.keys(IMG_PATH_MAP).some(function (k) {
+        return k.split('/').pop() !== IMG_PATH_MAP[k];
+      });
+    };
     closeModal();
     toast(tf('toast.importing', { n: total }), 3000);
 
@@ -2373,11 +2424,16 @@
         scheduleSave();
         renderHome();
         toast(tf('toast.importDone', { ok: okCount, total: total }), 3000);
+        IMG_PATH_MAP = {}; // 本批结束：清空映射，避免影响下一次导入
         return;
       }
       var item = importQueue[idx++];
       var p = item.text != null ? Promise.resolve(item.text) : readFileText(item.file);
       p.then(function (text) {
+        // 文件/文件夹导入：按相对路径把改名后的图片引用写回去（zip 导入在入队时已重写）
+        if (item.text == null && imagesRenamed()) {
+          text = rewriteZipImageRefs(text, item.relDir || '', IMG_PATH_MAP);
+        }
         if (importText(item.name, text, opts, { silent: true, replace: replace, source: item.source || '' })) okCount++;
       }).catch(function () {
         toast(tf('toast.readFail', { name: item.name }));
@@ -2385,7 +2441,8 @@
         setTimeout(next, 20);
       });
     }
-    next();
+    // 图片入库是异步的：等本批图片都存好（映射完整）再开始导入 md
+    pendingImageWork.then(next, next);
   }
 
   function removeQueueItem(idx) {
@@ -3075,7 +3132,7 @@
       round2Ids: sessionIds(review.round2),
       currentId: review.current ? review.current.card.id : null,
       undo: u ? {
-        cardId: u.cardId, stat: u.stat,
+        cardId: u.cardId, dayKey: u.dayKey, stat: u.stat,
         queueIds: sessionIds(u.queue), round2Ids: sessionIds(u.round2),
         phase: u.phase, rated: u.rated, okCount: u.okCount, fuzzyCount: u.fuzzyCount, badCount: u.badCount, total: u.total
       } : null,
@@ -3109,7 +3166,7 @@
     var undo = null;
     if (ss.undo) {
       undo = {
-        cardId: ss.undo.cardId, stat: ss.undo.stat,
+        cardId: ss.undo.cardId, dayKey: ss.undo.dayKey, stat: ss.undo.stat,
         queue: ss.undo.queueIds.map(mk).filter(Boolean),
         round2: ss.undo.round2Ids.map(mk).filter(Boolean),
         phase: ss.undo.phase, rated: ss.undo.rated, okCount: ss.undo.okCount,
@@ -3234,6 +3291,7 @@
     // 撤销快照（评分前）：可恢复该卡状态与整个队列
     review.undo = {
       cardId: item.card.id,
+      dayKey: todayKey(), // 撤销时要把这次评分从当日统计里减掉
       stat: { s: st.s, n: st.n, ok: st.ok, bad: st.bad, last: st.last, box: st.box, dueAt: st.dueAt, ivl: st.ivl },
       queue: review.queue.slice(),
       round2: review.round2.slice(),
@@ -3298,6 +3356,11 @@
       st.s = u.stat.s; st.n = u.stat.n; st.ok = u.stat.ok; st.bad = u.stat.bad;
       st.last = u.stat.last; st.box = u.stat.box; st.dueAt = u.stat.dueAt; st.ivl = u.stat.ivl;
     }
+    // 撤销评分也要把「今日复习数」减回去，否则反复评分→撤销会把统计刷高
+    if (u.dayKey && state.daily[u.dayKey] > 0) {
+      state.daily[u.dayKey] -= 1;
+      if (!state.daily[u.dayKey]) delete state.daily[u.dayKey];
+    }
     review.queue = u.queue.slice();
     review.round2 = u.round2.slice();
     review.phase = u.phase;
@@ -3308,12 +3371,14 @@
     if (!item) { // 卡片在撤销前被删：丢弃会话重新开始
       toast(t('review.noUndo'));
       clearReviewSession();
+      flushSave();
       goHome();
       return;
     }
     review.current = item;
     review.revealed = false;
     saveReviewSession();
+    flushSave(); // 撤销后的 stat / daily / 会话立即落盘
     renderCard();
     toast(t('review.undone'), 1600);
   }
@@ -4945,6 +5010,11 @@
     flushCount: function () { return flushCount; },
     flushSave: flushSave,
     readRawState: function () { return Store.rawGet('state'); },
+    doImportQueue: doImportQueue,
+    undoRate: undoRate,
+    imgPathMapForTest: function () { return JSON.parse(JSON.stringify(IMG_PATH_MAP)); },
+    pendingImageWorkForTest: function () { return pendingImageWork; },
+    setCorruptImgForTest: function (name) { return Store.rawPut('img/' + name, { name: name }); },
     highlightCode: (typeof highlightCode === 'function') ? highlightCode : null,
     parseBackupBuffer: parseBackupBuffer,
     referencedImageNames: referencedImageNames,

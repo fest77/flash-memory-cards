@@ -329,12 +329,18 @@ async function main() {
       await new Promise(function (r) { setTimeout(r, 25); });
     }
     // 不主动 flushSave：这里要验证的是「App 自己在结束时落盘了」，主动落盘会把 bug 掩盖掉
-    await new Promise(function (r) { setTimeout(r, 600); });
-    var raw = JSON.parse(await A.readRawState());
+    // 轮询而不是死等固定时间：慢 CI 上 600ms 可能不够
+    var deadline = Date.now() + 2000;
+    var raw = null;
+    while (Date.now() < deadline) {
+      raw = JSON.parse(await A.readRawState());
+      if (raw && raw.reviewSession === null) break;
+      await new Promise(function (r) { setTimeout(r, 50); });
+    }
     return {
       summary: summaryShown(),
       mem: A.state().reviewSession,
-      persisted: raw.reviewSession,
+      persisted: raw ? raw.reviewSession : 'NO_RAW',
       guard: guard
     };
   })()`, 120000);
@@ -365,6 +371,180 @@ async function main() {
   })()`);
   check('单卡未评的合法会话不被误清（prune 判定未改）',
     legitSession.cards === 1 && legitSession.stillThere === true && legitSession.afterId === legitSession.beforeId, legitSession);
+
+  // 12) v1.12.13：文件夹导入（有 webkitRelativePath）同名图改名后，md 引用按路径分别指向各自存储名
+  const folderImport = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    function mk(name, rel, bytes, type) {
+      var f = new File([new Uint8Array(bytes)], name, { type: type || 'image/png' });
+      try { Object.defineProperty(f, 'webkitRelativePath', { value: rel }); } catch (e) {}
+      return f;
+    }
+    var md = '# 笔记\\n\\n## 一\\n\\n引用 A：![](../x/img.png)\\n\\n## 二\\n\\n引用 B：![](../y/img.png)';
+    A.openImportModal();
+    A.addQueueFiles([
+      mk('note.md', 'root/sub/note.md', Array.prototype.slice.call(new TextEncoder().encode(md)), 'text/markdown'),
+      mk('img.png', 'root/x/img.png', [1, 2, 3, 4]),
+      mk('img.png', 'root/y/img.png', [9, 8, 7, 6])
+    ]);
+    await A.pendingImageWorkForTest();
+    var map = A.imgPathMapForTest();
+    A.doImportQueue();
+    var deadline = Date.now() + 3000;
+    while (Date.now() < deadline && !A.state().decks.some(function (d) { return d.name === 'note'; })) {
+      await new Promise(function (r) { setTimeout(r, 50); });
+    }
+    var deck = A.state().decks.filter(function (d) { return d.name === 'note'; })[0];
+    var text = deck ? deck.cards.map(function (c) { return c.answer; }).join('\\n') : '';
+    return {
+      mapA: map['root/x/img.png'],
+      mapB: map['root/y/img.png'],
+      distinct: !!map['root/x/img.png'] && map['root/y/img.png'] &&
+        map['root/x/img.png'] !== map['root/y/img.png'],
+      usesA: !!map['root/x/img.png'] && text.indexOf(map['root/x/img.png']) >= 0,
+      usesB: !!map['root/y/img.png'] && text.indexOf(map['root/y/img.png']) >= 0,
+      text: text.slice(0, 160)
+    };
+  })()`, 120000);
+  check('文件夹导入：同名图按相对路径分别回写引用（不串图）',
+    folderImport.distinct === true && folderImport.usesA === true && folderImport.usesB === true, folderImport);
+
+  // 13) 无路径多选 + 同名歧义：不能把引用改成某个猜测的存储名
+  const pathlessImport = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    function mk(name, bytes, type) {
+      var f = new File([new Uint8Array(bytes)], name, { type: type || 'image/png' });
+      return f;
+    }
+    var md = '# 无路径\\n\\n## 一\\n\\n![](img.png)';
+    A.openImportModal();
+    A.addQueueFiles([
+      mk('note2.md', Array.prototype.slice.call(new TextEncoder().encode(md)), 'text/markdown'),
+      mk('img.png', [5, 5, 5, 5]),
+      mk('img.png', [6, 6, 6, 6])
+    ]);
+    await A.pendingImageWorkForTest();
+    var map = A.imgPathMapForTest();
+    A.doImportQueue();
+    var deadline = Date.now() + 3000;
+    while (Date.now() < deadline && !A.state().decks.some(function (d) { return d.name === 'note2'; })) {
+      await new Promise(function (r) { setTimeout(r, 50); });
+    }
+    var deck = A.state().decks.filter(function (d) { return d.name === 'note2'; })[0];
+    var text = deck ? deck.cards.map(function (c) { return c.answer; }).join('\\n') : '';
+    return {
+      mapValue: map['img.png'],
+      ambiguous: map['img.png'] === null,
+      keptOriginal: text.indexOf('(img.png)') >= 0,
+      text: text.slice(0, 120)
+    };
+  })()`, 120000);
+  check('无路径同名图歧义时不猜测改写（引用保持原名）',
+    pathlessImport.ambiguous === true && pathlessImport.keptOriginal === true, pathlessImport);
+
+  // 14) openDB 失败后必须能重试（不能把 null 永久缓存）
+  const dbRetry = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    var calls = 0;
+    var orig = indexedDB.open;
+    indexedDB.open = function () {
+      calls++;
+      if (calls === 1) {
+        var fake = {};
+        setTimeout(function () { if (fake.onerror) fake.onerror(); }, 0);
+        return fake;
+      }
+      return orig.apply(indexedDB, arguments);
+    };
+    try {
+      A.store.reopen();
+      var first = await A.readRawState();
+      var firstFailed = (first === null);
+      var attempts1 = window.__mdfcOpenAttempts || 0;
+      var second = await A.readRawState();
+      var attempts2 = window.__mdfcOpenAttempts || 0;
+      return {
+        calls: calls,
+        firstFailed: firstFailed,
+        retried: attempts2 > attempts1,
+        secondOk: second != null,
+        attempts1: attempts1,
+        attempts2: attempts2
+      };
+    } finally {
+      indexedDB.open = orig;
+      A.store.reopen();
+    }
+  })()`);
+  check('openDB 失败后下一次调用会重试（不永久缓存 null）',
+    dbRetry.firstFailed === true && dbRetry.retried === true && dbRetry.secondOk === true, dbRetry);
+
+  // 15) 撤销评分回退 daily / stat / 会话，并立即落盘
+  const undoDaily = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    // 内容里带唯一标记：卡片 id 是内容哈希，避免和前面测试的 deck 共享同一份 stat
+    var uniq = 'U' + Date.now();
+    var md = '## 一\\n\\n第一段内容 ' + uniq + '\\n\\n## 二\\n\\n第二段内容 ' + uniq + '\\n\\n## 三\\n\\n第三段内容 ' + uniq + '\\n\\n## 四\\n\\n第四段内容 ' + uniq;
+    A.importText('idb-undo', md, { mode: 'h2' }, { silent: true, replace: 'yes' });
+    var deck = A.state().decks.filter(function (d) { return d.name === 'idb-undo'; })[0];
+    function dk() {
+      var d = new Date();
+      return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+    }
+    var key = dk();
+    var before = A.state().daily[key] || 0;
+    A.startReview([deck.id], { resumeOk: true });
+    var cardId = A.state().reviewSession.currentId;
+    var statBefore = (A.state().stats[cardId] || {}).n || 0;
+    A.showAnswer();
+    A.rate('ok');
+    await A.flushSave();
+    var afterRate = A.state().daily[key] || 0;
+    var statAfterRate = (A.state().stats[cardId] || {}).n || 0;
+    A.undoRate();
+    await A.flushSave();
+    var raw = JSON.parse(await A.readRawState());
+    return {
+      cards: deck.cards.length,
+      dailyBefore: before,
+      afterRate: afterRate,
+      afterUndo: A.state().daily[key] || 0,
+      persistedDaily: raw.daily ? (raw.daily[key] || 0) : 0,
+      statBefore: statBefore,
+      statAfterRate: statAfterRate,
+      statN: (A.state().stats[cardId] || {}).n || 0,
+      persistedStatN: (raw.stats[cardId] || {}).n || 0,
+      currentIdBack: A.state().reviewSession ? A.state().reviewSession.currentId : null,
+      cardId: cardId
+    };
+  })()`);
+  check('撤销评分回退 daily/stat/会话并落盘',
+    undoDaily.cards >= 2 && undoDaily.afterRate === undoDaily.dailyBefore + 1 &&
+    undoDaily.afterUndo === undoDaily.dailyBefore && undoDaily.persistedDaily === undoDaily.dailyBefore &&
+    undoDaily.statAfterRate === undoDaily.statBefore + 1 && undoDaily.statN === undoDaily.statBefore &&
+    undoDaily.persistedStatN === undoDaily.statBefore &&
+    undoDaily.currentIdBack === undoDaily.cardId, undoDaily);
+
+  // 16) 坏的图片记录（有键无 blob）不能中断导入：直接覆盖
+  const corruptImg = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    await A.setCorruptImgForTest('corrupt-probe.png');
+    var nm = await A.storeImageForTest('corrupt-probe.png', [1, 2, 3, 4, 5]);
+    var type = await A.imgBlobTypeForTest('corrupt-probe.png');
+    return { nm: nm, type: type };
+  })()`);
+  check('坏图片记录（无 blob）不中断导入、直接覆盖',
+    corruptImg.nm === 'corrupt-probe.png' && corruptImg.type === 'image/png', corruptImg);
+
+  // 收尾：清掉本组测试写入的图片探针
+  await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    var extra = ['corrupt-probe.png'];
+    var idx = await A.imgIndexNames();
+    await A.setImgIndexForTest(idx.filter(function (n) { return extra.indexOf(n) < 0; }));
+    for (var i = 0; i < extra.length; i++) { try { await A.rawDeleteForTest('img/' + extra[i]); } catch (e) {} }
+    return true;
+  })()`).catch(() => null);
 
   ws.close();
   proc.kill();

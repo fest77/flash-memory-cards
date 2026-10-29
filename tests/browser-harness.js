@@ -64,6 +64,18 @@
       check('v11212 zipJoin 归一化', A3.zipJoin('notes/', './a/../b/img.png') === 'notes/b/img.png', A3.zipJoin('notes/', './a/../b/img.png'));
     } catch (e) { check('v11212 rewrite block error', false, e && e.message); }
 
+    try {
+      // v1.12.13：首页排序下拉必须跟随已保存的设置
+      var A4 = window.MDReviewApp;
+      A4.state().settings.deckSort = 'name';
+      A4.renderHome();
+      var sortV1 = document.getElementById('deckSort') ? document.getElementById('deckSort').value : null;
+      A4.state().settings.deckSort = 'recent';
+      A4.renderHome();
+      var sortV2 = document.getElementById('deckSort') ? document.getElementById('deckSort').value : null;
+      check('v11213 deckSort 回填', sortV1 === 'name' && sortV2 === 'recent', sortV1 + '/' + sortV2);
+    } catch (e) { check('v11213 deckSort block error', false, e && e.message); }
+
     var pre = document.createElement('pre');
     pre.id = 'testResult';
     pre.textContent = results.join('\n');
@@ -77,7 +89,10 @@
   var bootTries = 0;
   (function waitBoot() {
     var app = window.MDReviewApp;
-    if (app && app.state && app.state()) { run(); return; }
+    // 仅 state() 就绪还不够：boot 会等图库 URL 建好才画首屏（避免卡面先闪「未导入」），
+    // 这里必须等 renderHome 真正跑完（statBar 有内容），否则断言会撞上渲染前的空 DOM
+    var sb = document.getElementById('statBar');
+    if (app && app.state && app.state() && sb && sb.children.length > 0) { run(); return; }
     if (++bootTries > 400) {
       check('boot', false, 'timeout waiting MDReviewApp');
       finish();
