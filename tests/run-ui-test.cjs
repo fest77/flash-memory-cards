@@ -31,6 +31,7 @@ function fail(msg) { console.error('FAIL: ' + msg); process.exit(1); }
 
 if (!fs.existsSync(HTML)) fail('产物不存在，先运行 python scripts/build.py: ' + HTML);
 if (!BROWSER) {
+  if (process.env.REQUIRE_BROWSER) fail('未找到 Chromium 内核浏览器（REQUIRE_BROWSER=1）');
   console.log('skip 未找到 Chromium 内核浏览器，跳过 UI 交互测试');
   process.exit(0);
 }

@@ -1,0 +1,42 @@
+name: Tests
+
+# 功能回归：PR 与手动触发。
+# - core：纯 Node，零依赖（build-apk / release 流水线里也会跑）
+# - browser/idb/ui：用 ubuntu runner 自带的 Chrome 跑 CDP；REQUIRE_BROWSER=1 表示
+#   找不到浏览器必须失败，而不是静默 skip（避免"全绿但其实没跑"）
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Core unit tests
+        run: node tests/core.test.cjs
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build single-file HTML
+        run: python scripts/build.py
+      - name: Headless browser suites
+        env:
+          REQUIRE_BROWSER: '1'
+        run: |
+          set -euo pipefail
+          node tests/run-browser-test.cjs
+          node tests/run-idb-test.cjs
+          node tests/run-ui-test.cjs

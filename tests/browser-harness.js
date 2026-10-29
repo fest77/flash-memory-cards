@@ -58,7 +58,8 @@
       var t2 = A3.rewriteZipImageRefs('![](images/中/img001.png)', 'notes/', pm);
       check('v11212 md 在子目录时先按 md 目录拼路径', t2 === '![](img001-2.png)', t2);
       var t3 = A3.rewriteZipImageRefs('![](img001.png)', '', pm);
-      check('v11212 只写文件名且有同名图时保持原样（避免猜错）', t3 === '![](img001.png)', t3);
+      check('v11212/14 只写文件名且有同名图时写入歧义哨兵（不猜）',
+        t3 === '![]( __mdfc_ambiguous__/img001.png )'.replace(/ /g, ''), t3);
       var t4 = A3.rewriteZipImageRefs('![[images/上/uniq.png|300]]', '', pm);
       check('v11212 wiki 语法同样按路径重写', t4.indexOf('uniq.png') >= 0 && t4.indexOf('images/') < 0, t4);
       check('v11212 zipJoin 归一化', A3.zipJoin('notes/', './a/../b/img.png') === 'notes/b/img.png', A3.zipJoin('notes/', './a/../b/img.png'));
@@ -75,6 +76,42 @@
       var sortV2 = document.getElementById('deckSort') ? document.getElementById('deckSort').value : null;
       check('v11213 deckSort 回填', sortV1 === 'name' && sortV2 === 'recent', sortV1 + '/' + sortV2);
     } catch (e) { check('v11213 deckSort block error', false, e && e.message); }
+
+    try {
+      // v1.12.14：代码块/行内代码里的 [[wiki]] 不能被替换成链接
+      var A5 = window.MDReviewApp;
+      A5.importText('wiki-src', '## 目标卡\n\n这是目标卡的正文内容。', { mode: 'h2' }, { silent: true, replace: 'yes' });
+      var wikiHtml = A5.renderAnswerHtml('```\n[[目标卡]]\n```\n\n外面引用 [[目标卡]]', { name: 'wiki-src', cards: [] });
+      var codePart = (wikiHtml.match(/<pre[\s\S]*?<\/pre>/) || [''])[0];
+      check('v11214 代码块内 wiki 不变成链接',
+        codePart.indexOf('wikilink') < 0 && codePart.indexOf('目标卡') >= 0, codePart.slice(0, 80));
+      check('v11214 代码块外 wiki 仍是链接', /<a[^>]*wikilink/.test(wikiHtml), 'outer');
+      var inlineHtml = A5.renderAnswerHtml('`[[目标卡]]` 和 [[目标卡]]', { name: 'wiki-src', cards: [] });
+      var inlinePart = (inlineHtml.match(/<code>[\s\S]*?<\/code>/) || [''])[0];
+      check('v11214 行内代码里的 wiki 不变成链接', inlinePart.indexOf('wikilink') < 0, inlinePart.slice(0, 60));
+    } catch (e) { check('v11214 wiki block error', false, e && e.message); }
+
+    try {
+      // v1.12.14：全局搜索不再有失效的 60 上限；UI 只渲染 30 条但剩余数准确
+      var A6 = window.MDReviewApp;
+      var token = 'qzx' + String(Date.now()).slice(-6);
+      var chunks = [];
+      for (var si = 0; si < 40; si++) chunks.push('## 节' + si + '\n\n' + token + ' 内容 ' + si);
+      A6.importText('search-src', chunks.join('\n\n'), { mode: 'h2' }, { silent: true, replace: 'yes' });
+      var sdeck = A6.state().decks.filter(function (d) { return d.name === 'search-src'; })[0];
+      var expected = sdeck ? sdeck.cards.length : 0;
+      var hits = A6.globalSearch(token);
+      document.getElementById('globalSearch').value = token;
+      A6.runGlobalSearch();
+      var rows = document.querySelectorAll('#gsResults .gs-row').length;
+      var gsText = document.getElementById('gsResults').textContent || '';
+      check('v11214 搜索返回全部匹配（无 60 硬上限）',
+        expected >= 31 && hits.length === expected, hits.length + '/' + expected);
+      check('v11214 搜索 UI 显示 30 条并准确提示剩余',
+        rows === 30 && gsText.indexOf('另有 ' + (expected - 30) + ' 条匹配') >= 0, rows + '|' + gsText.slice(-30));
+      document.getElementById('globalSearch').value = '';
+      A6.runGlobalSearch();
+    } catch (e) { check('v11214 search block error', false, e && e.message); }
 
     var pre = document.createElement('pre');
     pre.id = 'testResult';

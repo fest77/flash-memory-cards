@@ -31,6 +31,7 @@ function fail(msg) { console.error('FAIL: ' + msg); process.exit(1); }
 
 if (!fs.existsSync(HTML)) fail('产物不存在，先运行 python scripts/build.py: ' + HTML);
 if (!BROWSER) {
+  if (process.env.REQUIRE_BROWSER) fail('未找到 Chromium 内核浏览器（REQUIRE_BROWSER=1）');
   console.log('skip 未找到 Chromium 内核浏览器，跳过 IDB 测试');
   process.exit(0);
 }
@@ -432,15 +433,19 @@ async function main() {
     }
     var deck = A.state().decks.filter(function (d) { return d.name === 'note2'; })[0];
     var text = deck ? deck.cards.map(function (c) { return c.answer; }).join('\\n') : '';
+    var sentinel = text.indexOf('__mdfc_ambiguous__/img.png') >= 0;
+    var placeholder = A.resolveImgSrc('<img src="__mdfc_ambiguous__/img.png">');
     return {
       mapValue: map['img.png'],
       ambiguous: map['img.png'] === null,
-      keptOriginal: text.indexOf('(img.png)') >= 0,
-      text: text.slice(0, 120)
+      sentinel: sentinel,
+      placeholder: /img-missing/.test(placeholder) && placeholder.indexOf('重名') >= 0,
+      text: text.slice(0, 140)
     };
   })()`, 120000);
-  check('无路径同名图歧义时不猜测改写（引用保持原名）',
-    pathlessImport.ambiguous === true && pathlessImport.keptOriginal === true, pathlessImport);
+  check('无路径同名图歧义：写入歧义哨兵并显示「重名」占位（不猜测）',
+    pathlessImport.ambiguous === true && pathlessImport.sentinel === true &&
+    pathlessImport.placeholder === true, pathlessImport);
 
   // 14) openDB 失败后必须能重试（不能把 null 永久缓存）
   const dbRetry = await evalJs(`(async function () {
@@ -460,9 +465,9 @@ async function main() {
       A.store.reopen();
       var first = await A.readRawState();
       var firstFailed = (first === null);
-      var attempts1 = window.__mdfcOpenAttempts || 0;
+      var attempts1 = A.openAttemptsForTest();
       var second = await A.readRawState();
-      var attempts2 = window.__mdfcOpenAttempts || 0;
+      var attempts2 = A.openAttemptsForTest();
       return {
         calls: calls,
         firstFailed: firstFailed,
@@ -536,6 +541,55 @@ async function main() {
   check('坏图片记录（无 blob）不中断导入、直接覆盖',
     corruptImg.nm === 'corrupt-probe.png' && corruptImg.type === 'image/png', corruptImg);
 
+  // 17) 防御性 prune：确实评完（rated>=total）但残留 currentId 的会话会被清掉；合法暂停不受影响
+  const pruneGuard = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    function sess(rated, total, currentId) {
+      return {
+        deckIds: [], filter: 'all', deckName: 'prune-deck', phase: 1,
+        total: total, rated: rated, okCount: rated, fuzzyCount: 0, badCount: 0,
+        queueIds: [], round2Ids: [], currentId: currentId, undo: null, savedAt: Date.now()
+      };
+    }
+    // 合法暂停：最后一张待评（rated=total-1, currentId 有值）→ 必须留着
+    A.state().reviewSession = sess(3, 4, 'pending-card');
+    A.renderHome();
+    var legitKept = !!A.state().reviewSession;
+    // 评完后残留：rated=total，其余全空，只剩 currentId → 清掉并落盘
+    A.state().reviewSession = sess(4, 4, 'finished-card');
+    A.renderHome();
+    await A.flushSave();
+    var raw = JSON.parse(await A.readRawState());
+    return {
+      legitKept: legitKept,
+      memAfterFinish: A.state().reviewSession,
+      persistedAfterFinish: raw.reviewSession
+    };
+  })()`);
+  check('防御 prune：评完残留被清、合法暂停保留',
+    pruneGuard.legitKept === true && pruneGuard.memAfterFinish === null &&
+    pruneGuard.persistedAfterFinish === null, pruneGuard);
+
+  // 18) 图片入库异常时 addQueueFiles 仍要渲染队列（不能被 rejection 卡死）
+  const importReject = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    A.openImportModal();
+    var mdFile = new File([new TextEncoder().encode('# 笔记\\n\\n内容内容内容')], 'rej.md', { type: 'text/markdown' });
+    var bad = new File([new Uint8Array([1, 2, 3])], 'bad.png', { type: 'image/png' });
+    // 让读取相对路径时抛错，制造 importImageFiles 的 rejection
+    Object.defineProperty(bad, 'webkitRelativePath', { get: function () { throw new Error('boom'); } });
+    A.addQueueFiles([mdFile, bad]);
+    await new Promise(function (r) { setTimeout(r, 400); });
+    var list = document.getElementById('impList');
+    return {
+      queueLen: A.importQueue().length,
+      listText: list ? list.textContent : '(no list)',
+      rendered: !!list && list.textContent.indexOf('rej') >= 0
+    };
+  })()`);
+  check('图片入库抛错时队列仍渲染（不卡死）',
+    importReject.queueLen === 1 && importReject.rendered === true, importReject);
+
   // 收尾：清掉本组测试写入的图片探针
   await evalJs(`(async function () {
     var A = window.MDReviewApp;
@@ -543,6 +597,7 @@ async function main() {
     var idx = await A.imgIndexNames();
     await A.setImgIndexForTest(idx.filter(function (n) { return extra.indexOf(n) < 0; }));
     for (var i = 0; i < extra.length; i++) { try { await A.rawDeleteForTest('img/' + extra[i]); } catch (e) {} }
+    A.state().reviewSession = null;
     return true;
   })()`).catch(() => null);
 

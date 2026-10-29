@@ -455,6 +455,29 @@ const zipAB = zipBytes.buffer.slice(zipBytes.byteOffset, zipBytes.byteOffset + z
     assert.ok(chunks.length >= 2, '应有切块卡');
     assert.ok(chunks.every((c) => c.chapter === '长小节'), chunks.map((c) => c.chapter).join(','));
   });
+  test('v11214 para：超长代码块不按内部空行切开（围栏成对）', () => {
+    const code = '```js\n' + Array.from({ length: 30 }, (_, i) => `line${i}();`).join('\n') + '\n\nstill code\n```';
+    const md = `# T\n\npara one text\n\n${code}\n\npara two text`;
+    for (const max of [300, 120, 80]) {
+      const deck = Core.buildDeck('t', md, { mode: 'para', maxCardLen: max, qstyle: 'prompt', lang: 'zh-Hans' });
+      const unbalanced = deck.cards.filter((c) => ((c.answer.match(/```/g) || []).length % 2) === 1);
+      assert.strictEqual(unbalanced.length, 0, 'maxLen=' + max + ' 出现围栏不成对的卡');
+      const withCode = deck.cards.filter((c) => c.answer.indexOf('```js') >= 0);
+      assert.strictEqual(withCode.length, 1, '代码块应完整落在一张卡里');
+      assert.ok(withCode[0].answer.indexOf('still code') >= 0 && withCode[0].answer.indexOf('```') >= 0);
+    }
+  });
+  test('v11214 表格：只有表头时不输出 <tbody>，有数据行时正常闭合', () => {
+    const onlyHeader = Core.renderMarkdown('| 列A | 列B |\n|---|---|');
+    assert.ok(onlyHeader.indexOf('<thead>') >= 0 && onlyHeader.indexOf('</thead>') >= 0);
+    assert.ok(onlyHeader.indexOf('<tbody') < 0 && onlyHeader.indexOf('</tbody>') < 0, onlyHeader);
+    const withBody = Core.renderMarkdown('| 列A | 列B |\n|---|---|\n| 值 | 1 |');
+    const open = (withBody.match(/<tbody>/g) || []).length;
+    const close = (withBody.match(/<\/tbody>/g) || []).length;
+    assert.strictEqual(open, 1);
+    assert.strictEqual(close, 1);
+    assert.ok(withBody.indexOf('<td>值</td>') >= 0);
+  });
   test('qa 模式概览与题目同组（都未分类）', () => {
     const deck = Core.buildDeck('t', '# 网络笔记\n\n背景介绍，这是开头的说明内容。\n\nQ: 什么是 TCP？\nA: 传输控制协议。', { mode: 'qa', maxCardLen: 1600, qstyle: 'prompt' });
     assert.ok(deck.cards.every((c) => !c.chapter), 'chapter 应为空');

@@ -21,6 +21,10 @@ const EDGE_CANDIDATES = [
   'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
   'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+  '/usr/bin/google-chrome',
+  '/usr/bin/google-chrome-stable',
+  '/usr/bin/chromium',
+  '/usr/bin/chromium-browser',
 ];
 
 function fail(msg) {
@@ -75,6 +79,8 @@ fs.writeFileSync(TEST_PAGE, testPage, 'utf8');
 /* ---------------- headless 运行 ---------------- */
 const edge = EDGE_CANDIDATES.find((p) => fs.existsSync(p));
 if (!edge) {
+  // CI 里设 REQUIRE_BROWSER=1：找不到浏览器直接失败，不能静默跳过
+  if (process.env.REQUIRE_BROWSER) fail('未找到 Edge/Chrome（REQUIRE_BROWSER=1）');
   console.log('skip 未找到 Edge/Chrome，跳过头less 冒烟测试');
   process.exit(0);
 }

@@ -21,6 +21,14 @@ jobs:
         with:
           python-version: '3.11'
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 纯 Node 单测（零依赖、秒级）：构建前先挡住逻辑回归
+      - name: Unit tests
+        run: node tests/core.test.cjs
+
       - name: Build single-file HTML
         run: python scripts/build.py
 

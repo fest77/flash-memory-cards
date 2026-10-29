@@ -266,7 +266,8 @@
     var buf = [];
     for (var i = from; i < to; i++) {
       var line = lines[i];
-      if (!line.trim()) {
+      // 代码围栏内的空行不是段落边界：否则超长代码块会被从中间切开、围栏不成对
+      if (!line.trim() && !(mask && mask[i])) {
         if (buf.length) { paragraphs.push(buf.join('\n')); buf = []; }
         continue;
       }
@@ -895,19 +896,20 @@
         }
       } else if (blk.type === 'table') {
         html += '<div class="md-table-wrap"><div class="md-table"><table>';
-        for (var r = 0; r < blk.rows.length; r++) {
-          var tag = r === 0 ? 'th' : 'td';
-          var rowTag = r === 0 ? 'thead' : 'tbody';
-          if (r === 0) html += '<thead><tr>';
-          if (r === 1) html += '<tbody><tr>';
-          if (r > 1) html += '<tr>';
-          for (var c = 0; c < blk.rows[r].length; c++) {
-            html += '<' + tag + '>' + inline(blk.rows[r][c]) + '</' + tag + '>';
+        html += '<thead><tr>';
+        for (var c0 = 0; c0 < blk.rows[0].length; c0++) html += '<th>' + inline(blk.rows[0][c0]) + '</th>';
+        html += '</tr></thead>';
+        // 只有表头行时不能输出 <tbody>（否则是非法标记）
+        if (blk.rows.length > 1) {
+          html += '<tbody>';
+          for (var r1 = 1; r1 < blk.rows.length; r1++) {
+            html += '<tr>';
+            for (var c1 = 0; c1 < blk.rows[r1].length; c1++) html += '<td>' + inline(blk.rows[r1][c1]) + '</td>';
+            html += '</tr>';
           }
-          html += '</tr>';
-          if (r === 0) html += '</thead>';
+          html += '</tbody>';
         }
-        html += '</tbody></table></div></div>';
+        html += '</table></div></div>';
       } else if (blk.type === 'list') {
         html += '<div class="md-list">';
         for (var it = 0; it < blk.items.length; it++) {
