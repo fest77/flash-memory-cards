@@ -2428,7 +2428,7 @@ body.light .hl-kw { color: #1a5fb4; }
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.10';
+  var APP_VERSION = '1.12.11';
   // 应用锁开关：手机系统普遍自带应用锁，默认隐藏该设置项（相关代码与原生桥全部保留）。
   // 需要恢复时把 false 改成 true（原生侧 APP_LOCK_ENABLED 同步改），选项即重新出现在「设置 → 存储」。
   var FEATURE_APP_LOCK = false;
@@ -2500,7 +2500,7 @@ body.light .hl-kw { color: #1a5fb4; }
       'import.note': '图片按<b>文件名</b>匹配 md 里的引用（如 ![](images/a.png) 取 a.png），同名会覆盖。图片只存本机，<b>「备份全部」不含图片</b>，换机后重新导入即可。zip 只在本地解压，不上传。',
       'import.empty': '还没有选择文件', 'import.doAll': '导入全部', 'import.doAllCount': '导入全部（{n}）',
       'toast.onlyMd': '未识别的文件（支持 md / txt / 图片）', 'toast.noFile': '没有选择文件',
-      'toast.imgTaken': '已导入 {n} 张图片', 'toast.imgNoStore': '本机存储不可用，图片没有保存', 'img.missing': '图片未导入', 'img.broken': '图片无法显示',
+      'toast.imgTaken': '已导入 {n} 张图片', 'toast.imgNoStore': '本机存储不可用，图片没有保存', 'toast.imgLost': '有 {n} 张图片保存失败（可能本机空间不足）', 'img.missing': '图片未导入', 'img.broken': '图片无法显示',
       'toast.saveFail': '保存失败：本机存储不可用，进度可能丢失', 'toast.backupMerged': '已合并 {n} 本笔记（本地进度保留）', 'import.suffix': '(导入)', 'toast.notZip': '请选择 .zip 文件', 'toast.unzipping': '正在解压…', 'toast.zipEmpty': 'zip 里没有找到 md / 图片文件',
       'toast.zipTaken': '已从 zip 中取出 {n} 篇笔记', 'toast.unzipFail': '解压失败：{msg}',
       'toast.queueEmpty': '先选择要导入的文件',
@@ -2619,7 +2619,7 @@ body.light .hl-kw { color: #1a5fb4; }
       'import.note': '圖片按<b>檔名</b>匹配 md 裡的引用（如 ![](images/a.png) 取 a.png），同名會覆蓋。圖片只存本機，<b>「備份全部」不含圖片</b>，換機後重新匯入即可。zip 只在本機解壓，不上傳。',
       'import.empty': '還沒有選擇檔案', 'import.doAll': '匯入全部', 'import.doAllCount': '匯入全部（{n}）',
       'toast.onlyMd': '未識別的檔案（支援 md / txt / 圖片）', 'toast.noFile': '沒有選擇檔案',
-      'toast.imgTaken': '已匯入 {n} 張圖片', 'toast.imgNoStore': '本機儲存不可用，圖片沒有保存', 'img.missing': '圖片未匯入', 'img.broken': '圖片無法顯示',
+      'toast.imgTaken': '已匯入 {n} 張圖片', 'toast.imgNoStore': '本機儲存不可用，圖片沒有保存', 'toast.imgLost': '有 {n} 張圖片保存失敗（可能本機空間不足）', 'img.missing': '圖片未匯入', 'img.broken': '圖片無法顯示',
       'toast.saveFail': '儲存失敗：本機儲存不可用，進度可能遺失', 'toast.backupMerged': '已合併 {n} 本筆記（本機進度保留）', 'import.suffix': '(匯入)', 'toast.notZip': '請選擇 .zip 檔案', 'toast.unzipping': '正在解壓…', 'toast.zipEmpty': 'zip 裡沒有找到 md / 圖片檔案',
       'toast.zipTaken': '已從 zip 中取出 {n} 篇筆記', 'toast.unzipFail': '解壓失敗：{msg}',
       'toast.queueEmpty': '先選擇要匯入的檔案',
@@ -2738,7 +2738,7 @@ body.light .hl-kw { color: #1a5fb4; }
       'import.note': 'Images are matched by <b>filename</b> against references in the md (e.g. ![](images/a.png) uses a.png); same-name images overwrite. Images stay on this device and are <b>not included in backups</b> — re-import after switching devices. Zip files are unpacked locally, nothing is uploaded.',
       'import.empty': 'No files selected yet', 'import.doAll': 'Import all', 'import.doAllCount': 'Import all ({n})',
       'toast.onlyMd': 'Unrecognized files (md / txt / images only)', 'toast.noFile': 'No file selected',
-      'toast.imgTaken': 'Imported {n} images', 'toast.imgNoStore': 'Local storage unavailable, images not saved', 'img.missing': 'Image not imported', 'img.broken': 'Image cannot be shown',
+      'toast.imgTaken': 'Imported {n} images', 'toast.imgNoStore': 'Local storage unavailable, images not saved', 'toast.imgLost': '{n} images could not be saved (storage may be full)', 'img.missing': 'Image not imported', 'img.broken': 'Image cannot be shown',
       'toast.saveFail': 'Save failed: local storage unavailable, progress may be lost', 'toast.backupMerged': 'Merged {n} notes (local progress kept)', 'import.suffix': ' (imported)', 'toast.notZip': 'Please choose a .zip file', 'toast.unzipping': 'Unpacking…', 'toast.zipEmpty': 'No .md / .txt files found in the zip',
       'toast.zipTaken': 'Extracted {n} notes from the zip', 'toast.unzipFail': 'Unpack failed: {msg}',
       'toast.queueEmpty': 'Select files to import first',
@@ -3601,7 +3601,7 @@ body.light .hl-kw { color: #1a5fb4; }
     });
   }
 
-  function storeImage(name, blob, renameMap) {
+  function storeImage(name, blob, renameMap, outMap) {
     var base = imgBase(name);
     blob = normalizeImageBlob(blob, base); // 存进来就纠正类型：否则 SVG 永远解不出来
     var commit = function (nm) {
@@ -3616,7 +3616,7 @@ body.light .hl-kw { color: #1a5fb4; }
       if (!m) return nm + '-2';
       return m[1] + '-' + (parseInt((m[2] || '-1').slice(1), 10) + 1) + m[3];
     };
-    // 返回：'名字' = 新写入的名字；true = 内容相同去重沿用；null = 失败
+    // 返回：最终存储名（可能是 -2/-3 改名）；null = 失败
     var tryName = function (nm) {
       return Store.rawGet('img/' + nm).then(function (ex) {
         if (!ex) return commit(nm);
@@ -3624,36 +3624,89 @@ body.light .hl-kw { color: #1a5fb4; }
           if (d[0] === d[1]) {
             // 内容已存在（去重）：顺手把索引和内存 URL 补上——
             // 否则索引丢过条目时，重导同样的 zip 只是「静默命中」，页面依旧显示未导入。
-            // 内存 URL 用纠正过类型的 Blob：库里可能是旧版本留下的坏类型记录
-            rememberImage(nm, normalizeImageBlob(ex.blob, nm));
-            return addToImgIndex(nm).then(function () { return true; });
+            // 已有 URL 时不重建：重建会 revoke 旧 URL，正在滚动加载的 <img> 会瞬间变破图；
+            // 新 URL 用纠正过类型的 Blob：库里可能是旧版本留下的坏类型记录
+            if (!IMG_URLS[nm]) rememberImage(nm, normalizeImageBlob(ex.blob, nm));
+            return addToImgIndex(nm).then(function () { return nm; });
           }
           return tryName(bumpName(nm));
         });
       });
     };
-    return tryName(base).then(function (res) {
-      if (!res) return false;
-      if (typeof res === 'string' && res !== base && renameMap) renameMap[base] = res; // 改名了：记录映射供重写引用
-      return true;
+    return tryName(base).then(function (nm) {
+      if (!nm) return null;
+      // 路径映射要拿到每张图的最终名字（zip 里不同子目录可以有同名文件）
+      if (outMap) outMap[name] = nm;
+      if (nm !== base && renameMap) renameMap[base] = nm; // 改名了：记录映射供重写引用
+      return nm;
     });
   }
 
-  function importImageEntries(entries, renameMap) { // [{name, bytes}]（zip 内）→ Promise(成功数)
+  /**
+   * 串行存图（不要 Promise.all）：不同子目录的同名图片并行进来时，多个 tryName 会同时看到
+   * 「这个名字还不存在」，于是各自 commit 同一个键，后写的覆盖先写的——实测 251 张图里
+   * 53 张被覆盖丢失（只剩 198 个名字）。串行后每张图都能拿到独立名字（img001.png / -2 / -3）。
+   */
+  function importImageEntries(entries, outMap) { // [{name, bytes}]（zip 内）→ Promise(成功数)
     var n = 0;
-    return Promise.all(entries.map(function (en) {
-      if (!en || !en.bytes) return Promise.resolve();
-      return storeImage(en.name, new Blob([en.bytes], { type: imgMime(en.name) }), renameMap).then(function (ok) {
-        if (ok) n++;
+    return entries.reduce(function (p, en) {
+      return p.then(function () {
+        if (!en || !en.bytes) return null;
+        return storeImage(en.name, new Blob([en.bytes], { type: imgMime(en.name) }), null, outMap).then(function (nm) {
+          if (nm) n++;
+        });
       });
-    })).then(function () { return n; });
+    }, Promise.resolve()).then(function () { return n; });
   }
 
   function importImageFiles(files) { // File[] → Promise(成功数)；改名记入全局映射供本批 md 重写
     var n = 0;
-    return Promise.all(files.map(function (f) {
-      return storeImage(f.name, f, IMG_RENAMES).then(function (ok) { if (ok) n++; });
-    })).then(function () { return n; });
+    return files.reduce(function (p, f) {
+      return p.then(function () {
+        return storeImage(f.name, f, IMG_RENAMES).then(function (nm) { if (nm) n++; });
+      });
+    }, Promise.resolve()).then(function () { return n; });
+  }
+
+  /* zip 内相对路径归一：md 所在目录 + 引用路径 → zip 里的完整路径 */
+  function zipJoin(dir, ref) {
+    var q = String(ref || '').replace(/\\/g, '/');
+    if (q.indexOf('?') >= 0) q = q.slice(0, q.indexOf('?'));
+    if (q.charAt(0) === '/') dir = '';
+    var parts = String((dir || '') + q.replace(/^\.?\//, '')).split('/');
+    var out = [];
+    parts.forEach(function (seg) {
+      if (!seg || seg === '.') return;
+      if (seg === '..') { out.pop(); return; }
+      out.push(seg);
+    });
+    return out.join('/');
+  }
+
+  /**
+   * 按「zip 内完整路径」重写一份 md 的图片引用。
+   * 只按文件名重写会把别的子目录的同名图套到这篇笔记上（实测 251 张图里 50 处引用拿到了错图），
+   * 所以先按路径精确匹配；路径没命中时才退回「文件名唯一」的匹配。
+   */
+  function rewriteZipImageRefs(text, dir, pathMap) {
+    if (!text || !pathMap) return text;
+    var baseMap = Object.create(null);
+    Object.keys(pathMap).forEach(function (p) {
+      var b = p.split('/').pop();
+      var nm = pathMap[p];
+      if (!(b in baseMap)) baseMap[b] = nm;
+      else if (baseMap[b] !== nm) baseMap[b] = null; // 同名不同图：只能按路径认
+    });
+    var fix = function (ref) {
+      // 先按 md 所在目录拼；再试「相对 zip 根」的写法（很多导出工具写的是根相对路径）
+      var hit = pathMap[zipJoin(dir, ref)] || pathMap[zipJoin('', ref)];
+      if (hit) return hit;
+      var b = String(ref).split('/').pop();
+      return baseMap[b] || ref;
+    };
+    text = text.replace(/(!\[[^\]]*\]\()([^)\s]+)/g, function (m, pre, p) { return pre + fix(p); });
+    text = text.replace(/(!\[\[)([^\]|\r\n]+)/g, function (m, pre, p) { return pre + fix(p); });
+    return text;
   }
 
   /** 所有卡片引用的图片名集合（![]() / ![[..]] / （配图 x）） */
@@ -4660,23 +4713,23 @@ body.light .hl-kw { color: #1a5fb4; }
           if (isImageFile(nm)) imgs.push(en);
           else if (isTextNote(nm)) texts.push(en);
         });
-        var renames = {};
-        return importImageEntries(imgs, renames).then(function (nImg) {
+        var pathMap = {}; // zip 内完整路径 → 实际存储名
+        return importImageEntries(imgs, pathMap).then(function (nImg) {
           if (!texts.length && !nImg) { toast(t('toast.zipEmpty')); return; }
           texts.forEach(function (en) {
             var base = en.name.split('/').pop();
+            var dir = en.name.indexOf('/') >= 0 ? en.name.slice(0, en.name.lastIndexOf('/') + 1) : '';
             var text = Core.decodeBytes(en.bytes);
-            // 同名图片被改名（同名不同内容）→ 重写本批 md 的引用
-            Object.keys(renames).forEach(function (oldN) {
-              text = text.split(oldN).join(renames[oldN]);
-            });
+            // 按路径重写引用：不同子目录可以有同名图片（img001.png ×3），只按文件名替换会串图
+            text = rewriteZipImageRefs(text, dir, pathMap);
             importQueue.push({ name: base.replace(/\.[^.]+$/, ''), text: text, size: en.bytes.length, source: en.name });
           });
           renderImportQueue();
           var msg = '';
           if (texts.length) msg += tf('toast.zipTaken', { n: texts.length });
           if (nImg) msg += (msg ? '，' : '') + tf('toast.imgTaken', { n: nImg });
-          if (msg) toast(msg, 3000);
+          if (imgs.length && nImg < imgs.length) msg += (msg ? '，' : '') + tf('toast.imgLost', { n: imgs.length - nImg });
+          if (msg) toast(msg, 3200);
         });
       })
       .catch(function (err) {
@@ -6431,10 +6484,13 @@ body.light .hl-kw { color: #1a5fb4; }
 
   function storeBackupImages(images) {
     // 图片写入是纯增量（名字→blob），失败不影响笔记数据；返回 同名冲突改名映射
+    // 串行：备份里也可能有同名不同内容的图片，并行会互相覆盖（见 importImageEntries）
     var renames = {};
-    return Promise.all((images || []).map(function (im) {
-      return storeImage(im.name, new Blob([im.bytes], { type: imgMime(im.name) }), renames);
-    })).then(function () { return renames; });
+    return (images || []).reduce(function (p, im) {
+      return p.then(function () {
+        return storeImage(im.name, new Blob([im.bytes], { type: imgMime(im.name) }), renames);
+      });
+    }, Promise.resolve()).then(function () { return renames; });
   }
 
   /** 备份导入时：同名冲突被改名的图片 → 重写备份里卡片引用（纯函数，供测试） */
@@ -7289,6 +7345,14 @@ body.light .hl-kw { color: #1a5fb4; }
     },
     normalizeImageBlob: normalizeImageBlob,
     imgMime: imgMime,
+    rewriteZipImageRefs: rewriteZipImageRefs,
+    zipJoin: zipJoin,
+    importImageEntriesForTest: function (entries) {
+      var map = {};
+      return importImageEntries(entries.map(function (en) {
+        return { name: en.name, bytes: new Uint8Array(en.bytes) };
+      }), map).then(function (n) { return { stored: n, pathMap: map }; });
+    },
     repairImageIndex: repairImageIndex,
     loadStoredImages: loadStoredImages,
     imgIndexNames: function () {

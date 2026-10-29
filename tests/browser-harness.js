@@ -43,6 +43,27 @@
 
     } catch (e) { check('v1121 fixes block error', false, e && e.message); }
 
+    try {
+      // v1.12.12：zip 内不同子目录的同名图片（img001.png ×3），引用必须按路径重写，不能串图
+      var A3 = window.MDReviewApp;
+      var pm = {
+        'images/上/img001.png': 'img001.png',
+        'images/中/img001.png': 'img001-2.png',
+        'images/下/img001.png': 'img001-3.png',
+        'images/上/uniq.png': 'uniq.png'
+      };
+      var t1 = A3.rewriteZipImageRefs('![](images/上/img001.png)\n![](images/中/img001.png)\n![](images/下/img001.png)', '', pm);
+      check('v11212 zip 同名图片按路径重写',
+        t1.indexOf('![](img001.png)') >= 0 && t1.indexOf('![](img001-2.png)') >= 0 && t1.indexOf('![](img001-3.png)') >= 0, t1.replace(/\n/g, ' | '));
+      var t2 = A3.rewriteZipImageRefs('![](images/中/img001.png)', 'notes/', pm);
+      check('v11212 md 在子目录时先按 md 目录拼路径', t2 === '![](img001-2.png)', t2);
+      var t3 = A3.rewriteZipImageRefs('![](img001.png)', '', pm);
+      check('v11212 只写文件名且有同名图时保持原样（避免猜错）', t3 === '![](img001.png)', t3);
+      var t4 = A3.rewriteZipImageRefs('![[images/上/uniq.png|300]]', '', pm);
+      check('v11212 wiki 语法同样按路径重写', t4.indexOf('uniq.png') >= 0 && t4.indexOf('images/') < 0, t4);
+      check('v11212 zipJoin 归一化', A3.zipJoin('notes/', './a/../b/img.png') === 'notes/b/img.png', A3.zipJoin('notes/', './a/../b/img.png'));
+    } catch (e) { check('v11212 rewrite block error', false, e && e.message); }
+
     var pre = document.createElement('pre');
     pre.id = 'testResult';
     pre.textContent = results.join('\n');

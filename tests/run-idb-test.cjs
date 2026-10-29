@@ -239,10 +239,44 @@ async function main() {
   check('解码失败的图片显示明确占位（保留文件名）',
     brokenChip.hasChip === true && brokenChip.stillImg === false && brokenChip.hasName === true, brokenChip);
 
+  // 8) v1.12.12：不同子目录的同名图片（真实 zip 里 img001.png 在三个目录各一份）
+  //    串行存 → 三个独立名字、三份内容都还在、都能解码；引用按路径映射
+  const dupNames = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    function svg(c) {
+      return Array.prototype.slice.call(new TextEncoder().encode(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="' + c + '"/></svg>'));
+    }
+    function loads(url) {
+      return new Promise(function (res) {
+        var im = new Image();
+        im.onload = function () { res(im.naturalWidth > 0); };
+        im.onerror = function () { res(false); };
+        im.src = url;
+        setTimeout(function () { res(false); }, 3000);
+      });
+    }
+    var r = await A.importImageEntriesForTest([
+      { name: 'images/a/dup-probe.svg', bytes: svg('#f00') },
+      { name: 'images/b/dup-probe.svg', bytes: svg('#0f0') },
+      { name: 'images/c/dup-probe.svg', bytes: svg('#00f') }
+    ]);
+    var names = ['images/a/dup-probe.svg', 'images/b/dup-probe.svg', 'images/c/dup-probe.svg'].map(function (k) { return r.pathMap[k]; });
+    var uniq = names.filter(function (n, i) { return names.indexOf(n) === i; });
+    var ok = [];
+    for (var i = 0; i < names.length; i++) {
+      var m = /src="([^"]+)"/.exec(A.resolveImgSrc('<img src="' + names[i] + '">'));
+      ok.push(m ? await loads(m[1]) : false);
+    }
+    return { stored: r.stored, names: names, uniq: uniq.length, allLoad: ok.every(Boolean) };
+  })()`);
+  check('同名图片串行存储不互相覆盖（3 个独立名字、都能解码）',
+    dupNames.stored === 3 && dupNames.uniq === 3 && dupNames.allLoad === true, dupNames);
+
   // 收尾：按名字删除探针数据，不污染用户图库
   await evalJs(`(async function () {
     var A = window.MDReviewApp, names = ${JSON.stringify(probeNames)};
-    var extra = ['recover-1.png', 'typed-a.svg', 'typed-b.svg'];
+    var extra = ['recover-1.png', 'typed-a.svg', 'typed-b.svg', 'dup-probe.svg', 'dup-probe-2.svg', 'dup-probe-3.svg'];
     var idx = await A.imgIndexNames();
     await A.setImgIndexForTest(idx.filter(function (n) { return names.indexOf(n) < 0 && extra.indexOf(n) < 0; }));
     for (var i = 0; i < names.length; i++) { try { await A.rawDeleteForTest('img/' + names[i]); } catch (e) {} }
