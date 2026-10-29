@@ -1487,7 +1487,8 @@ body.light .hl-kw { color: #1a5fb4; }
     var buf = [];
     for (var i = from; i < to; i++) {
       var line = lines[i];
-      if (!line.trim()) {
+      // 代码围栏内的空行不是段落边界：否则超长代码块会被从中间切开、围栏不成对
+      if (!line.trim() && !(mask && mask[i])) {
         if (buf.length) { paragraphs.push(buf.join('\n')); buf = []; }
         continue;
       }
@@ -2116,19 +2117,20 @@ body.light .hl-kw { color: #1a5fb4; }
         }
       } else if (blk.type === 'table') {
         html += '<div class="md-table-wrap"><div class="md-table"><table>';
-        for (var r = 0; r < blk.rows.length; r++) {
-          var tag = r === 0 ? 'th' : 'td';
-          var rowTag = r === 0 ? 'thead' : 'tbody';
-          if (r === 0) html += '<thead><tr>';
-          if (r === 1) html += '<tbody><tr>';
-          if (r > 1) html += '<tr>';
-          for (var c = 0; c < blk.rows[r].length; c++) {
-            html += '<' + tag + '>' + inline(blk.rows[r][c]) + '</' + tag + '>';
+        html += '<thead><tr>';
+        for (var c0 = 0; c0 < blk.rows[0].length; c0++) html += '<th>' + inline(blk.rows[0][c0]) + '</th>';
+        html += '</tr></thead>';
+        // 只有表头行时不能输出 <tbody>（否则是非法标记）
+        if (blk.rows.length > 1) {
+          html += '<tbody>';
+          for (var r1 = 1; r1 < blk.rows.length; r1++) {
+            html += '<tr>';
+            for (var c1 = 0; c1 < blk.rows[r1].length; c1++) html += '<td>' + inline(blk.rows[r1][c1]) + '</td>';
+            html += '</tr>';
           }
-          html += '</tr>';
-          if (r === 0) html += '</thead>';
+          html += '</tbody>';
         }
-        html += '</tbody></table></div></div>';
+        html += '</table></div></div>';
       } else if (blk.type === 'list') {
         html += '<div class="md-list">';
         for (var it = 0; it < blk.items.length; it++) {
@@ -2455,7 +2457,7 @@ body.light .hl-kw { color: #1a5fb4; }
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.13';
+  var APP_VERSION = '1.12.14';
   // 应用锁开关：手机系统普遍自带应用锁，默认隐藏该设置项（相关代码与原生桥全部保留）。
   // 需要恢复时把 false 改成 true（原生侧 APP_LOCK_ENABLED 同步改），选项即重新出现在「设置 → 存储」。
   var FEATURE_APP_LOCK = false;
@@ -2524,10 +2526,10 @@ body.light .hl-kw { color: #1a5fb4; }
       'confirm.replaceDeck': '已存在同名笔记「{name}」，用新内容替换吗？（尽量保留已掌握进度）',
       'toast.cancelled': '已取消', 'toast.imported': '已导入「{name}」 {n} 张卡片',
       'import.title': '导入笔记', 'import.pick': '📄 选择文件（md 笔记 + 图片，可多选）', 'import.zip': '🗜️ 选择 .zip（多篇 md + 图片）', 'import.dir': '📁 导入整个文件夹（电脑端，含图片）',
-      'import.note': '图片按<b>文件名</b>匹配 md 里的引用（如 ![](images/a.png) 取 a.png），同名会覆盖。图片只存本机，<b>「备份全部」不含图片</b>，换机后重新导入即可。zip 只在本地解压，不上传。',
+      'import.note': '图片按<b>文件名</b>匹配 md 里的引用（如 ![](images/a.png) 取 a.png），同名不同内容会<b>自动改名</b>（-2/-3）并按路径重写引用，不会覆盖已有图片。图片只存本机，<b>「备份全部」不含图片</b>，换机后重新导入即可。zip 只在本地解压，不上传。',
       'import.empty': '还没有选择文件', 'import.doAll': '导入全部', 'import.doAllCount': '导入全部（{n}）',
       'toast.onlyMd': '未识别的文件（支持 md / txt / 图片）', 'toast.noFile': '没有选择文件',
-      'toast.imgTaken': '已导入 {n} 张图片', 'toast.imgNoStore': '本机存储不可用，图片没有保存', 'toast.imgLost': '有 {n} 张图片保存失败（可能本机空间不足）', 'img.missing': '图片未导入', 'img.broken': '图片无法显示',
+      'toast.imgTaken': '已导入 {n} 张图片', 'toast.imgNoStore': '本机存储不可用，图片没有保存', 'toast.imgLost': '有 {n} 张图片保存失败（可能本机空间不足）', 'img.missing': '图片未导入', 'img.broken': '图片无法显示', 'img.ambiguous': '图片重名，无法确定',
       'toast.saveFail': '保存失败：本机存储不可用，进度可能丢失', 'toast.backupMerged': '已合并 {n} 本笔记（本地进度保留）', 'import.suffix': '(导入)', 'toast.notZip': '请选择 .zip 文件', 'toast.unzipping': '正在解压…', 'toast.zipEmpty': 'zip 里没有找到 md / 图片文件',
       'toast.zipTaken': '已从 zip 中取出 {n} 篇笔记', 'toast.unzipFail': '解压失败：{msg}',
       'toast.queueEmpty': '先选择要导入的文件',
@@ -2545,7 +2547,7 @@ body.light .hl-kw { color: #1a5fb4; }
       'ai.testing': '请求中…（最长等 {s} 秒）', 'ai.testOk': '连接成功', 'ai.testFail': '连接失败', 'ai.modelReply': '模型回复：',
       'ai.title': 'AI 提炼提问', 'ai.desc': '用大模型读懂每张卡的答案，把标题改写成更像面试题的问题（<b>只改题面，不动答案</b>）。请求从你的手机直接发出，不经过任何服务器。',
       'ai.notConfigured': '还没有配置 AI：到「设置 → AI 供应商」添加供应商并填 Key。',
-      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.canceled': '已停止提炼', 'img.cleanup': '清理未引用图片', 'img.repair': '修复图片索引', 'img.repairRunning': '正在检查图片…', 'img.repairOk': '图片索引正常（{n} 张）', 'img.repairDone': '已修复：补回 {added} 张、剔除 {dropped} 条失效记录（共 {total} 张）', 'img.repairRetyped': '，并纠正 {n} 张图片的格式信息', 'img.repairFail': '修复失败，请重试','search.ph': '搜索全部笔记…', 'search.empty': '没有匹配的卡片', 'search.more': '还有 {n} 条未显示', 'search.reviewFrom': '从这张开始复习', 'search.openDeck': '查看笔记', 'sort.recent': '最近导入', 'sort.name': '名称', 'sort.cards': '卡片数', 'sort.due': '待复习数','read.fs': '字号','pin.title': '应用锁（4 位密码）', 'pin.ph': '4 位数字密码', 'pin.set': '设置密码', 'pin.note': '仅本机存储（加盐哈希）；忘记密码只能清除全部数据。切后台 5 分钟后自动锁定。', 'pin.remove': '移除密码', 'pin.badFormat': '密码必须是 4 位数字', 'pin.setOk': '密码已设置', 'pin.removed': '密码已移除', 'pin.androidOnly': '应用锁仅安卓 App 可用', 'rem.title': '每日复习提醒', 'rem.set': '开启提醒', 'rem.cancel': '关闭提醒', 'rem.setOk': '提醒已开启（本地通知）', 'rem.cancelled': '提醒已关闭', 'rem.androidOnly': '系统提醒仅安卓 App 可用','card.editTitle': '编辑卡片', 'card.fTitle': '标题', 'card.fQuestion': '题面', 'card.fAnswer': '答案', 'card.editNote': '保存会尽量写回源 Markdown；无法定位时仅更新卡片并标记「已修改」。', 'card.editConfirm': '保存对这张卡片的修改？', 'card.answerRequired': '答案不能为空', 'card.savedRaw': '已保存（含源 Markdown）', 'card.savedLocal': '已保存（本地修改）', 'card.modified': '已修改', 'card.opEdit': '编辑', 'card.opSplit': '拆分', 'card.opMerge': '合并', 'card.opMove': '移动', 'card.opUndo': '撤销', 'card.splitTitle': '拆分为两张', 'card.splitNote': '光标位置即拆分点。', 'card.splitDo': '拆分', 'card.splitConfirm': '拆分这张卡片为两张？', 'card.splitFail': '拆分点两侧都需要内容', 'card.splitDone': '已拆分为两张', 'card.mergeConfirm': '把下一张卡片合并到这张？（下一张将被删除）', 'card.mergeFail': '没有下一张可合并', 'card.mergeDone': '已合并', 'card.moveTitle': '移动到其他笔记', 'card.moveDeck': '目标笔记', 'card.moveConfirm': '移动这张卡片？', 'card.moveDone': '已移动', 'card.noUndo': '没有可撤销的操作', 'card.undone': '已撤销上次操作', 'read.lh': '行距', 'read.cw': '卡片宽度', 'read.small': '小', 'read.medium': '中', 'read.large': '大', 'read.tight': '紧', 'read.loose': '松', 'read.narrow': '窄', 'read.wide': '宽', 'img.cleanupNone': '没有可清理的图片', 'img.cleanupConfirm': '发现 {n} 张未被任何卡片引用的图片（约 {kb} KB），删除？', 'img.cleanupDone': '已清理 {n} 张图片', 'backup.remind': '内容有改动且超过 7 天未备份，建议导出备份', 'backup.now': '立即备份', 'backup.nowBtn': '一键备份', 'backup.folderSet': '选择备份文件夹', 'backup.folderChange': '更换备份文件夹', 'backup.savedToFolder': '已写入备份文件夹：{name}', 'backup.fsaUnsupported': '当前浏览器不支持文件夹备份，已改为普通下载', 'ai.undo': '撤销本次提炼', 'ai.undone': '已恢复原题面', 'ai.undoFail': '无法撤销：笔记内容已变化', 'ai.start': '开始提炼',
+      'ai.cardCount': '共 {n} 张卡', 'ai.ready': '已就绪', 'ai.notReady': '未配置', 'ai.canceled': '已停止提炼', 'img.cleanup': '清理未引用图片', 'img.repair': '修复图片索引', 'img.repairRunning': '正在检查图片…', 'img.repairOk': '图片索引正常（{n} 张）', 'img.repairDone': '已修复：补回 {added} 张、剔除 {dropped} 条失效记录（共 {total} 张）', 'img.repairRetyped': '，并纠正 {n} 张图片的格式信息', 'img.repairFail': '修复失败，请重试','search.ph': '搜索全部笔记…', 'search.empty': '没有匹配的卡片', 'search.more': '另有 {n} 条匹配，请缩小搜索范围', 'search.reviewFrom': '从这张开始复习', 'search.openDeck': '查看笔记', 'sort.recent': '最近导入', 'sort.name': '名称', 'sort.cards': '卡片数', 'sort.due': '待复习数','read.fs': '字号','pin.title': '应用锁（4 位密码）', 'pin.ph': '4 位数字密码', 'pin.set': '设置密码', 'pin.note': '仅本机存储（加盐哈希）；忘记密码只能清除全部数据。切后台 5 分钟后自动锁定。', 'pin.remove': '移除密码', 'pin.badFormat': '密码必须是 4 位数字', 'pin.setOk': '密码已设置', 'pin.removed': '密码已移除', 'pin.androidOnly': '应用锁仅安卓 App 可用', 'rem.title': '每日复习提醒', 'rem.set': '开启提醒', 'rem.cancel': '关闭提醒', 'rem.setOk': '提醒已开启（本地通知）', 'rem.cancelled': '提醒已关闭', 'rem.androidOnly': '系统提醒仅安卓 App 可用','card.editTitle': '编辑卡片', 'card.fTitle': '标题', 'card.fQuestion': '题面', 'card.fAnswer': '答案', 'card.editNote': '保存会尽量写回源 Markdown；无法定位时仅更新卡片并标记「已修改」。', 'card.editConfirm': '保存对这张卡片的修改？', 'card.answerRequired': '答案不能为空', 'card.savedRaw': '已保存（含源 Markdown）', 'card.savedLocal': '已保存（本地修改）', 'card.modified': '已修改', 'card.opEdit': '编辑', 'card.opSplit': '拆分', 'card.opMerge': '合并', 'card.opMove': '移动', 'card.opUndo': '撤销', 'card.splitTitle': '拆分为两张', 'card.splitNote': '光标位置即拆分点。', 'card.splitDo': '拆分', 'card.splitConfirm': '拆分这张卡片为两张？', 'card.splitFail': '拆分点两侧都需要内容', 'card.splitDone': '已拆分为两张', 'card.mergeConfirm': '把下一张卡片合并到这张？（下一张将被删除）', 'card.mergeFail': '没有下一张可合并', 'card.mergeDone': '已合并', 'card.moveTitle': '移动到其他笔记', 'card.moveDeck': '目标笔记', 'card.moveConfirm': '移动这张卡片？', 'card.moveDone': '已移动', 'card.noUndo': '没有可撤销的操作', 'card.undone': '已撤销上次操作', 'read.lh': '行距', 'read.cw': '卡片宽度', 'read.small': '小', 'read.medium': '中', 'read.large': '大', 'read.tight': '紧', 'read.loose': '松', 'read.narrow': '窄', 'read.wide': '宽', 'img.cleanupNone': '没有可清理的图片', 'img.cleanupConfirm': '发现 {n} 张未被任何卡片引用的图片（约 {kb} KB），删除？', 'img.cleanupDone': '已清理 {n} 张图片', 'backup.remind': '内容有改动且超过 7 天未备份，建议导出备份', 'backup.now': '立即备份', 'backup.nowBtn': '一键备份', 'backup.folderSet': '选择备份文件夹', 'backup.folderChange': '更换备份文件夹', 'backup.savedToFolder': '已写入备份文件夹：{name}', 'backup.fsaUnsupported': '当前浏览器不支持文件夹备份，已改为普通下载', 'ai.undo': '撤销本次提炼', 'ai.undone': '已恢复原题面', 'ai.undoFail': '无法撤销：笔记内容已变化', 'ai.start': '开始提炼',
       'ai.busy': '正在提炼，请稍等', 'ai.needConfig': '先配置 AI 地址和模型',
       'ai.progress': '提炼中… {done} / {total} 张（共 {batches} 批）',
       'ai.badFormat': '返回格式无法解析（需要 {"questions":[{"idx":..,"q":".."}]}）',
@@ -2643,10 +2645,10 @@ body.light .hl-kw { color: #1a5fb4; }
       'confirm.replaceDeck': '已存在同名筆記「{name}」，用新內容替換嗎？（盡量保留已掌握進度）',
       'toast.cancelled': '已取消', 'toast.imported': '已匯入「{name}」 {n} 張卡片',
       'import.title': '匯入筆記', 'import.pick': '📄 選擇檔案（md 筆記 + 圖片，可多選）', 'import.zip': '🗜️ 選擇 .zip（多篇 md + 圖片）', 'import.dir': '📁 匯入整個資料夾（電腦端，含圖片）',
-      'import.note': '圖片按<b>檔名</b>匹配 md 裡的引用（如 ![](images/a.png) 取 a.png），同名會覆蓋。圖片只存本機，<b>「備份全部」不含圖片</b>，換機後重新匯入即可。zip 只在本機解壓，不上傳。',
+      'import.note': '圖片按<b>檔名</b>匹配 md 裡的引用（如 ![](images/a.png) 取 a.png），同名不同內容會<b>自動改名</b>（-2/-3）並按路徑重寫引用，不會覆蓋已有圖片。圖片只存本機，<b>「備份全部」不含圖片</b>，換機後重新匯入即可。zip 只在本機解壓，不上傳。',
       'import.empty': '還沒有選擇檔案', 'import.doAll': '匯入全部', 'import.doAllCount': '匯入全部（{n}）',
       'toast.onlyMd': '未識別的檔案（支援 md / txt / 圖片）', 'toast.noFile': '沒有選擇檔案',
-      'toast.imgTaken': '已匯入 {n} 張圖片', 'toast.imgNoStore': '本機儲存不可用，圖片沒有保存', 'toast.imgLost': '有 {n} 張圖片保存失敗（可能本機空間不足）', 'img.missing': '圖片未匯入', 'img.broken': '圖片無法顯示',
+      'toast.imgTaken': '已匯入 {n} 張圖片', 'toast.imgNoStore': '本機儲存不可用，圖片沒有保存', 'toast.imgLost': '有 {n} 張圖片保存失敗（可能本機空間不足）', 'img.missing': '圖片未匯入', 'img.broken': '圖片無法顯示', 'img.ambiguous': '圖片重名，無法確定',
       'toast.saveFail': '儲存失敗：本機儲存不可用，進度可能遺失', 'toast.backupMerged': '已合併 {n} 本筆記（本機進度保留）', 'import.suffix': '(匯入)', 'toast.notZip': '請選擇 .zip 檔案', 'toast.unzipping': '正在解壓…', 'toast.zipEmpty': 'zip 裡沒有找到 md / 圖片檔案',
       'toast.zipTaken': '已從 zip 中取出 {n} 篇筆記', 'toast.unzipFail': '解壓失敗：{msg}',
       'toast.queueEmpty': '先選擇要匯入的檔案',
@@ -2664,7 +2666,7 @@ body.light .hl-kw { color: #1a5fb4; }
       'ai.testing': '請求中…（最長等 {s} 秒）', 'ai.testOk': '連線成功', 'ai.testFail': '連線失敗', 'ai.modelReply': '模型回覆：',
       'ai.title': 'AI 提煉提問', 'ai.desc': '用大模型讀懂每張卡的答案，把標題改寫成更像面試題的問題（<b>只改題面，不動答案</b>）。請求從你的手機直接發出，不經過任何伺服器。',
       'ai.notConfigured': '還沒有設定 AI：到「設定 → AI 供應商」新增供應商並填 Key。',
-      'ai.cardCount': '共 {n} 張卡', 'ai.ready': '已就緒', 'ai.notReady': '未設定', 'ai.canceled': '已停止提煉', 'img.cleanup': '清理未引用圖片', 'img.repair': '修復圖片索引', 'img.repairRunning': '正在檢查圖片…', 'img.repairOk': '圖片索引正常（{n} 張）', 'img.repairDone': '已修復：補回 {added} 張、剔除 {dropped} 條失效記錄（共 {total} 張）', 'img.repairRetyped': '，並修正 {n} 張圖片的格式資訊', 'img.repairFail': '修復失敗，請重試','search.ph': '搜尋全部筆記…', 'search.empty': '沒有匹配的卡片', 'search.more': '還有 {n} 條未顯示', 'search.reviewFrom': '從這張開始複習', 'search.openDeck': '查看筆記', 'sort.recent': '最近匯入', 'sort.name': '名稱', 'sort.cards': '卡片數', 'sort.due': '待複習數','read.fs': '字號','pin.title': '應用鎖（4 位密碼）', 'pin.ph': '4 位數字密碼', 'pin.set': '設置密碼', 'pin.note': '僅本機存儲（加鹽哈希）；忘記密碼只能清除全部數據。切後台 5 分鐘後自動鎖定。', 'pin.remove': '移除密碼', 'pin.badFormat': '密碼必須是 4 位數字', 'pin.setOk': '密碼已設置', 'pin.removed': '密碼已移除', 'pin.androidOnly': '應用鎖僅安卓 App 可用', 'rem.title': '每日複習提醒', 'rem.set': '開啟提醒', 'rem.cancel': '關閉提醒', 'rem.setOk': '提醒已開啟（本機通知）', 'rem.cancelled': '提醒已關閉', 'rem.androidOnly': '系統提醒僅安卓 App 可用','card.editTitle': '編輯卡片', 'card.fTitle': '標題', 'card.fQuestion': '題面', 'card.fAnswer': '答案', 'card.editNote': '保存會盡量寫回源 Markdown；無法定位時僅更新卡片並標記「已修改」。', 'card.editConfirm': '保存對這張卡片的修改？', 'card.answerRequired': '答案不能為空', 'card.savedRaw': '已保存（含源 Markdown）', 'card.savedLocal': '已保存（本機修改）', 'card.modified': '已修改', 'card.opEdit': '編輯', 'card.opSplit': '拆分', 'card.opMerge': '合併', 'card.opMove': '移動', 'card.opUndo': '撤銷', 'card.splitTitle': '拆分為兩張', 'card.splitNote': '游標位置即拆分點。', 'card.splitDo': '拆分', 'card.splitConfirm': '拆分這張卡片為兩張？', 'card.splitFail': '拆分點兩側都需要內容', 'card.splitDone': '已拆分為兩張', 'card.mergeConfirm': '把下一張卡片合併到這張？（下一張將被刪除）', 'card.mergeFail': '沒有下一張可合併', 'card.mergeDone': '已合併', 'card.moveTitle': '移動到其他筆記', 'card.moveDeck': '目標筆記', 'card.moveConfirm': '移動這張卡片？', 'card.moveDone': '已移動', 'card.noUndo': '沒有可撤銷的操作', 'card.undone': '已撤銷上次操作', 'read.lh': '行距', 'read.cw': '卡片寬度', 'read.small': '小', 'read.medium': '中', 'read.large': '大', 'read.tight': '緊', 'read.loose': '鬆', 'read.narrow': '窄', 'read.wide': '寬', 'img.cleanupNone': '沒有可清理的圖片', 'img.cleanupConfirm': '發現 {n} 張未被任何卡片引用的圖片（約 {kb} KB），刪除？', 'img.cleanupDone': '已清理 {n} 張圖片', 'backup.remind': '內容有改動且超過 7 天未備份，建議匯出備份', 'backup.now': '立即備份', 'backup.nowBtn': '一鍵備份', 'backup.folderSet': '選擇備份資料夾', 'backup.folderChange': '更換備份資料夾', 'backup.savedToFolder': '已寫入備份資料夾：{name}', 'backup.fsaUnsupported': '當前瀏覽器不支持資料夾備份，已改為普通下載', 'ai.undo': '撤銷本次提煉', 'ai.undone': '已恢復原題面', 'ai.undoFail': '無法撤銷：筆記內容已變化', 'ai.start': '開始提煉',
+      'ai.cardCount': '共 {n} 張卡', 'ai.ready': '已就緒', 'ai.notReady': '未設定', 'ai.canceled': '已停止提煉', 'img.cleanup': '清理未引用圖片', 'img.repair': '修復圖片索引', 'img.repairRunning': '正在檢查圖片…', 'img.repairOk': '圖片索引正常（{n} 張）', 'img.repairDone': '已修復：補回 {added} 張、剔除 {dropped} 條失效記錄（共 {total} 張）', 'img.repairRetyped': '，並修正 {n} 張圖片的格式資訊', 'img.repairFail': '修復失敗，請重試','search.ph': '搜尋全部筆記…', 'search.empty': '沒有匹配的卡片', 'search.more': '另有 {n} 條符合，請縮小搜尋範圍', 'search.reviewFrom': '從這張開始複習', 'search.openDeck': '查看筆記', 'sort.recent': '最近匯入', 'sort.name': '名稱', 'sort.cards': '卡片數', 'sort.due': '待複習數','read.fs': '字號','pin.title': '應用鎖（4 位密碼）', 'pin.ph': '4 位數字密碼', 'pin.set': '設置密碼', 'pin.note': '僅本機存儲（加鹽哈希）；忘記密碼只能清除全部數據。切後台 5 分鐘後自動鎖定。', 'pin.remove': '移除密碼', 'pin.badFormat': '密碼必須是 4 位數字', 'pin.setOk': '密碼已設置', 'pin.removed': '密碼已移除', 'pin.androidOnly': '應用鎖僅安卓 App 可用', 'rem.title': '每日複習提醒', 'rem.set': '開啟提醒', 'rem.cancel': '關閉提醒', 'rem.setOk': '提醒已開啟（本機通知）', 'rem.cancelled': '提醒已關閉', 'rem.androidOnly': '系統提醒僅安卓 App 可用','card.editTitle': '編輯卡片', 'card.fTitle': '標題', 'card.fQuestion': '題面', 'card.fAnswer': '答案', 'card.editNote': '保存會盡量寫回源 Markdown；無法定位時僅更新卡片並標記「已修改」。', 'card.editConfirm': '保存對這張卡片的修改？', 'card.answerRequired': '答案不能為空', 'card.savedRaw': '已保存（含源 Markdown）', 'card.savedLocal': '已保存（本機修改）', 'card.modified': '已修改', 'card.opEdit': '編輯', 'card.opSplit': '拆分', 'card.opMerge': '合併', 'card.opMove': '移動', 'card.opUndo': '撤銷', 'card.splitTitle': '拆分為兩張', 'card.splitNote': '游標位置即拆分點。', 'card.splitDo': '拆分', 'card.splitConfirm': '拆分這張卡片為兩張？', 'card.splitFail': '拆分點兩側都需要內容', 'card.splitDone': '已拆分為兩張', 'card.mergeConfirm': '把下一張卡片合併到這張？（下一張將被刪除）', 'card.mergeFail': '沒有下一張可合併', 'card.mergeDone': '已合併', 'card.moveTitle': '移動到其他筆記', 'card.moveDeck': '目標筆記', 'card.moveConfirm': '移動這張卡片？', 'card.moveDone': '已移動', 'card.noUndo': '沒有可撤銷的操作', 'card.undone': '已撤銷上次操作', 'read.lh': '行距', 'read.cw': '卡片寬度', 'read.small': '小', 'read.medium': '中', 'read.large': '大', 'read.tight': '緊', 'read.loose': '鬆', 'read.narrow': '窄', 'read.wide': '寬', 'img.cleanupNone': '沒有可清理的圖片', 'img.cleanupConfirm': '發現 {n} 張未被任何卡片引用的圖片（約 {kb} KB），刪除？', 'img.cleanupDone': '已清理 {n} 張圖片', 'backup.remind': '內容有改動且超過 7 天未備份，建議匯出備份', 'backup.now': '立即備份', 'backup.nowBtn': '一鍵備份', 'backup.folderSet': '選擇備份資料夾', 'backup.folderChange': '更換備份資料夾', 'backup.savedToFolder': '已寫入備份資料夾：{name}', 'backup.fsaUnsupported': '當前瀏覽器不支持資料夾備份，已改為普通下載', 'ai.undo': '撤銷本次提煉', 'ai.undone': '已恢復原題面', 'ai.undoFail': '無法撤銷：筆記內容已變化', 'ai.start': '開始提煉',
       'ai.busy': '正在提煉，請稍等', 'ai.needConfig': '先設定 AI 位址和模型',
       'ai.progress': '提煉中… {done} / {total} 張（共 {batches} 批）',
       'ai.badFormat': '返回格式無法解析（需要 {"questions":[{"idx":..,"q":".."}]}）',
@@ -2762,10 +2764,10 @@ body.light .hl-kw { color: #1a5fb4; }
       'confirm.replaceDeck': 'A note named "{name}" already exists. Replace it with the new content? (mastered progress is kept where possible)',
       'toast.cancelled': 'Cancelled', 'toast.imported': 'Imported "{name}" — {n} cards',
       'import.title': 'Import notes', 'import.pick': '📄 Pick files (md notes + images, multi-select)', 'import.zip': '🗜️ Pick a .zip (md files + images)', 'import.dir': '📁 Import a whole folder (desktop, images included)',
-      'import.note': 'Images are matched by <b>filename</b> against references in the md (e.g. ![](images/a.png) uses a.png); same-name images overwrite. Images stay on this device and are <b>not included in backups</b> — re-import after switching devices. Zip files are unpacked locally, nothing is uploaded.',
+      'import.note': 'Images are matched by <b>filename</b> against references in the md (e.g. ![](images/a.png) uses a.png); same-name but different images are renamed (-2/-3) and their references rewritten; existing images are never overwritten. Images stay on this device and are <b>not included in backups</b> — re-import after switching devices. Zip files are unpacked locally, nothing is uploaded.',
       'import.empty': 'No files selected yet', 'import.doAll': 'Import all', 'import.doAllCount': 'Import all ({n})',
       'toast.onlyMd': 'Unrecognized files (md / txt / images only)', 'toast.noFile': 'No file selected',
-      'toast.imgTaken': 'Imported {n} images', 'toast.imgNoStore': 'Local storage unavailable, images not saved', 'toast.imgLost': '{n} images could not be saved (storage may be full)', 'img.missing': 'Image not imported', 'img.broken': 'Image cannot be shown',
+      'toast.imgTaken': 'Imported {n} images', 'toast.imgNoStore': 'Local storage unavailable, images not saved', 'toast.imgLost': '{n} images could not be saved (storage may be full)', 'img.missing': 'Image not imported', 'img.broken': 'Image cannot be shown', 'img.ambiguous': 'Duplicate image name',
       'toast.saveFail': 'Save failed: local storage unavailable, progress may be lost', 'toast.backupMerged': 'Merged {n} notes (local progress kept)', 'import.suffix': ' (imported)', 'toast.notZip': 'Please choose a .zip file', 'toast.unzipping': 'Unpacking…', 'toast.zipEmpty': 'No .md / .txt files found in the zip',
       'toast.zipTaken': 'Extracted {n} notes from the zip', 'toast.unzipFail': 'Unpack failed: {msg}',
       'toast.queueEmpty': 'Select files to import first',
@@ -2783,7 +2785,7 @@ body.light .hl-kw { color: #1a5fb4; }
       'ai.testing': 'Requesting… (up to {s} s)', 'ai.testOk': 'Connected', 'ai.testFail': 'Connection failed', 'ai.modelReply': 'Model reply: ',
       'ai.title': 'AI question refine', 'ai.desc': 'Have an LLM rewrite each card\'s title into an interview-style question (<b>questions only, answers untouched</b>). Requests go straight from your phone to the API; no server in between.',
       'ai.notConfigured': 'AI is not configured: add a provider and fill in the key under Settings → AI providers.',
-      'ai.cardCount': '{n} cards', 'ai.ready': 'Ready', 'ai.notReady': 'Not configured', 'ai.canceled': 'Refining stopped', 'img.cleanup': 'Clean unused images', 'img.repair': 'Repair image index', 'img.repairRunning': 'Checking images…', 'img.repairOk': 'Image index is healthy ({n} images)', 'img.repairDone': 'Repaired: {added} restored, {dropped} stale entries dropped ({total} images)', 'img.repairRetyped': ', {n} image type(s) corrected', 'img.repairFail': 'Repair failed, please retry','search.ph': 'Search all notes…', 'search.empty': 'No matching cards', 'search.more': '{n} more not shown', 'search.reviewFrom': 'Review from this card', 'search.openDeck': 'Open note', 'sort.recent': 'Recent', 'sort.name': 'Name', 'sort.cards': 'Cards', 'sort.due': 'Due','read.fs': 'Font size','pin.title': 'App lock (4-digit password)', 'pin.ph': '4-digit password', 'pin.set': 'Set password', 'pin.note': 'Stored locally (salted hash); forgetting the password requires clearing all data. Auto-locks 5 minutes after backgrounding.', 'pin.remove': 'Remove password', 'pin.badFormat': 'Password must be 4 digits', 'pin.setOk': 'Password set', 'pin.removed': 'Password removed', 'pin.androidOnly': 'App lock is Android-only', 'rem.title': 'Daily review reminder', 'rem.set': 'Enable', 'rem.cancel': 'Disable', 'rem.setOk': 'Reminder enabled (local notification)', 'rem.cancelled': 'Reminder disabled', 'rem.androidOnly': 'System reminders are Android-only','card.editTitle': 'Edit card', 'card.fTitle': 'Title', 'card.fQuestion': 'Question', 'card.fAnswer': 'Answer', 'card.editNote': 'Saving writes back to the source Markdown when possible; otherwise the card is updated locally and marked modified.', 'card.editConfirm': 'Save changes to this card?', 'card.answerRequired': 'Answer cannot be empty', 'card.savedRaw': 'Saved (source Markdown updated)', 'card.savedLocal': 'Saved (local edit)', 'card.modified': 'modified', 'card.opEdit': 'Edit', 'card.opSplit': 'Split', 'card.opMerge': 'Merge', 'card.opMove': 'Move', 'card.opUndo': 'Undo', 'card.splitTitle': 'Split into two', 'card.splitNote': 'The cursor position is the split point.', 'card.splitDo': 'Split', 'card.splitConfirm': 'Split this card into two?', 'card.splitFail': 'Both sides need content', 'card.splitDone': 'Split into two', 'card.mergeConfirm': 'Merge the next card into this one? (the next card will be removed)', 'card.mergeFail': 'No next card to merge', 'card.mergeDone': 'Merged', 'card.moveTitle': 'Move to another note', 'card.moveDeck': 'Target note', 'card.moveConfirm': 'Move this card?', 'card.moveDone': 'Moved', 'card.noUndo': 'Nothing to undo', 'card.undone': 'Last operation undone', 'read.lh': 'Line height', 'read.cw': 'Card width', 'read.small': 'Small', 'read.medium': 'Medium', 'read.large': 'Large', 'read.tight': 'Tight', 'read.loose': 'Loose', 'read.narrow': 'Narrow', 'read.wide': 'Wide', 'img.cleanupNone': 'No unused images', 'img.cleanupConfirm': '{n} images are not referenced by any card (~{kb} KB). Delete?', 'img.cleanupDone': 'Cleaned {n} images', 'backup.remind': 'Changes not backed up for 7+ days — export a backup', 'backup.now': 'Back up', 'backup.nowBtn': 'Back up now', 'backup.folderSet': 'Choose backup folder', 'backup.folderChange': 'Change backup folder', 'backup.savedToFolder': 'Saved to backup folder: {name}', 'backup.fsaUnsupported': 'Folder backup not supported here — using normal download', 'ai.undo': 'Undo this refine', 'ai.undone': 'Original questions restored', 'ai.undoFail': 'Cannot undo: the deck has changed', 'ai.start': 'Start refine',
+      'ai.cardCount': '{n} cards', 'ai.ready': 'Ready', 'ai.notReady': 'Not configured', 'ai.canceled': 'Refining stopped', 'img.cleanup': 'Clean unused images', 'img.repair': 'Repair image index', 'img.repairRunning': 'Checking images…', 'img.repairOk': 'Image index is healthy ({n} images)', 'img.repairDone': 'Repaired: {added} restored, {dropped} stale entries dropped ({total} images)', 'img.repairRetyped': ', {n} image type(s) corrected', 'img.repairFail': 'Repair failed, please retry','search.ph': 'Search all notes…', 'search.empty': 'No matching cards', 'search.more': '{n} more matches — narrow the search', 'search.reviewFrom': 'Review from this card', 'search.openDeck': 'Open note', 'sort.recent': 'Recent', 'sort.name': 'Name', 'sort.cards': 'Cards', 'sort.due': 'Due','read.fs': 'Font size','pin.title': 'App lock (4-digit password)', 'pin.ph': '4-digit password', 'pin.set': 'Set password', 'pin.note': 'Stored locally (salted hash); forgetting the password requires clearing all data. Auto-locks 5 minutes after backgrounding.', 'pin.remove': 'Remove password', 'pin.badFormat': 'Password must be 4 digits', 'pin.setOk': 'Password set', 'pin.removed': 'Password removed', 'pin.androidOnly': 'App lock is Android-only', 'rem.title': 'Daily review reminder', 'rem.set': 'Enable', 'rem.cancel': 'Disable', 'rem.setOk': 'Reminder enabled (local notification)', 'rem.cancelled': 'Reminder disabled', 'rem.androidOnly': 'System reminders are Android-only','card.editTitle': 'Edit card', 'card.fTitle': 'Title', 'card.fQuestion': 'Question', 'card.fAnswer': 'Answer', 'card.editNote': 'Saving writes back to the source Markdown when possible; otherwise the card is updated locally and marked modified.', 'card.editConfirm': 'Save changes to this card?', 'card.answerRequired': 'Answer cannot be empty', 'card.savedRaw': 'Saved (source Markdown updated)', 'card.savedLocal': 'Saved (local edit)', 'card.modified': 'modified', 'card.opEdit': 'Edit', 'card.opSplit': 'Split', 'card.opMerge': 'Merge', 'card.opMove': 'Move', 'card.opUndo': 'Undo', 'card.splitTitle': 'Split into two', 'card.splitNote': 'The cursor position is the split point.', 'card.splitDo': 'Split', 'card.splitConfirm': 'Split this card into two?', 'card.splitFail': 'Both sides need content', 'card.splitDone': 'Split into two', 'card.mergeConfirm': 'Merge the next card into this one? (the next card will be removed)', 'card.mergeFail': 'No next card to merge', 'card.mergeDone': 'Merged', 'card.moveTitle': 'Move to another note', 'card.moveDeck': 'Target note', 'card.moveConfirm': 'Move this card?', 'card.moveDone': 'Moved', 'card.noUndo': 'Nothing to undo', 'card.undone': 'Last operation undone', 'read.lh': 'Line height', 'read.cw': 'Card width', 'read.small': 'Small', 'read.medium': 'Medium', 'read.large': 'Large', 'read.tight': 'Tight', 'read.loose': 'Loose', 'read.narrow': 'Narrow', 'read.wide': 'Wide', 'img.cleanupNone': 'No unused images', 'img.cleanupConfirm': '{n} images are not referenced by any card (~{kb} KB). Delete?', 'img.cleanupDone': 'Cleaned {n} images', 'backup.remind': 'Changes not backed up for 7+ days — export a backup', 'backup.now': 'Back up', 'backup.nowBtn': 'Back up now', 'backup.folderSet': 'Choose backup folder', 'backup.folderChange': 'Change backup folder', 'backup.savedToFolder': 'Saved to backup folder: {name}', 'backup.fsaUnsupported': 'Folder backup not supported here — using normal download', 'ai.undo': 'Undo this refine', 'ai.undone': 'Original questions restored', 'ai.undoFail': 'Cannot undo: the deck has changed', 'ai.start': 'Start refine',
       'ai.busy': 'Refine in progress, please wait', 'ai.needConfig': 'Configure the API URL and model first',
       'ai.progress': 'Refining… {done} / {total} cards ({batches} batches)',
       'ai.badFormat': 'Unparseable response (expected {"questions":[{"idx":..,"q":".."}]})',
@@ -2950,12 +2952,13 @@ body.light .hl-kw { color: #1a5fb4; }
     var dbPromise = null;
     var wiping = false; // 清库期间禁止重新打开连接（异步保存会把 deleteDatabase 重新 blocked）
     var wipeLocked = false; // 清库已开始：所有写入（IDB 与 localStorage）一律丢弃
+    var openAttempts = 0; // 打开尝试次数（供测试断言「失败后会重试」，不挂到 window）
 
     function openDB() {
       if (wiping) return Promise.resolve(null); // 清库中：读写直接失败，不再新建连接
       // 缓存同一个连接 Promise：并发调用（boot 加载中又来写图片）不再拿到未就绪的 db
       if (dbPromise) return dbPromise;
-      window.__mdfcOpenAttempts = (window.__mdfcOpenAttempts || 0) + 1;
+      openAttempts++;
       var p = new Promise(function (resolve) {
         if (typeof indexedDB === 'undefined') return resolve(null);
         var settled = false;
@@ -3075,6 +3078,7 @@ body.light .hl-kw { color: #1a5fb4; }
       isWiping: function () { return wiping; },
       lockWrites: function () { wipeLocked = true; },
       isLocked: function () { return wipeLocked; },
+      openAttempts: function () { return openAttempts; },
       rawPut: function (key, val) { return openDB().then(function () { return idbPut(key, val); }); },
       rawKeys: function () { return openDB().then(function () { return idbKeys(); }); },
       rawDelete: function (key) {
@@ -3620,6 +3624,8 @@ body.light .hl-kw { color: #1a5fb4; }
   /* 批次导入期间 图片相对路径 → 实际存储名 的映射（导入 md 时按路径重写引用）
    值为 null 表示该路径下有同名不同图的歧义（例如手机多选没有目录信息），此时宁可不重写 */
   var IMG_PATH_MAP = {};
+  /* 同名歧义时写进引用的哨兵前缀：渲染时显示「图片重名，无法确定」，而不是随便显示一张 */
+  var IMG_AMBIGUOUS = '__mdfc_ambiguous__/';
   /* 图片入库是异步的：多次「选择文件」要串行，导入 md 前必须等它完成 */
   var pendingImageWork = Promise.resolve();
 
@@ -3777,11 +3783,14 @@ body.light .hl-kw { color: #1a5fb4; }
       else if (baseMap[b] !== nm) baseMap[b] = null; // 同名不同图：只能按路径认
     });
     var fix = function (ref) {
+      var base = String(ref).split('/').pop();
+      var ambiguous = IMG_AMBIGUOUS + base;
       // 先按 md 所在目录拼；再试「相对 zip 根」的写法（很多导出工具写的是根相对路径）
-      var hit = pathMap[zipJoin(dir, ref)] || pathMap[zipJoin('', ref)];
-      if (hit) return hit;
-      var b = String(ref).split('/').pop();
-      return baseMap[b] || ref;
+      var k1 = zipJoin(dir, ref), k2 = zipJoin('', ref);
+      if (Object.prototype.hasOwnProperty.call(pathMap, k1)) return pathMap[k1] || ambiguous;
+      if (Object.prototype.hasOwnProperty.call(pathMap, k2)) return pathMap[k2] || ambiguous;
+      if (Object.prototype.hasOwnProperty.call(baseMap, base)) return baseMap[base] || ambiguous;
+      return ref;
     };
     text = text.replace(/(!\[[^\]]*\]\()([^)\s]+)/g, function (m, pre, p) { return pre + fix(p); });
     text = text.replace(/(!\[\[)([^\]|\r\n]+)/g, function (m, pre, p) { return pre + fix(p); });
@@ -3867,6 +3876,10 @@ body.light .hl-kw { color: #1a5fb4; }
       if (!m) return tag;
       if (/^(?:https?:|blob:|data:)/i.test(m[1])) return tag;
       var base = imgBase(m[1]);
+      // 同名歧义哨兵：明确告诉用户「分不清是哪张」，不要随便显示一张
+      if (String(m[1]).indexOf(IMG_AMBIGUOUS) === 0) {
+        return '<span class="img-missing">🖼 ' + ESC(t('img.ambiguous')) + '：' + ESC(base) + '</span>';
+      }
       // data-img 供解码失败兜底用：blob URL 里已经看不出原文件名了
       if (IMG_URLS[base]) return tag.replace(/src="[^"]*"/, 'src="' + IMG_URLS[base] + '" data-img="' + ESC(base) + '"');
       return '<span class="img-missing">🖼 ' + ESC(t('img.missing')) + '：' + ESC(base) + '</span>';
@@ -4286,7 +4299,6 @@ body.light .hl-kw { color: #1a5fb4; }
         var si = src.toLowerCase().indexOf(q);
         var snip = si >= 0 ? src.slice(Math.max(0, si - 18), si + q.length + 30) : src.slice(0, 46);
         out.push({ deckId: d.id, deckName: d.name, card: c, snippet: snip });
-        if (out.length >= 60) return;
       });
     });
     return out;
@@ -4491,7 +4503,8 @@ body.light .hl-kw { color: #1a5fb4; }
         if (tt) titleMap[tt] = { deckId: d.id, cardId: c.id };
       });
     });
-    return html.replace(/\[\[([^\]\n|]+)\]\]/g, function (m, target) {
+    return html.replace(/(<pre[\s\S]*?<\/pre>|<code[\s\S]*?<\/code>)|\[\[([^\]\n|]+)\]\]/g, function (m, code, target) {
+      if (code) return code; // 代码块 / 行内代码里的 [[x]] 原样保留
       var hit = titleMap[String(target).trim()];
       return hit
         ? '<a href="#" class="wikilink" data-act="wiki-jump" data-deck="' + hit.deckId + '" data-card="' + hit.cardId + '">' + ESC(String(target).trim()) + '</a>'
@@ -4520,10 +4533,8 @@ body.light .hl-kw { color: #1a5fb4; }
 
   function renderHome() {
     var totalCards = 0;
-    var knownCards = 0;
     state.decks.forEach(function (d) {
       totalCards += d.cards.length;
-      knownCards += knownOf(d);
     });
     var today = state.daily[todayKey()] || 0;
     var filter = state.settings.filter;
@@ -4752,15 +4763,20 @@ body.light .hl-kw { color: #1a5fb4; }
       zips.push(f);
     });
     var p = imgs.length ? importImageFiles(imgs, IMG_PATH_MAP) : Promise.resolve(0);
-    p.then(function (nImg) {
-      if (nImg) toast(tf('toast.imgTaken', { n: nImg }), 2600);
-      else if (imgs.length) toast(t('toast.imgNoStore'), 4200);
+    var finish = function (nImg) {
+      if (nImg > 0) toast(tf('toast.imgTaken', { n: nImg }), 2600);
+      else if (imgs.length && nImg === 0) toast(t('toast.imgNoStore'), 4200);
       if (!added && !imgs.length && !zips.length) {
         toast(arr.length ? t('toast.onlyMd') : t('toast.noFile'));
         return;
       }
       renderImportQueue();
       zips.forEach(function (z) { addQueueZip(z); });
+    };
+    // 图片存失败也要继续：队列照常渲染、zip 照常路由，别让整个导入卡死
+    p.then(finish, function () {
+      toast(t('toast.imgNoStore'), 4200);
+      finish(-1);
     });
   }
 
@@ -5429,7 +5445,18 @@ body.light .hl-kw { color: #1a5fb4; }
 
   // 队列/二轮/当前全空的会话是残留，直接清掉（并落盘）
   function pruneEmptySession() {
-    if (state.reviewSession && sessionRemaining() <= 0) {
+    var rs = state.reviewSession;
+    if (!rs) return;
+    // 原来的「全空」判定（含 currentId 也空）
+    var empty = sessionRemaining() <= 0;
+    // 防御：确实评完（rated >= total）但还残留 currentId 的会话。
+    // 合法暂停恒有 rated < total（单卡 0<1、最后一张待评 total-1<total），所以不会误杀。
+    var finished = typeof rs.rated === 'number' && typeof rs.total === 'number' &&
+      rs.rated >= rs.total &&
+      (rs.queueIds || []).length === 0 &&
+      (rs.round2Ids || []).length === 0 &&
+      !!rs.currentId;
+    if (empty || finished) {
       state.reviewSession = null;
       flushSave();
     }
@@ -6409,7 +6436,6 @@ body.light .hl-kw { color: #1a5fb4; }
   function backupPayload(deckIds) {
     var payload = JSON.parse(backupJson(deckIds));
     payload.kind = deckIds ? 'deck' : 'full';
-    if (!deckIds) delete payload.version_note;
     return payload;
   }
 
@@ -6669,29 +6695,6 @@ body.light .hl-kw { color: #1a5fb4; }
     }).catch(function () {
       toast(t('toast.badBackup'), 3000);
     });
-  }
-
-  function importBackup(text) {
-    var obj = null;
-    try { obj = JSON.parse(text); } catch (e) { obj = null; }
-    if (!obj || !Array.isArray(obj.decks)) {
-      toast(t('toast.badBackup'));
-      return;
-    }
-    if (!window.confirm(t('confirm.importBackup'))) return;
-    lastOpSnapshot = null; // 旧 json 恢复：撤销快照失效
-    // 恢复只覆盖「笔记 + 进度 + 统计」；AI 供应商配置（备份里本来就没有 Key）、主题、语言保留本机当前的
-    var prevSettings = state.settings;
-    state = normalizeState(obj);
-    state.settings.ai = prevSettings.ai;
-    state.settings.theme = prevSettings.theme;
-    state.settings.lang = prevSettings.lang;
-    pruneDaily();
-    applyTheme();
-    applyI18nStatic();
-    flushSave();
-    renderHome();
-    toast(tf('toast.backupImported', { n: state.decks.length }), 2600);
   }
 
   /* ============================== 事件 ============================== */
@@ -7509,6 +7512,9 @@ body.light .hl-kw { color: #1a5fb4; }
       isWiping: function () { return Store.isWiping(); },
       isLocked: function () { return Store.isLocked(); }
     },
+    openAttemptsForTest: function () { return Store.openAttempts(); },
+    globalSearch: globalSearch,
+    runGlobalSearch: runGlobalSearch,
     wipeOrder: function () { return window.__wipeOrder || null; },
     wipeAllData: function (dryRun) { return window.__wipeAllData(dryRun); },
     hasOpSnapshot: function () { return !!lastOpSnapshot; },
