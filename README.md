@@ -72,8 +72,8 @@ python -m http.server 8000
 
 **最简单：仓库根目录就有现成的 APK，直接下载安装**（debug 签名，安装时允许「未知来源」）：
 
-- GitHub：`https://raw.githubusercontent.com/fest77/flash-memory-cards/main/MDFlashCards-v1.12.11.apk`
-- Gitee：`https://gitee.com/festeel/flash-memory-cards/raw/main/MDFlashCards-v1.12.11.apk`
+- GitHub：`https://raw.githubusercontent.com/fest77/flash-memory-cards/main/MDFlashCards-v1.12.12.apk`
+- Gitee：`https://gitee.com/festeel/flash-memory-cards/raw/main/MDFlashCards-v1.12.12.apk`
 
 自己打包的其他方式：
 
@@ -267,7 +267,8 @@ md-flashcards/
 ├── tests/
 │   ├── core.test.cjs         # 63 项单元测试
 │   ├── run-browser-test.cjs  # 169 项 headless Edge 端到端
-│   ├── run-idb-test.cjs      # 8 项 IndexedDB 真实时钟回归（图片索引/类型/坏图占位）
+│   ├── run-idb-test.cjs      # 9 项 IndexedDB 真实时钟回归（图片索引/类型/同名图）
+│   ├── run-ui-test.cjs       # 7 项交互回归（大图缩放/平移/滑动关闭、宽表格横向滚动）
 │   ├── run-screenshots.cjs   # 生成 docs/images 截图
 │   └── fixtures/             # 测试用 zip
 ├── docs/
@@ -398,6 +399,7 @@ python scripts/build.py                      # 内联 → dist/md-flashcards.htm
 | 1.12.8 | 修复图片「未导入」：批量导入时并行写图会并发更新图片索引，导致索引丢失大部分条目，重启/更新后图片全部显示「图片未导入」，且重导同一个 zip 因「内容已存在」被静默跳过而修不回来。现在索引更新串行化、去重命中时自动补索引，并在启动时与「设置 → 存储 → 修复图片索引」里按本地实际存储重建索引（已损坏的图库可一键修回，无需删笔记重导） |
 | 1.12.0 | 内容体验与平台能力：KaTeX 公式（本地内联子集字体）、代码高亮/复制、图片点击缩放、阅读设置（字号/行距/卡宽）；全局搜索、卡片编辑/拆分/合并/移动+撤销、标签与排序；Obsidian callout 与 wikilink 跳转、题目语言跟随界面；安卓接收分享导入、PIN 应用锁、每日本地提醒 |
 | 1.12.9 | 与 1.12.8 同一批功能（图片索引修复）；此外修好了自动发版流程里发布说明文件被提前删除、导致 Gitee Release 上传失败的问题 |
+| 1.12.12 | 看图与表格体验：① 大图双击放大后**可以单指拖动平移**（原来只放大不能移），双指捏合改为连续缩放并把焦点固定在手指中间，缩放/平移都限制在可视范围内不会拖丢；② 未放大时**左右滑动即可退出大图**（跟安卓手势返回一致，带滑出动画），点空白处仍然可以关闭；③ **超宽表格底部可横向滚动**——表头和单元格有最小列宽、表格按内容宽度展开，列不再被挤成一条，窄表格保持原样不出现滚动条 |
 | 1.12.11 | 修复图片「串图/错图」：笔记 zip 里不同子目录可以有同名图片（实测样本 251 张图里 87 张重名，如 `images/image上/img001.png`、`images/image中/img001.png`）。旧逻辑按文件名存图且并行写入，同名图片会互相覆盖（实测只存下 198 张，53 张丢失），随后又按文件名把整批 md 的引用统一改成最后一张——结果 215 处引用里 50 处拿到别人的图。现在图片改为串行入库（每张都能拿到 `img001.png` / `-2` / `-3` 独立名字），引用按 zip 内完整路径精确重写（同名且只写了文件名时保持原样，不猜），导入时若有图片保存失败会明确提示数量。用户侧：升级后**重新导入一次该 zip 并选「覆盖」**即可把已串错的旧笔记纠正过来 |
 | 1.12.10 | 修复图片「内容异常」（卡面变成文件名）：Android 文件选择器/网盘/微信目录常把 svg 等文件报成 `application/octet-stream` 或空类型。浏览器对 PNG/JPEG 会按文件头嗅探照常显示，SVG 却只认 `image/svg+xml`，类型不对就整张解不出来。现在导入时按扩展名纠正存储的图片类型、启动/修复时按扩展名重建图片地址（旧数据无需重导即可恢复），「修复图片索引」会报告纠正了多少张；浏览器确实解不出的图改为显示「图片无法显示：文件名」占位，而不是把文件名撑成一张假图 |
 

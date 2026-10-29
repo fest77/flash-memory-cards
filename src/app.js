@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.11';
+  var APP_VERSION = '1.12.12';
   // 应用锁开关：手机系统普遍自带应用锁，默认隐藏该设置项（相关代码与原生桥全部保留）。
   // 需要恢复时把 false 改成 true（原生侧 APP_LOCK_ENABLED 同步改），选项即重新出现在「设置 → 存储」。
   var FEATURE_APP_LOCK = false;
@@ -4946,6 +4946,12 @@
     },
     normalizeImageBlob: normalizeImageBlob,
     imgMime: imgMime,
+    openImageViewer: openImageViewer,
+    closeImageViewer: closeImageViewer,
+    imgViewerTransform: function () {
+      var i = document.querySelector('#imgViewer img');
+      return i ? (i.style.transform || '') : '';
+    },
     rewriteZipImageRefs: rewriteZipImageRefs,
     zipJoin: zipJoin,
     importImageEntriesForTest: function (entries) {
@@ -5005,42 +5011,189 @@
   // 代码高亮钩子（core 渲染时调用）
   window.__mdfcHighlight = highlightCode;
 
-  /* ---------- 图片放大（点开看大图：双击缩放、双指捏合、点遮罩关闭） ---------- */
+  /* ---------- 图片放大（双击缩放、单指拖动、双指捏合、左右滑动关闭、点遮罩关闭） ---------- */
+  var imgViewerClosing = false;
+  var imgViewerTimer = 0;
   function openImageViewer(src) {
-    var v = $('#imgViewer');
-    if (!v) return;
+    var old = $('#imgViewer');
+    if (!old || !old.parentNode) return;
+    // 换一个干净的同名节点：每次打开都重新绑手势会叠加，第 N 次打开就有 N 套监听器互相打架
+    var v = old.cloneNode(false);
+    old.parentNode.replaceChild(v, old);
+    // 滑出动画还没结束又点开新图：取消上一次的收尾，否则新图会被一起隐藏
+    if (imgViewerTimer) { clearTimeout(imgViewerTimer); imgViewerTimer = 0; }
+    imgViewerClosing = false;
     v.innerHTML = '<img src="' + ESC(src) + '" alt="">';
     v.classList.remove('hidden');
     var img = v.querySelector('img');
     var scale = 1, tx = 0, ty = 0;
-    var apply = function () { img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')'; };
-    img._reset = function () { scale = 1; tx = 0; ty = 0; apply(); };
-    var lastTap = 0, lastDist = 0;
-    v.querySelector('img').addEventListener('touchend', function (e) {
-      var now = Date.now();
-      if (now - lastTap < 300) { // 双击：2x 复位切换
-        if (scale > 1) img._reset(); else { scale = 2; apply(); }
-      }
-      lastTap = now;
-    });
-    v.addEventListener('touchmove', function (e) {
+    var startX = 0, startY = 0, lastX = 0, lastY = 0, startT = 0;
+    var pinchDist = 0, pinchMx = 0, pinchMy = 0;
+    var moved = false, pinching = false, mouseDown = false;
+    var lastTap = 0;
+
+    var apply = function (anim) {
+      img.classList.toggle('noanim', !anim);
+      img.style.transform = 'translate3d(' + tx + 'px,' + ty + 'px,0) scale(' + scale + ')';
+    };
+    // 缩放后把图限制在可视范围内：留一点余量，拖到边缘就停住（不会把图拖丢）
+    var clampT = function () {
+      var r = img.getBoundingClientRect();
+      var maxX = Math.max(0, (r.width - v.clientWidth) / 2);
+      var maxY = Math.max(0, (r.height - v.clientHeight) / 2);
+      if (tx > maxX) tx = maxX;
+      if (tx < -maxX) tx = -maxX;
+      if (ty > maxY) ty = maxY;
+      if (ty < -maxY) ty = -maxY;
+    };
+    // 以屏幕上某点为中心缩放（双击 / 捏合都用它），点下面的内容保持不动
+    var zoomAt = function (ns, px, py, anim) {
+      ns = Math.min(6, Math.max(1, ns));
+      var k = ns / scale;
+      var cx = px - v.clientWidth / 2;
+      var cy = py - v.clientHeight / 2;
+      tx = cx - (cx - tx) * k;
+      ty = cy - (cy - ty) * k;
+      scale = ns;
+      if (scale <= 1.001) { scale = 1; tx = 0; ty = 0; }
+      clampT();
+      apply(anim);
+    };
+
+    v.addEventListener('touchstart', function (e) {
       if (e.touches.length === 2) {
+        pinching = true;
+        moved = true;
+        var a = e.touches[0], b = e.touches[1];
+        pinchDist = Math.sqrt(Math.pow(a.clientX - b.clientX, 2) + Math.pow(a.clientY - b.clientY, 2));
+        pinchMx = (a.clientX + b.clientX) / 2;
+        pinchMy = (a.clientY + b.clientY) / 2;
+        return;
+      }
+      if (e.touches.length === 1) {
+        var t0 = e.touches[0];
+        startX = lastX = t0.clientX;
+        startY = lastY = t0.clientY;
+        startT = Date.now();
+        moved = false;
+        pinching = false;
+      }
+    }, { passive: true });
+
+    v.addEventListener('touchmove', function (e) {
+      if (e.touches.length >= 2) {
         e.preventDefault();
-        var dx = e.touches[0].clientX - e.touches[1].clientX;
-        var dy = e.touches[0].clientY - e.touches[1].clientY;
-        var dist = Math.sqrt(dx * dx + dy * dy);
-        if (lastDist) { scale = Math.min(6, Math.max(0.4, scale * dist / lastDist)); apply(); }
-        lastDist = dist;
-      } else if (e.touches.length === 1 && scale > 1) {
-        e.preventDefault();
+        var a = e.touches[0], b = e.touches[1];
+        var dist = Math.sqrt(Math.pow(a.clientX - b.clientX, 2) + Math.pow(a.clientY - b.clientY, 2));
+        var mx = (a.clientX + b.clientX) / 2, my = (a.clientY + b.clientY) / 2;
+        if (pinchDist > 0) {
+          var ns = Math.min(6, Math.max(1, scale * dist / pinchDist));
+          var k = ns / scale;
+          var cx = mx - v.clientWidth / 2, cy = my - v.clientHeight / 2;
+          tx = cx - (cx - tx) * k + (mx - pinchMx);
+          ty = cy - (cy - ty) * k + (my - pinchMy);
+          scale = ns;
+          if (scale <= 1.001) { scale = 1; tx = 0; ty = 0; }
+          clampT();
+          apply(false);
+        }
+        pinchDist = dist; pinchMx = mx; pinchMy = my;
+        return;
+      }
+      if (e.touches.length === 1) {
+        var t0 = e.touches[0];
+        var dx = t0.clientX - lastX, dy = t0.clientY - lastY;
+        lastX = t0.clientX; lastY = t0.clientY;
+        if (Math.abs(t0.clientX - startX) > 8 || Math.abs(t0.clientY - startY) > 8) moved = true;
+        if (scale > 1.001) {
+          e.preventDefault();
+          tx += dx; ty += dy;
+          clampT();
+          apply(false);
+        } else if (moved && Math.abs(t0.clientX - startX) > 12) {
+          e.preventDefault(); // 横向滑动关闭，别让页面在背后滚动
+        }
       }
     }, { passive: false });
-    v.addEventListener('touchend', function () { lastDist = 0; });
+
+    var endTouch = function (e) {
+      if (e.touches && e.touches.length > 0) {
+        // 双指抬起一根：剩下那根继续拖，位置要从当前手指重新算，否则会跳一下
+        pinchDist = 0;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+        return;
+      }
+      pinchDist = 0;
+      if (pinching) { pinching = false; return; }
+      var dx = lastX - startX, dy = lastY - startY;
+      var dt = Date.now() - startT;
+      // 未放大时：左/右滑出去就关掉（跟系统返回手势一致）
+      if (scale <= 1.001 && dt < 700 && Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        closeImageViewer(dx > 0 ? 1 : -1);
+        return;
+      }
+      // 轻点（没拖动）→ 双击判定
+      if (!moved) {
+        var now = Date.now();
+        if (now - lastTap < 300) {
+          lastTap = 0;
+          if (scale > 1.05) { scale = 1; tx = 0; ty = 0; apply(true); }
+          else zoomAt(2.5, lastX, lastY, true);
+        } else {
+          lastTap = now;
+        }
+      }
+    };
+    v.addEventListener('touchend', endTouch);
+    v.addEventListener('touchcancel', function () { pinchDist = 0; pinching = false; });
+
+    // 桌面端：拖动平移 + 滚轮缩放（手机用不到，测试和电脑浏览器用得上）
+    img.addEventListener('mousedown', function (e) {
+      if (scale <= 1.001) return;
+      e.preventDefault();
+      mouseDown = true;
+      lastX = e.clientX; lastY = e.clientY;
+    });
+    v.addEventListener('mousemove', function (e) {
+      if (!mouseDown) return;
+      tx += e.clientX - lastX; ty += e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      clampT();
+      apply(false);
+    });
+    v.addEventListener('mouseup', function () { mouseDown = false; });
+    v.addEventListener('mouseleave', function () { mouseDown = false; });
+    v.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      var step = e.deltaY > 0 ? -0.25 : 0.25;
+      zoomAt(scale + step * scale, e.clientX, e.clientY, false);
+    }, { passive: false });
+
     v.addEventListener('click', function (e) { if (e.target === v) closeImageViewer(); });
   }
-  function closeImageViewer() {
+
+  /** dir: 1 向右滑出、-1 向左滑出、0/undefined 直接关闭 */
+  function closeImageViewer(dir) {
     var v = $('#imgViewer');
-    if (v) { v.classList.add('hidden'); v.innerHTML = ''; }
+    if (!v || v.classList.contains('hidden') || imgViewerClosing) return;
+    var img = v.querySelector('img');
+    if (img && dir) {
+      imgViewerClosing = true;
+      img.classList.remove('noanim');
+      img.style.transition = 'transform .18s ease-out, opacity .18s ease-out';
+      img.style.opacity = '0';
+      img.style.transform = 'translate3d(' + (dir * 45) + 'vw,' + 0 + 'px,0) scale(.9)';
+      imgViewerTimer = setTimeout(function () {
+        v.classList.add('hidden');
+        v.innerHTML = '';
+        imgViewerClosing = false;
+        imgViewerTimer = 0;
+      }, 180);
+      return;
+    }
+    v.classList.add('hidden');
+    v.innerHTML = '';
   }
 
   /**

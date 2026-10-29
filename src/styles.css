@@ -425,9 +425,26 @@ code {
   border-radius: 5px;
   font-size: .92em;
 }
-.md-table { overflow-x: auto; margin: 10px 0; }
-.md-table table { border-collapse: collapse; font-size: 14px; min-width: 100%; }
-.md-table th, .md-table td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+/* 表格：内容多时靠外层横向滚动，列宽不再被压扁（超宽表格底部有滚动条） */
+.md-table { overflow: visible; margin: 0; }
+.md-table-wrap {
+  overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  margin: 10px 0;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140,160,190,.55) transparent;
+}
+.md-table-wrap::-webkit-scrollbar { height: 7px; }
+.md-table-wrap::-webkit-scrollbar-track { background: transparent; }
+.md-table-wrap::-webkit-scrollbar-thumb { background: rgba(140,160,190,.5); border-radius: 4px; }
+.md-table table { border-collapse: collapse; font-size: 14px; width: max-content; min-width: 100%; }
+.md-table th, .md-table td {
+  border: 1px solid var(--line); padding: 7px 10px;
+  text-align: left; vertical-align: top;
+  min-width: 4.5em; max-width: 26em;
+}
 .md-table th { background: var(--subtle); font-weight: 600; }
 .md-table tr:nth-child(even) td { background: var(--faint); }
 blockquote {
@@ -483,7 +500,7 @@ a { color: var(--link); }
 .md-view { font-size: 14.5px; }
 .md-view p { margin: 6px 0; }
 .rv-q p { margin: 6px 0; }
-.rv-q .md-list, .rv-q .md-table { margin: 6px 0; }
+.rv-q .md-list, .rv-q .md-table-wrap { margin: 6px 0; }
 .rv-q code { font-size: .95em; }
 
 /* ---------------- 分类速记 ---------------- */
@@ -801,8 +818,18 @@ body.light .hl-cmt { color: #8a97a8; }
 body.light .hl-str { color: #3d7a2c; }
 body.light .hl-num { color: #a05f1c; }
 body.light .hl-kw { color: #1a5fb4; }
-#imgViewer { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.92); display: grid; place-items: center; }
-#imgViewer img { max-width: 96vw; max-height: 92vh; transition: transform .12s; will-change: transform; }
+#imgViewer {
+  position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.92);
+  display: grid; place-items: center;
+  touch-action: none; overscroll-behavior: none;
+}
+#imgViewer img {
+  max-width: 96vw; max-height: 92vh;
+  transition: transform .12s, opacity .12s;
+  will-change: transform; cursor: zoom-in;
+  -webkit-user-select: none; user-select: none; -webkit-user-drag: none;
+}
+#imgViewer img.noanim { transition: none; }
 
 /* 组 B：搜索 / 标签 / 排序 / 卡片操作 */
 #globalSearch { width: 100%; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--dashed); background: var(--subtle); color: var(--text-soft); margin-top: 6px; box-sizing: border-box; }
