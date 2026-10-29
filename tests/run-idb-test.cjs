@@ -284,6 +284,88 @@ async function main() {
     return true;
   })()`).catch(() => null);
 
+  // 9) 评分后落盘的 currentId 不能是「刚评完的那张」（v1.12.13）
+  //    用落盘日志抓「下一次 nextCard 覆盖之前」那次写入：修复前第一次写入是刚评的卡，修复后是 null
+  const afterRate = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    var md = '## 一\\n\\n第一段内容。\\n\\n## 二\\n\\n第二段内容。\\n\\n## 三\\n\\n第三段内容。\\n\\n## 四\\n\\n第四段内容。';
+    A.importText('idb-review-a', md, { mode: 'h2' }, { silent: true, replace: 'yes' });
+    var deck = A.state().decks.filter(function (d) { return d.name === 'idb-review-a'; })[0];
+    A.startReview([deck.id], { resumeOk: true });
+    var ratedId = A.state().reviewSession.currentId;
+    A.showAnswer();
+    window.__mdfcSaveLog = [];
+    A.rate('ok');
+    var log = window.__mdfcSaveLog.slice();
+    window.__mdfcSaveLog = null;
+    await A.flushSave();
+    var raw = JSON.parse(await A.readRawState());
+    var s = raw.reviewSession;
+    return {
+      cards: deck.cards.length,
+      ratedId: ratedId,
+      saveLog: log,
+      ratedIdSaved: log.indexOf(ratedId) >= 0,
+      persistedCurrentId: s ? s.currentId : 'NO_SESSION'
+    };
+  })()`);
+  check('评分时首次落盘的 currentId 不是刚评完的卡（落盘日志 + 磁盘双证）',
+    afterRate.cards >= 2 && afterRate.ratedId && afterRate.ratedIdSaved === false &&
+    afterRate.persistedCurrentId !== afterRate.ratedId, afterRate);
+
+  // 10) 跑完一整轮：内存与磁盘的 reviewSession 都必须是 null（原来磁盘残留 currentId=最后一张）
+  const afterFinish = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    var guard = 0;
+    function summaryShown() {
+      var s = document.getElementById('rvSummary');
+      return s && !s.classList.contains('hidden');
+    }
+    while (!summaryShown() && guard++ < 300) {
+      var show = document.querySelector('[data-act="show-answer"]');
+      if (show && show.offsetParent !== null) show.click();
+      var ok = document.querySelector('[data-act="rate"][data-rate="ok"]');
+      if (ok && ok.offsetParent !== null) ok.click();
+      await new Promise(function (r) { setTimeout(r, 25); });
+    }
+    // 不主动 flushSave：这里要验证的是「App 自己在结束时落盘了」，主动落盘会把 bug 掩盖掉
+    await new Promise(function (r) { setTimeout(r, 600); });
+    var raw = JSON.parse(await A.readRawState());
+    return {
+      summary: summaryShown(),
+      mem: A.state().reviewSession,
+      persisted: raw.reviewSession,
+      guard: guard
+    };
+  })()`, 120000);
+  check('复习结束后内存与磁盘的 reviewSession 均为 null',
+    afterFinish.summary === true && afterFinish.mem === null && afterFinish.persisted === null, afterFinish);
+
+  // 11) 防回归：单卡未评的合法会话不能被 prune 误清（prune 判定未改）
+  const legitSession = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    A.importText('idb-review-b', '# 唯一\\n\\n只有这一段内容。', { mode: 'para' }, { silent: true, replace: 'yes' });
+    var deck = A.state().decks.filter(function (d) { return d.name === 'idb-review-b'; })[0];
+    A.startReview([deck.id], { resumeOk: true });
+    var before = A.state().reviewSession;
+    var beforeId = before ? before.currentId : null;
+    A.renderHome();
+    await new Promise(function (r) { setTimeout(r, 60); });
+    var after = A.state().reviewSession;
+    // 收尾：把这张评掉，避免留下会话影响后续/下次运行
+    A.showAnswer();
+    A.rate('ok');
+    await A.flushSave();
+    return {
+      cards: deck.cards.length,
+      beforeId: beforeId,
+      stillThere: !!after,
+      afterId: after ? after.currentId : null
+    };
+  })()`);
+  check('单卡未评的合法会话不被误清（prune 判定未改）',
+    legitSession.cards === 1 && legitSession.stillThere === true && legitSession.afterId === legitSession.beforeId, legitSession);
+
   ws.close();
   proc.kill();
 

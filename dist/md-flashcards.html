@@ -3339,16 +3339,29 @@ body.light .hl-kw { color: #1a5fb4; }
   }
 
   var flushCount = 0;
+  /** 立即落盘，返回 Promise<boolean>（测试需要确定性；现有调用方忽略返回值） */
   function flushSave() {
     flushCount++;
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
-    if (Store.isLocked && Store.isLocked()) return; // 清库后不再写
+    if (Store.isLocked && Store.isLocked()) return Promise.resolve(false); // 清库后不再写
     try {
-      var pr = Store.save(JSON.stringify(state));
-      if (pr && typeof pr.then === 'function') {
-        pr.then(function (ok) { if (ok === false) notifySaveFail(); }).catch(notifySaveFail);
+      var json = JSON.stringify(state);
+      // 测试用落盘日志（未设置 window.__mdfcSaveLog 时零开销）：记录每次落盘的 currentId
+      if (window.__mdfcSaveLog) {
+        try { window.__mdfcSaveLog.push(state.reviewSession ? state.reviewSession.currentId : null); } catch (e) { /* ignore */ }
       }
-    } catch (e) { notifySaveFail(); }
+      var pr = Store.save(json);
+      if (pr && typeof pr.then === 'function') {
+        return pr.then(function (ok) {
+          if (ok === false) notifySaveFail();
+          return ok;
+        }, function () { notifySaveFail(); return false; });
+      }
+      return Promise.resolve(true);
+    } catch (e) {
+      notifySaveFail();
+      return Promise.resolve(false);
+    }
   }
 
   /* ============================== 派生数据 ============================== */
@@ -5671,10 +5684,10 @@ body.light .hl-kw { color: #1a5fb4; }
     }
     review.rated++;
     bumpDaily();
+    review.current = null; // 先清当前：落盘的是「currentId:null + 剩余队列」，被杀也不会重显刚评过的卡
     saveReviewSession();
     scheduleSave();
     flushSave();
-    review.current = null;
     nextCard();
   }
 
@@ -5733,6 +5746,7 @@ body.light .hl-kw { color: #1a5fb4; }
 
   function finishReview() {
     clearReviewSession();
+    flushSave(); // 清空后立即落盘：rate() 之前写进去的「最后一个待评卡」否则会留在库里，重启后诈尸
     $('#rvCard').classList.add('hidden');
     $('#btnShow').classList.add('hidden');
     $('#rateRow').classList.add('hidden');
@@ -7355,6 +7369,8 @@ body.light .hl-kw { color: #1a5fb4; }
     renderAiProviders: renderAiProviders,
     imgUrls: function () { return IMG_URLS; },
     flushCount: function () { return flushCount; },
+    flushSave: flushSave,
+    readRawState: function () { return Store.rawGet('state'); },
     highlightCode: (typeof highlightCode === 'function') ? highlightCode : null,
     parseBackupBuffer: parseBackupBuffer,
     referencedImageNames: referencedImageNames,
