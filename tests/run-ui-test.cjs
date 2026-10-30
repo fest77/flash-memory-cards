@@ -319,6 +319,48 @@ async function main() {
     mathReview.ansKatex >= 1 && mathReview.preKatex === 0 &&
     mathReview.preText.indexOf('$a+b=c$') >= 0, mathReview);
 
+  // 9) v1.12.17：单本笔记导出说明注明「不含图片和其他笔记」（三语）
+  const exportNote = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    var name = 'ui-export-note';
+    A.state().decks = A.state().decks.filter(function (d) { return d.name !== name; });
+    A.importText(name, '## 一\\n\\n导出说明用例内容。', { mode: 'h2' }, { silent: true, replace: 'yes' });
+    A.renderHome();
+    function openNote() {
+      var box = Array.prototype.filter.call(document.querySelectorAll('#deckList .deck'), function (el) {
+        var n = el.querySelector('.deck-name');
+        return n && n.textContent === name;
+      })[0];
+      var btn = box ? box.querySelector('[data-act="export-deck"]') : null;
+      if (btn) btn.click();
+      var note = document.querySelector('#modalBox .modal-note');
+      return note ? note.textContent : '';
+    }
+    function close() {
+      var b = document.querySelector('#modalBox [data-act="close-modal"]');
+      if (b) b.click();
+    }
+    function setLang(lang) {
+      var sel = document.getElementById('setLang');
+      if (!sel) return false;
+      sel.value = lang;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    }
+    var zh = openNote(); close();
+    var langEn = setLang('en'); var en = openNote(); close();
+    var langHant = setLang('zh-Hant'); var hant = openNote(); close();
+    var restored = setLang('zh-Hans');
+    A.state().decks = A.state().decks.filter(function (d) { return d.name !== name; });
+    A.renderHome();
+    return { zh: zh, en: en, hant: hant, langEn: langEn, langHant: langHant, restored: restored };
+  })()`);
+  check('单本笔记导出说明注明不含图片和其他笔记（三语）',
+    exportNote.zh.indexOf('单本笔记') >= 0 && exportNote.zh.indexOf('其他笔记') >= 0 &&
+    exportNote.hant.indexOf('單本筆記') >= 0 && exportNote.hant.indexOf('其他筆記') >= 0 &&
+    /single-note/i.test(exportNote.en) && /other notes/i.test(exportNote.en) &&
+    exportNote.langEn === true && exportNote.langHant === true && exportNote.restored === true, exportNote);
+
   ws.close();
   proc.kill();
 

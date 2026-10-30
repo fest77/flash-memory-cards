@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.16';
+  var APP_VERSION = '1.12.17';
   // 应用锁开关：手机系统普遍自带应用锁，默认隐藏该设置项（相关代码与原生桥全部保留）。
   // 需要恢复时把 false 改成 true（原生侧 APP_LOCK_ENABLED 同步改），选项即重新出现在「设置 → 存储」。
   var FEATURE_APP_LOCK = false;
@@ -103,7 +103,7 @@
       'toast.onlyMd': '未识别的文件（支持 md / txt / 图片）', 'toast.noFile': '没有选择文件',
       'toast.imgTaken': '已导入 {n} 张图片', 'toast.imgNoStore': '本机存储不可用，图片没有保存', 'toast.imgLost': '有 {n} 张图片保存失败（可能本机空间不足）', 'img.missing': '图片未导入', 'img.broken': '图片无法显示', 'img.ambiguous': '图片重名，无法确定',
       'toast.saveFail': '保存失败：本机存储不可用，进度可能丢失', 'toast.backupMerged': '已合并 {n} 本笔记（本地进度保留）', 'import.suffix': '(导入)', 'toast.notZip': '请选择 .zip 文件', 'toast.unzipping': '正在解压…', 'toast.zipEmpty': 'zip 里没有找到 md / 图片文件',
-      'toast.zipTaken': '已从 zip 中取出 {n} 篇笔记', 'toast.unzipFail': '解压失败：{msg}',
+      'toast.zipTaken': '已从 zip 中取出 {n} 篇笔记', 'toast.unzipFail': '解压失败：{msg}', 'toast.tooLarge': '文件过大，已停止解压',
       'toast.queueEmpty': '先选择要导入的文件',
       'confirm.batchReplace': '有 {n} 个笔记与现有笔记同名，用新内容替换吗？（取消 = 跳过同名；不同文件夹的同名文件会分别保留）',
       'toast.importing': '开始导入 {n} 个文件…', 'toast.importDone': '导入完成：{ok} / {total} 个笔记', 'toast.readFail': '读取失败：{name}',
@@ -145,7 +145,7 @@
       'rename.title': '重命名笔记', 'rename.note': '只改显示名称，卡片和复习进度不变。',
       'toast.nameEmpty': '名称不能为空', 'toast.renamed': '已重命名',
       'confirm.resetProgress': '把「{name}」的复习进度全部清零？', 'toast.progressCleared': '进度已清零',
-      'export.title': '导出备份', 'export.note': '{kb} KB · 含卡片与复习进度，不含图片（图片请用「备份全部」）。下载后文件在手机「下载」目录；也可以复制文本自行保存。',
+      'export.title': '导出备份', 'export.note': '{kb} KB · 单本笔记导出：含卡片与复习进度，不含图片与其他笔记（图片请用「备份全部」）。下载后文件在手机「下载」目录；也可以复制文本自行保存。',
       'export.copy': '复制文本', 'export.download': '下载 .json',
       'toast.savedToDownloads': '已保存到手机「下载」目录：{name}', 'toast.downloading': '已开始下载（若没反应请用「复制文本」）',
       'toast.downloadFail': '下载失败，请用「复制文本」', 'toast.copied': '已复制', 'toast.copyFail': '复制失败，请手动全选复制',
@@ -222,7 +222,7 @@
       'toast.onlyMd': '未識別的檔案（支援 md / txt / 圖片）', 'toast.noFile': '沒有選擇檔案',
       'toast.imgTaken': '已匯入 {n} 張圖片', 'toast.imgNoStore': '本機儲存不可用，圖片沒有保存', 'toast.imgLost': '有 {n} 張圖片保存失敗（可能本機空間不足）', 'img.missing': '圖片未匯入', 'img.broken': '圖片無法顯示', 'img.ambiguous': '圖片重名，無法確定',
       'toast.saveFail': '儲存失敗：本機儲存不可用，進度可能遺失', 'toast.backupMerged': '已合併 {n} 本筆記（本機進度保留）', 'import.suffix': '(匯入)', 'toast.notZip': '請選擇 .zip 檔案', 'toast.unzipping': '正在解壓…', 'toast.zipEmpty': 'zip 裡沒有找到 md / 圖片檔案',
-      'toast.zipTaken': '已從 zip 中取出 {n} 篇筆記', 'toast.unzipFail': '解壓失敗：{msg}',
+      'toast.zipTaken': '已從 zip 中取出 {n} 篇筆記', 'toast.unzipFail': '解壓失敗：{msg}', 'toast.tooLarge': '檔案過大，已停止解壓',
       'toast.queueEmpty': '先選擇要匯入的檔案',
       'confirm.batchReplace': '有 {n} 個筆記與現有筆記同名，用新內容替換嗎？（取消 = 跳過同名；不同資料夾的同名檔案會分別保留）',
       'toast.importing': '開始匯入 {n} 個檔案…', 'toast.importDone': '匯入完成：{ok} / {total} 個筆記', 'toast.readFail': '讀取失敗：{name}',
@@ -264,7 +264,7 @@
       'rename.title': '重新命名筆記', 'rename.note': '只改顯示名稱，卡片和複習進度不變。',
       'toast.nameEmpty': '名稱不能為空', 'toast.renamed': '已重新命名',
       'confirm.resetProgress': '把「{name}」的複習進度全部清零？', 'toast.progressCleared': '進度已清零',
-      'export.title': '匯出備份', 'export.note': '{kb} KB · 含卡片與複習進度，不含圖片（圖片請用「備份全部」）。下載後檔案在手機「下載」目錄；也可以複製文字自行保存。',
+      'export.title': '匯出備份', 'export.note': '{kb} KB · 單本筆記匯出：含卡片與複習進度，不含圖片與其他筆記（圖片請用「備份全部」）。下載後檔案在手機「下載」目錄；也可以複製文字自行保存。',
       'export.copy': '複製文字', 'export.download': '下載 .json',
       'toast.savedToDownloads': '已保存到手機「下載」目錄：{name}', 'toast.downloading': '已開始下載（若沒反應請用「複製文字」）',
       'toast.downloadFail': '下載失敗，請用「複製文字」', 'toast.copied': '已複製', 'toast.copyFail': '複製失敗，請手動全選複製',
@@ -341,7 +341,7 @@
       'toast.onlyMd': 'Unrecognized files (md / txt / images only)', 'toast.noFile': 'No file selected',
       'toast.imgTaken': 'Imported {n} images', 'toast.imgNoStore': 'Local storage unavailable, images not saved', 'toast.imgLost': '{n} images could not be saved (storage may be full)', 'img.missing': 'Image not imported', 'img.broken': 'Image cannot be shown', 'img.ambiguous': 'Duplicate image name',
       'toast.saveFail': 'Save failed: local storage unavailable, progress may be lost', 'toast.backupMerged': 'Merged {n} notes (local progress kept)', 'import.suffix': ' (imported)', 'toast.notZip': 'Please choose a .zip file', 'toast.unzipping': 'Unpacking…', 'toast.zipEmpty': 'No .md / .txt files found in the zip',
-      'toast.zipTaken': 'Extracted {n} notes from the zip', 'toast.unzipFail': 'Unpack failed: {msg}',
+      'toast.zipTaken': 'Extracted {n} notes from the zip', 'toast.unzipFail': 'Unpack failed: {msg}', 'toast.tooLarge': 'File too large; extraction stopped',
       'toast.queueEmpty': 'Select files to import first',
       'confirm.batchReplace': '{n} notes share names with existing ones. Replace them? (Cancel = skip those; same-name files from different folders are kept separately)',
       'toast.importing': 'Importing {n} files…', 'toast.importDone': 'Import finished: {ok} / {total} notes', 'toast.readFail': 'Read failed: {name}',
@@ -383,7 +383,7 @@
       'rename.title': 'Rename note', 'rename.note': 'Only the display name changes; cards and progress are untouched.',
       'toast.nameEmpty': 'Name cannot be empty', 'toast.renamed': 'Renamed',
       'confirm.resetProgress': 'Reset all review progress for "{name}"?', 'toast.progressCleared': 'Progress cleared',
-      'export.title': 'Export backup', 'export.note': '{kb} KB · includes cards and review progress, but not images (use "Backup all" for a full zip). The file lands in your phone\'s Downloads folder; you can also copy the text.',
+      'export.title': 'Export backup', 'export.note': '{kb} KB · Single-note export: includes cards and review progress, but not images or other notes (use "Backup all" for a full zip). The file lands in your phone\'s Downloads folder; you can also copy the text.',
       'export.copy': 'Copy text', 'export.download': 'Download .json',
       'toast.savedToDownloads': 'Saved to phone Downloads: {name}', 'toast.downloading': 'Download started (if nothing happens, use "Copy text")',
       'toast.downloadFail': 'Download failed — use "Copy text"', 'toast.copied': 'Copied', 'toast.copyFail': 'Copy failed — select and copy manually',
@@ -2542,6 +2542,7 @@
         });
       })
       .catch(function (err) {
+        if (err && err.code === 'tooLarge') { toast(t('toast.tooLarge'), 4200); return; }
         toast(tf('toast.unzipFail', { msg: (err && err.message) || '?' }), 4200);
       });
   }
@@ -4335,6 +4336,19 @@
       if (!stats[cid]) stats[cid] = backupObj.stats[cid]; // 只补缺失，不覆盖本地进度
     });
     next.stats = stats;
+    // 每日统计同样只补缺失：对已存在的日期不做求和，避免重复合并同一份备份时翻倍
+    var daily = next.daily && typeof next.daily === 'object' ? next.daily : {};
+    var backupDaily = backupObj.daily;
+    if (backupDaily && typeof backupDaily === 'object') {
+      Object.keys(backupDaily).forEach(function (day) {
+        if (day === '__proto__' || day === 'constructor' || day === 'prototype') return;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
+        if (Object.prototype.hasOwnProperty.call(daily, day)) return;
+        var v = backupDaily[day];
+        if (typeof v === 'number' && isFinite(v) && v >= 0) daily[day] = v;
+      });
+    }
+    next.daily = daily;
     return next;
   }
 
@@ -4360,7 +4374,8 @@
         '</div>'
       );
       modalPayload = { backupObj: obj, backupImages: r.images };
-    }).catch(function () {
+    }).catch(function (err) {
+      if (err && err.code === 'tooLarge') { toast(t('toast.tooLarge'), 4200); return; }
       toast(t('toast.badBackup'), 3000);
     });
   }
@@ -5526,8 +5541,14 @@
   };
 
   /* Android 外部分享/打开（.md/.zip）→ 走导入预览 */
-  window.__externalImport = function (name, b64) {
+  window.__externalImport = function (name, b64, declaredBytes) {
     try {
+      // Android 分享入口在原生侧已先查文件大小；这里再兜一层，避免其它调用方把超大内容送进来
+      var shareLimit = (Core.UNZIP_LIMITS && Core.UNZIP_LIMITS.totalBytes) || (300 * 1024 * 1024);
+      var shareBytes = (typeof declaredBytes === 'number' && isFinite(declaredBytes) && declaredBytes >= 0)
+        ? declaredBytes
+        : Math.floor(String(b64 || '').length * 3 / 4);
+      if (shareBytes > shareLimit) { toast(t('toast.tooLarge'), 4200); return; }
       var bin = atob(b64);
       var u8 = new Uint8Array(bin.length);
       for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
@@ -5546,7 +5567,8 @@
             '</div>'
           );
           modalPayload = { backupObj: r.obj, backupImages: r.images };
-        }).catch(function () {
+        }).catch(function (err) {
+          if (err && err.code === 'tooLarge') { toast(t('toast.tooLarge'), 4200); return; }
           addQueueFiles([new File([u8], name || 'import.zip', { type: 'application/zip' })]);
           openImportModal();
         });

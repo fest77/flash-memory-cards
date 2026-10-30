@@ -1045,6 +1045,145 @@ async function main() {
     updateFallback.plain && updateFallback.plain.version === '1.2.3' &&
     /最新|up to date/i.test(updateFallback.toast), updateFallback);
 
+  // 32) v1.12.17：解压预算——声明尺寸先判，压缩比与解压实测兜底，条数封顶
+  const zipBudget = await evalJs(`(async function () {
+    var Core = window.MDReviewCore;
+    var enc = new TextEncoder();
+    function mkZip(entries) {
+      var parts = [], central = [], off = 0;
+      entries.forEach(function (en) {
+        var nb = enc.encode(en.name);
+        var data = en.data;
+        var h = new Uint8Array(30), hv = new DataView(h.buffer);
+        hv.setUint32(0, 0x04034b50, true); hv.setUint16(4, 20, true); hv.setUint16(8, en.method, true);
+        hv.setUint32(18, data.length, true); hv.setUint32(22, data.length, true);
+        hv.setUint16(26, nb.length, true);
+        parts.push(h, nb, data);
+        var c = new Uint8Array(46), cv = new DataView(c.buffer);
+        cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true);
+        cv.setUint16(10, en.method, true);
+        cv.setUint32(20, data.length, true); cv.setUint32(24, en.size, true);
+        cv.setUint16(28, nb.length, true); cv.setUint32(42, off, true);
+        central.push(c, nb);
+        off += 30 + nb.length + data.length;
+      });
+      var cdSize = 0;
+      central.forEach(function (x) { cdSize += x.length; });
+      var e = new Uint8Array(22), ev = new DataView(e.buffer);
+      ev.setUint32(0, 0x06054b50, true);
+      ev.setUint16(8, entries.length, true); ev.setUint16(10, entries.length, true);
+      ev.setUint32(12, cdSize, true); ev.setUint32(16, off, true);
+      var all = parts.concat(central, [e]);
+      var total = 0, i;
+      for (i = 0; i < all.length; i++) total += all[i].length;
+      var out = new Uint8Array(total), p = 0;
+      for (i = 0; i < all.length; i++) { out.set(all[i], p); p += all[i].length; }
+      return out;
+    }
+    async function deflate(u8) {
+      var cs = new CompressionStream('deflate-raw');
+      var w = cs.writable.getWriter();
+      w.write(u8); w.close();
+      return new Uint8Array(await new Response(cs.readable).arrayBuffer());
+    }
+    function attempt(u8) {
+      return Core.unzipFiles(u8.buffer).then(function (list) { return { list: list }; }, function (e) { return { err: e }; });
+    }
+    var fileLimit = (Core.UNZIP_LIMITS && Core.UNZIP_LIMITS.fileBytes) || 30 * 1024 * 1024;
+    var totalLimit = (Core.UNZIP_LIMITS && Core.UNZIP_LIMITS.totalBytes) || 300 * 1024 * 1024;
+    var entriesLimit = (Core.UNZIP_LIMITS && Core.UNZIP_LIMITS.entries) || 2000;
+    var ratioLimit = (Core.UNZIP_LIMITS && Core.UNZIP_LIMITS.ratio) || 100;
+
+    // a) 单文件声明解压后超 30MB：解析阶段就拒绝，不进入解压
+    var bigDeclared = await attempt(mkZip([{ name: 'big.md', method: 0, data: enc.encode('x'), size: fileLimit + 1 }]));
+    // b) 整包声明累计超 300MB：11 个各 30MB（单条不超、压缩比也过关）
+    var many = [];
+    for (var k = 0; k < 11; k++) many.push({ name: 'p' + k + '.md', method: 0, data: new Uint8Array(320 * 1024), size: 30 * 1024 * 1024 });
+    var totalBomb = await attempt(mkZip(many));
+    // c) 声明压缩比超 100:1
+    var ratioData = new Uint8Array(8 * 1024 * 1024);
+    var ratioBomb = await attempt(mkZip([{ name: 'ratio.md', method: 8, data: await deflate(ratioData), size: ratioData.length }]));
+    // d) 声明尺寸撒谎（1KB），实际解压 31MB：按实测流量兜底
+    var liarData = new Uint8Array(31 * 1024 * 1024);
+    var liar = await attempt(mkZip([{ name: 'liar.md', method: 8, data: await deflate(liarData), size: 1024 }]));
+    // e) 条目数 2001：拒绝；正好 2000：接受
+    var over = [];
+    for (var j = 0; j < entriesLimit + 1; j++) over.push({ name: 'n' + j + '.md', method: 0, data: enc.encode('x'), size: 1 });
+    var tooMany = await attempt(mkZip(over));
+    var atLimit = await attempt(mkZip(over.slice(0, entriesLimit)));
+    // f) 正常小 zip：接受
+    var okData = enc.encode('hello');
+    var control = await attempt(mkZip([{ name: 'ok.md', method: 8, data: await deflate(okData), size: okData.length }]));
+
+    function rejected(r) { return !!(r.err && r.err.code === 'tooLarge' && /文件过大/.test(r.err.message)); }
+    return {
+      limits: Core.UNZIP_LIMITS || null,
+      expectLimits: { f: fileLimit, t: totalLimit, e: entriesLimit, r: ratioLimit },
+      big: rejected(bigDeclared), total: rejected(totalBomb), ratio: rejected(ratioBomb),
+      liar: rejected(liar), many: rejected(tooMany),
+      atLimit: !!(atLimit.list && atLimit.list.length === entriesLimit),
+      control: !!(control.list && control.list.length === 1 && new TextDecoder().decode(control.list[0].bytes) === 'hello')
+    };
+  })()`);
+  check('解压预算：单文件/整包/条数/压缩比/实测超限都中止且不解压截断',
+    zipBudget.big === true && zipBudget.total === true && zipBudget.ratio === true &&
+    zipBudget.liar === true && zipBudget.many === true && zipBudget.atLimit === true &&
+    zipBudget.control === true, zipBudget);
+
+  // 33) v1.12.17：合并备份的每日统计只补缺失日期，不求和；重复合并不翻倍
+  const dailyMerge = await evalJs(`(function () {
+    var A = window.MDReviewApp;
+    var local = { decks: [], stats: {}, daily: { '2026-10-01': 5, '2026-10-02': 2 } };
+    var backup = JSON.parse('{"decks":[],"stats":{},"daily":{"2026-10-01":999,"2026-10-03":7,"bad":3,"__proto__":{"polluted":true}}}');
+    var once = A.mergeBackupState(local, backup);
+    var twice = A.mergeBackupState(once, backup);
+    return {
+      oct1: once.daily['2026-10-01'], oct2: once.daily['2026-10-02'], oct3: once.daily['2026-10-03'],
+      twiceOct1: twice.daily['2026-10-01'], twiceOct3: twice.daily['2026-10-03'],
+      bad: Object.prototype.hasOwnProperty.call(once.daily, 'bad'),
+      polluted: ({}).polluted === true,
+      protoSafe: Object.getPrototypeOf(once.daily) === Object.prototype
+    };
+  })()`);
+  check('合并备份每日统计只补缺失日期、不求和（重复合并不翻倍）',
+    dailyMerge.oct1 === 5 && dailyMerge.oct2 === 2 && dailyMerge.oct3 === 7 &&
+    dailyMerge.twiceOct1 === 5 && dailyMerge.twiceOct3 === 7 &&
+    dailyMerge.bad === false && dailyMerge.polluted === false && dailyMerge.protoSafe === true, dailyMerge);
+
+  // 34) v1.12.17：外部分享大文件在 atob 之前按声明体积拦截，不先读进内存
+  const shareLimit = await evalJs(`(async function () {
+    var Core = window.MDReviewCore, enc = new TextEncoder();
+    var payload = {
+      version: '1.12.17', kind: 'full', exportedAt: Date.now(),
+      decks: [{ id: 'dsharebig', name: 'share-big', cards: [{ id: 'csharebig', title: 't', question: '', answer: '分享阈值答案，长度足够。' }] }],
+      stats: {}
+    };
+    var zip = Core.zipStore([{ name: 'backup.json', data: enc.encode(JSON.stringify(payload)) }]);
+    var raw = '';
+    for (var i = 0; i < zip.length; i++) raw += String.fromCharCode(zip[i]);
+    var b64 = btoa(raw);
+    function closeAny() {
+      var b = document.querySelector('#modalBox [data-act="close-modal"]');
+      if (b) b.click();
+    }
+    function modalOpen() { return !document.getElementById('modal').classList.contains('hidden'); }
+    var limit = (Core.UNZIP_LIMITS && Core.UNZIP_LIMITS.totalBytes) || (300 * 1024 * 1024);
+    closeAny();
+    window.__externalImport('big-share.zip', b64, limit + 1);
+    await new Promise(function (r) { setTimeout(r, 220); });
+    var tEl = document.getElementById('toast');
+    var big = { toast: tEl ? tEl.textContent : '', modal: modalOpen() };
+    closeAny();
+    window.__externalImport('small-share.zip', b64, 100);
+    await new Promise(function (r) { setTimeout(r, 220); });
+    var small = { modal: modalOpen() };
+    closeAny();
+    return { big: big, small: small };
+  })()`);
+  check('外部分享超 300MB 直接提示、不打开导入；小文件照常预览',
+    shareLimit.big.modal === false && /文件过大/.test(shareLimit.big.toast) === true &&
+    shareLimit.small.modal === true, shareLimit);
+
   // 收尾：清掉本组测试写入的图片探针
   await evalJs(`(async function () {
     var A = window.MDReviewApp;

@@ -52,6 +52,8 @@ public class MainActivity extends Activity {
     private static final int REQ_PICK_FILES = 1001;
     private static final String ASSET_HOST = "appassets.androidplatform.net";
     private static final String START_URL = "https://" + ASSET_HOST + "/index.html";
+    // 外部分享入口的体积阈值（与 Web 端解压整包上限一致）：超限直接提示，不读进内存
+    private static final long MAX_SHARE_BYTES = 300L * 1024 * 1024;
 
     private WebView webView;
     private ValueCallback<Uri[]> pendingFileCallback;
@@ -193,8 +195,9 @@ public class MainActivity extends Activity {
         if (Intent.ACTION_SEND.equals(action)) {
             if (intent.getExtras() != null && intent.getStringExtra(Intent.EXTRA_TEXT) != null) {
                 String text = intent.getStringExtra(Intent.EXTRA_TEXT);
-                final String b64 = Base64.getEncoder().encodeToString(text.getBytes(StandardCharsets.UTF_8));
-                pushExternalImport(b64, "shared.md");
+                byte[] textBytes = text.getBytes(StandardCharsets.UTF_8);
+                final String b64 = Base64.getEncoder().encodeToString(textBytes);
+                pushExternalImport(b64, "shared.md", textBytes.length);
                 return;
             }
             uri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
@@ -205,25 +208,65 @@ public class MainActivity extends Activity {
         try {
             name = uri.getLastPathSegment();
             if (name == null || !name.matches(".*\\.(md|markdown|txt|zip)$")) name = "import.md";
-            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+            long declared = queryShareSize(uri);
+            if (declared > MAX_SHARE_BYTES) {
+                showShareTooLarge();
+                return;
+            }
+            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream(
+                declared > 0 && declared < 1024 * 1024 ? (int) declared : 8192);
             java.io.InputStream is = getContentResolver().openInputStream(uri);
+            if (is == null) throw new IOException("openInputStream failed");
             byte[] buf = new byte[8192];
             int n;
-            while ((n = is.read(buf)) > 0) bos.write(buf, 0, n);
-            is.close();
+            long total = 0;
+            try {
+                while ((n = is.read(buf)) > 0) {
+                    total += n;
+                    if (total > MAX_SHARE_BYTES) { // 声明尺寸未知/不可信时的兜底：读到超限即停
+                        showShareTooLarge();
+                        return;
+                    }
+                    bos.write(buf, 0, n);
+                }
+            } finally {
+                is.close();
+            }
             final String b64 = Base64.getEncoder().encodeToString(bos.toByteArray());
-            pushExternalImport(b64, name);
+            pushExternalImport(b64, name, total);
         } catch (Exception e) {
             Toast.makeText(this, "无法读取分享的文件", Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void pushExternalImport(final String b64, final String name) {
-        // 冷启动时 Web 端可能还没挂上 __externalImport：最多重试 10 次（约 6 秒）
-        pushExternalImportRetry(b64, name, 0);
+    /** 分享入口的文件体积：优先 OpenableColumns.SIZE，退而用 AssetFileDescriptor 长度；未知返回 -1。 */
+    private long queryShareSize(Uri uri) {
+        long size = -1;
+        try (android.database.Cursor c = getContentResolver().query(
+                uri, new String[]{android.provider.OpenableColumns.SIZE}, null, null, null)) {
+            if (c != null && c.moveToFirst()) {
+                int idx = c.getColumnIndex(android.provider.OpenableColumns.SIZE);
+                if (idx >= 0 && !c.isNull(idx)) size = c.getLong(idx);
+            }
+        } catch (Exception ignored) { /* 查询失败按未知处理，交给读取时兜底 */ }
+        if (size < 0) {
+            try (android.content.res.AssetFileDescriptor fd = getContentResolver().openAssetFileDescriptor(uri, "r")) {
+                if (fd != null) size = fd.getLength();
+            } catch (Exception ignored) { /* 同上 */ }
+        }
+        return size;
     }
 
-    private void pushExternalImportRetry(final String b64, final String name, final int attempt) {
+    private void showShareTooLarge() {
+        Toast.makeText(this, getString(R.string.share_too_large), Toast.LENGTH_LONG).show();
+    }
+
+    private void pushExternalImport(final String b64, final String name, final long bytes) {
+        // 冷启动时 Web 端可能还没挂上 __externalImport：最多重试 10 次（约 6 秒）
+        pushExternalImportRetry(b64, name, bytes, 0);
+    }
+
+    private void pushExternalImportRetry(final String b64, final String name, final long bytes, final int attempt) {
         if (webView == null) return;
         // 文件名走 JSON 转义，避免引号/反斜杠注入
         final String jsName = org.json.JSONObject.quote(name == null ? "import.md" : name);
@@ -231,9 +274,9 @@ public class MainActivity extends Activity {
         new Handler(Looper.getMainLooper()).postDelayed(() -> webView.evaluateJavascript(call, value -> {
             boolean ready = value != null && value.contains("true");
             if (ready) {
-                webView.evaluateJavascript("window.__externalImport(" + jsName + ",'" + b64 + "')", null);
+                webView.evaluateJavascript("window.__externalImport(" + jsName + ",'" + b64 + "'," + bytes + ")", null);
             } else if (attempt < 10) {
-                pushExternalImportRetry(b64, name, attempt + 1);
+                pushExternalImportRetry(b64, name, bytes, attempt + 1);
             } else {
                 Toast.makeText(MainActivity.this, "导入准备超时，请在应用内手动导入", Toast.LENGTH_LONG).show();
             }

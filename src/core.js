@@ -940,6 +940,24 @@
 
   var ZIP_TEXT_EXT = /\.(md|markdown|txt)$/i;
 
+  // zip 解压预算：压缩包里的声明尺寸不可信，解压时必须按实测再判一次
+  var UNZIP_LIMITS = {
+    fileBytes: 30 * 1024 * 1024,   // 单个文件解压后 30 MB
+    totalBytes: 300 * 1024 * 1024, // 整包累计解压后 300 MB
+    entries: 2000,                 // 最多 2000 个文件条目
+    ratio: 100                     // 单条目压缩比上限 100:1
+  };
+
+  function tooLargeError() {
+    var e = new Error('文件过大，已停止解压');
+    e.code = 'tooLarge';
+    return e;
+  }
+
+  function ratioTooHigh(size, compSize) {
+    return size > 0 && (compSize <= 0 || size / compSize > UNZIP_LIMITS.ratio);
+  }
+
   function decodeBytes(bytes) {
     return new TextDecoder('utf-8').decode(bytes).replace(/^\uFEFF/, '');
   }
@@ -955,20 +973,50 @@
     return decodeBytes(bytes);
   }
 
-  function inflateRawEntry(data) {
+  function inflateRawEntry(data, maxBytes) {
     return new Promise(function (resolve, reject) {
       if (typeof DecompressionStream === 'undefined') {
         reject(new Error('当前浏览器不支持 zip 解压（DecompressionStream），请升级浏览器或改选 md 文件'));
         return;
       }
+      var reader;
       try {
         var stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-        new Response(stream).arrayBuffer().then(function (buf) {
-          resolve(new Uint8Array(buf));
-        }, reject);
+        reader = stream.getReader();
       } catch (e) {
         reject(e);
+        return;
       }
+      var chunks = [];
+      var total = 0;
+      function finish() {
+        var out = new Uint8Array(total);
+        var off = 0;
+        for (var i = 0; i < chunks.length; i++) {
+          out.set(chunks[i], off);
+          off += chunks[i].length;
+        }
+        resolve(out);
+      }
+      // 边解边计数：声明尺寸作假时，也不能先把整颗炸弹读进内存
+      function pump() {
+        reader.read().then(function (r) {
+          if (r.done) { finish(); return; }
+          var chunk = r.value;
+          total += chunk.length;
+          if (maxBytes != null && total > maxBytes) {
+            try {
+              var cp = reader.cancel();
+              if (cp && typeof cp.catch === 'function') cp.catch(function () { /* ignore */ });
+            } catch (e) { /* ignore */ }
+            reject(tooLargeError());
+            return;
+          }
+          chunks.push(chunk);
+          pump();
+        }, reject);
+      }
+      pump();
     });
   }
 
@@ -1001,12 +1049,15 @@
       var cdOffset = view.getUint32(eocd + 16, true);
       var accept = filter || ZIP_TEXT_EXT;
       var entries = [];
+      var fileCount = 0;
+      var declaredTotal = 0;
       var p = cdOffset;
       for (var k = 0; k < count; k++) {
         if (p + 46 > bytes.length || view.getUint32(p, true) !== 0x02014b50) break;
         var flags = view.getUint16(p + 8, true);
         var method = view.getUint16(p + 10, true);
         var compSize = view.getUint32(p + 20, true);
+        var uncompSize = view.getUint32(p + 24, true);
         var nameLen = view.getUint16(p + 28, true);
         var extraLen = view.getUint16(p + 30, true);
         var commentLen = view.getUint16(p + 32, true);
@@ -1020,26 +1071,50 @@
         var base = name.split('/').pop();
         if (!base || base.charAt(0) === '.') continue;
         if (!accept.test(name)) continue;
+        fileCount++;
+        if (fileCount > UNZIP_LIMITS.entries) { reject(tooLargeError()); return; }
+        // 先按中央目录声明的尺寸拦一次，避免先解压再发现超限
+        if (uncompSize > UNZIP_LIMITS.fileBytes || ratioTooHigh(uncompSize, compSize)) {
+          reject(tooLargeError());
+          return;
+        }
+        declaredTotal += uncompSize;
+        if (declaredTotal > UNZIP_LIMITS.totalBytes) { reject(tooLargeError()); return; }
         if (localOff + 30 > bytes.length || view.getUint32(localOff, true) !== 0x04034b50) continue;
         var lNameLen = view.getUint16(localOff + 26, true);
         var lExtraLen = view.getUint16(localOff + 28, true);
         var dataStart = localOff + 30 + lNameLen + lExtraLen;
         if (dataStart + compSize > bytes.length) continue;
-        entries.push({ name: name, method: method, data: bytes.subarray(dataStart, dataStart + compSize) });
+        entries.push({ name: name, method: method, compSize: compSize, data: bytes.subarray(dataStart, dataStart + compSize) });
       }
       if (!entries.length) {
         resolve([]);
         return;
       }
-      Promise.all(entries.map(function (en) {
-        if (en.method === 0) return Promise.resolve({ name: en.name, bytes: en.data });
-        if (en.method === 8) {
-          return inflateRawEntry(en.data).then(function (out) { return { name: en.name, bytes: out }; });
-        }
-        return Promise.resolve(null);
-      })).then(function (list) {
-        resolve(list.filter(Boolean));
-      }, reject);
+      // 串行解压：累计体积必须按实测逐个累加，并发会把整包同时展开在内存里
+      var out = [];
+      var totalActual = 0;
+      var chain = Promise.resolve();
+      entries.forEach(function (en) {
+        chain = chain.then(function () {
+          var cap = Math.min(UNZIP_LIMITS.fileBytes, UNZIP_LIMITS.totalBytes - totalActual);
+          if (cap <= 0) throw tooLargeError();
+          if (en.method === 0) {
+            if (en.data.length > cap || ratioTooHigh(en.data.length, en.compSize)) throw tooLargeError();
+            totalActual += en.data.length;
+            out.push({ name: en.name, bytes: en.data });
+            return;
+          }
+          if (en.method === 8) {
+            return inflateRawEntry(en.data, cap).then(function (outBytes) {
+              if (outBytes.length > cap || ratioTooHigh(outBytes.length, en.compSize)) throw tooLargeError();
+              totalActual += outBytes.length;
+              out.push({ name: en.name, bytes: outBytes });
+            });
+          }
+        });
+      });
+      chain.then(function () { resolve(out); }, reject);
     });
   }
 
@@ -1192,6 +1267,7 @@
     schedule: schedule,
     isDue: isDue,
     BOX_IVL: BOX_IVL,
+    UNZIP_LIMITS: UNZIP_LIMITS,
     unzipFiles: unzipFiles,
     isMathCandidate: isMathCandidate,
     zipStore: zipStore,
