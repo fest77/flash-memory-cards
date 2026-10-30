@@ -2457,7 +2457,7 @@ body.light .hl-kw { color: #1a5fb4; }
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.15';
+  var APP_VERSION = '1.12.16';
   // 应用锁开关：手机系统普遍自带应用锁，默认隐藏该设置项（相关代码与原生桥全部保留）。
   // 需要恢复时把 false 改成 true（原生侧 APP_LOCK_ENABLED 同步改），选项即重新出现在「设置 → 存储」。
   var FEATURE_APP_LOCK = false;
@@ -2964,7 +2964,14 @@ body.light .hl-kw { color: #1a5fb4; }
         var settled = false;
         var timer = 0;
         var finish = function (v) {
-          if (settled) return;
+          if (settled) {
+            // 超时（或 blocked/error）之后才到达的成功连接没人会用，必须关掉；
+            // 否则它一直占着库，deleteDatabase 永远 blocked，「清空数据」卡死。
+            if (v && v !== db && typeof v.close === 'function') {
+              try { v.close(); } catch (e) { /* ignore */ }
+            }
+            return;
+          }
           settled = true;
           if (timer) { clearTimeout(timer); timer = 0; }
           db = v;
@@ -3260,6 +3267,52 @@ body.light .hl-kw { color: #1a5fb4; }
     };
   }
 
+  // 备份/旧版本里的会话可能只有 queueIds：缺 round2Ids/deckIds 会让首页读取时抛错白屏。
+  // 边界处补齐所有字段；字段形状不可信时宁可丢弃 undo，也不要带着半截数据进复习。
+  function normalizeReviewSession(raw) {
+    if (!raw || typeof raw !== 'object' || !Array.isArray(raw.queueIds)) return null;
+    var ids = function (arr) {
+      return Array.isArray(arr) ? arr.filter(function (x) { return typeof x === 'string' && x; }) : [];
+    };
+    var num = function (v, d) { return typeof v === 'number' && isFinite(v) && v >= 0 ? v : d; };
+    var queueIds = ids(raw.queueIds);
+    var round2Ids = ids(raw.round2Ids);
+    var currentId = typeof raw.currentId === 'string' && raw.currentId ? raw.currentId : null;
+    var undo = null;
+    var u = raw.undo;
+    if (u && typeof u === 'object' && Array.isArray(u.queueIds) && Array.isArray(u.round2Ids)) {
+      undo = {
+        cardId: typeof u.cardId === 'string' ? u.cardId : '',
+        dayKey: typeof u.dayKey === 'string' ? u.dayKey : '',
+        stat: u.stat || null,
+        queueIds: ids(u.queueIds),
+        round2Ids: ids(u.round2Ids),
+        phase: u.phase === 2 ? 2 : 1,
+        rated: num(u.rated, 0),
+        okCount: num(u.okCount, 0),
+        fuzzyCount: num(u.fuzzyCount, 0),
+        badCount: num(u.badCount, 0),
+        total: num(u.total, 0)
+      };
+    }
+    return {
+      deckIds: ids(raw.deckIds),
+      filter: typeof raw.filter === 'string' ? raw.filter : 'all',
+      deckName: typeof raw.deckName === 'string' && raw.deckName ? raw.deckName : t('deck.defaultName'),
+      phase: raw.phase === 2 ? 2 : 1,
+      total: num(raw.total, queueIds.length + round2Ids.length + (currentId ? 1 : 0)),
+      rated: num(raw.rated, 0),
+      okCount: num(raw.okCount, 0),
+      fuzzyCount: num(raw.fuzzyCount, 0),
+      badCount: num(raw.badCount, 0),
+      queueIds: queueIds,
+      round2Ids: round2Ids,
+      currentId: currentId,
+      undo: undo,
+      savedAt: num(raw.savedAt, 0)
+    };
+  }
+
   function normalizeState(raw) {
     var s = emptyState();
     if (!raw || typeof raw !== 'object') {
@@ -3301,9 +3354,8 @@ body.light .hl-kw { color: #1a5fb4; }
     }
     if (raw.stats && typeof raw.stats === 'object') s.stats = raw.stats;
     if (raw.daily && typeof raw.daily === 'object') s.daily = raw.daily;
-    if (raw.reviewSession && typeof raw.reviewSession === 'object' && Array.isArray(raw.reviewSession.queueIds)) {
-      s.reviewSession = raw.reviewSession; // 复习会话（继续上次）
-    }
+    var sess = normalizeReviewSession(raw.reviewSession);
+    if (sess) s.reviewSession = sess;
     ['lastBackupAt', 'lastChangeAt', 'backupRemindDismissedAt'].forEach(function (k) {
       if (typeof raw[k] === 'number') s[k] = raw[k];
     });
@@ -4345,7 +4397,10 @@ body.light .hl-kw { color: #1a5fb4; }
     'https://gcore.jsdelivr.net/gh/fest77/flash-memory-cards@main/latest.json',
     'https://testingcf.jsdelivr.net/gh/fest77/flash-memory-cards@main/latest.json',
     'https://cdn.jsdelivr.net/gh/fest77/flash-memory-cards@main/latest.json',
-    'https://raw.githubusercontent.com/fest77/flash-memory-cards/main/latest.json'
+    'https://raw.githubusercontent.com/fest77/flash-memory-cards/main/latest.json',
+    // Gitee 的 raw 地址不返回 Access-Control-Allow-Origin，浏览器里必被 CORS 拦掉；
+    // 只有 API v5 的 contents 端点带 ACAO:*，所以兜底走 API 并解 base64。
+    'https://gitee.com/api/v5/repos/festeel/flash-memory-cards/contents/latest.json?ref=main'
   ];
   var RELEASES_URL = 'https://gitee.com/festeel/flash-memory-cards/releases';
 
@@ -4360,12 +4415,26 @@ body.light .hl-kw { color: #1a5fb4; }
     return 0;
   }
 
+  // 统一各镜像的返回形状：GitHub/jsDelivr 直接是 {version}，
+  // Gitee contents API 是 {encoding:'base64', content:'<base64 的 latest.json>'}。
+  function latestPayload(data) {
+    if (!data || typeof data !== 'object') return data;
+    if (typeof data.version === 'string') return data;
+    if (data.encoding === 'base64' && typeof data.content === 'string') {
+      var bin = atob(data.content.replace(/\s+/g, ''));
+      var bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return JSON.parse(new TextDecoder().decode(bytes));
+    }
+    return data;
+  }
+
   function fetchLatest(i) {
     if (i >= UPDATE_JSON_URLS.length) return Promise.reject(new Error('unreachable'));
     return fetch(UPDATE_JSON_URLS[i], { cache: 'no-store' }).then(function (r) {
       if (!r.ok) throw new Error('http ' + r.status);
       return r.json();
-    }).catch(function () { return fetchLatest(i + 1); });
+    }).then(latestPayload).catch(function () { return fetchLatest(i + 1); });
   }
 
   function checkUpdate() {
@@ -4411,7 +4480,25 @@ body.light .hl-kw { color: #1a5fb4; }
       codeSegs.push(code);
       return '\u0003C' + (codeSegs.length - 1) + '\u0004';
     };
-    text = text.replace(/```[\s\S]*?```/g, function (m) { return protect(m); });
+    // 围栏行级扫描：``` 与 ~~~ 都保护（core 的 RE_FENCE 同样支持两种），
+    // 且未闭合的围栏会一直保护到文末，和 Markdown 渲染保持一致。
+    (function () {
+      var lines = text.split('\n');
+      var fence = null;
+      for (var i = 0; i < lines.length; i++) {
+        var m = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(lines[i]);
+        if (!fence) {
+          if (m) {
+            fence = { ch: m[1].charAt(0), len: m[1].length };
+            lines[i] = protect(lines[i]);
+          }
+        } else {
+          lines[i] = protect(lines[i]);
+          if (m && m[1].charAt(0) === fence.ch && m[1].length >= fence.len && !m[2].trim()) fence = null;
+        }
+      }
+      text = lines.join('\n');
+    })();
     text = text.replace(/`[^`\n]+`/g, function (m) { return protect(m); });
     // 2) 公式提取：$$...$$（display），然后 $...$（inline）
     text = text.replace(/\$\$([\s\S]+?)\$\$/g, function (m, tex) {
@@ -4661,7 +4748,14 @@ body.light .hl-kw { color: #1a5fb4; }
     }
     deck.cards.forEach(function (c) {
       var tags = [];
-      String(c.answer + ' ' + c.question).replace(/(^|\s)#([\w\u4e00-\u9fa5-]{1,24})/g, function (m, pre, tg) {
+      // 代码块里的 #include / #define 不是标签：先按 core 的围栏规则遮掉代码行
+      var scan = [c.answer, c.question].map(function (txt) {
+        var lines = String(txt || '').split('\n');
+        var mask = Core.codeMask(lines);
+        return lines.map(function (l, i) { return mask[i] ? '' : l; }).join('\n');
+      }).join(' ');
+      scan.replace(/(^|\s)#([\w\u4e00-\u9fa5-]{1,24})/g, function (m, pre, tg) {
+        if (/^(?:\d+|[0-9a-fA-F]{3,8})$/.test(tg)) return m; // #123 / #fff 不是标签
         if (tags.indexOf(tg) < 0) tags.push(tg);
         return m;
       });
@@ -5645,6 +5739,25 @@ body.light .hl-kw { color: #1a5fb4; }
     state.reviewSession = null;
   }
 
+  // 删笔记/删卡后：会话里只要引用了已不存在的笔记或卡片，就直接作废，
+  // 否则首页会留下一个点进去才提示失效的「继续上次复习」死入口。
+  function pruneDeletedSession() {
+    var ss = state.reviewSession;
+    if (!ss) return;
+    if (!Array.isArray(ss.deckIds) || ss.deckIds.some(function (id) { return !findDeck(id); })) {
+      state.reviewSession = null;
+      return;
+    }
+    var alive = {};
+    state.decks.forEach(function (d) {
+      d.cards.forEach(function (c) { alive[c.id] = 1; });
+    });
+    var refs = (ss.queueIds || []).concat(ss.round2Ids || []);
+    if (ss.currentId) refs.push(ss.currentId);
+    if (ss.undo) refs = refs.concat(ss.undo.queueIds || [], ss.undo.round2Ids || []);
+    if (refs.some(function (id) { return !alive[id]; })) state.reviewSession = null;
+  }
+
   function resolveItem(cardId) {
     var ids = (state.reviewSession && state.reviewSession.deckIds) || (review ? review.deckIds : []);
     for (var i = 0; i < ids.length; i++) {
@@ -5751,8 +5864,12 @@ body.light .hl-kw { color: #1a5fb4; }
     var tEl = $('#rvTitle');
     var tText = card.title || '';
     if (tText.indexOf('![[') >= 0 || /!\[[^\]]*\]\(/.test(tText)) {
-      // 标题本身是图片嵌入（Obsidian 看图题）→ 渲染成图片
-      tEl.innerHTML = resolveImgSrc(Core.renderMarkdown(tText));
+      // 标题本身是图片嵌入（Obsidian 看图题）→ 渲染成图片；公式一并处理
+      var tm = renderMathSegments(tText);
+      tEl.innerHTML = resolveImgSrc(restoreMath(Core.renderMarkdown(tm.text), tm.segs));
+    } else if (window.katex && tText.indexOf('$') >= 0) {
+      var tm2 = renderMathSegments(tText);
+      tEl.innerHTML = restoreMath(Core.renderInline(tm2.text), tm2.segs);
     } else {
       tEl.textContent = tText;
     }
@@ -5760,7 +5877,9 @@ body.light .hl-kw { color: #1a5fb4; }
     var qText = (card.question || '').trim();
     var qEl = $('#rvQuestion');
     if (qText) {
-      qEl.innerHTML = qText.indexOf('\n') >= 0 ? resolveImgSrc(Core.renderMarkdown(qText)) : resolveImgSrc(Core.renderInline(qText));
+      var qm = renderMathSegments(qText);
+      var qHtml = qText.indexOf('\n') >= 0 ? Core.renderMarkdown(qm.text) : Core.renderInline(qm.text);
+      qEl.innerHTML = resolveImgSrc(restoreMath(qHtml, qm.segs));
       qEl.classList.remove('hidden');
     } else {
       qEl.innerHTML = '';
@@ -6031,6 +6150,7 @@ body.light .hl-kw { color: #1a5fb4; }
     if (!d.cards.length) {
       state.decks = state.decks.filter(function (x) { return x.id !== d.id; });
     }
+    pruneDeletedSession();
     cleanupUnreferencedImages();
     scheduleSave();
     return true;
@@ -6053,6 +6173,7 @@ body.light .hl-kw { color: #1a5fb4; }
     if (!d.cards.length) {
       state.decks = state.decks.filter(function (x) { return x.id !== d.id; });
     }
+    pruneDeletedSession();
     cleanupUnreferencedImages(); // 删卡后清理无引用图片
     scheduleSave();
     closeModal();
@@ -6971,6 +7092,7 @@ body.light .hl-kw { color: #1a5fb4; }
         });
         d.cards.forEach(function (c) { if (!others[c.id]) delete state.stats[c.id]; });
         state.decks = state.decks.filter(function (x) { return x.id !== id; });
+        pruneDeletedSession();
         cleanupUnreferencedImages(); // 异步清理无引用图片
         scheduleSave();
         if ($('#view-manage').classList.contains('active')) { renderManage(); } else { renderHome(); }
@@ -7584,6 +7706,7 @@ body.light .hl-kw { color: #1a5fb4; }
       isLocked: function () { return Store.isLocked(); }
     },
     openAttemptsForTest: function () { return Store.openAttempts(); },
+    latestPayload: latestPayload,
     globalSearch: globalSearch,
     runGlobalSearch: runGlobalSearch,
     wipeOrder: function () { return window.__wipeOrder || null; },
@@ -7847,7 +7970,7 @@ body.light .hl-kw { color: #1a5fb4; }
             '<div class="modal-actions">' +
               '<button class="btn" data-act="close-modal">' + t('btn.cancel') + '</button>' +
               '<button class="btn primary" data-act="backup-merge">' + t('import.merge') + '</button>' +
-              '<button class="btn" data-act="backup-overwrite">' + t('import.overwrite') + '</button>' +
+              (r.obj.kind === 'deck' ? '' : '<button class="btn" data-act="backup-overwrite">' + t('import.overwrite') + '</button>') +
             '</div>'
           );
           modalPayload = { backupObj: r.obj, backupImages: r.images };

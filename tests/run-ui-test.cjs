@@ -5,6 +5,7 @@
  *   2) 双指捏合能连续改变 scale
  *   3) 未放大时左右滑动 → 关闭大图（安卓返回手势式退出）
  *   4) 宽表格不再压缩列宽：外层可横向滚动、列有最小宽度；窄表格不产生滚动
+ *   5) v1.12.16：标题/提问里的 $公式$ 也渲染；~~~ 围栏内的 $ 不当公式
  * 用 CDP + 真实时钟（合成 Touch/Mouse 事件需要真实 rAF/计时）。
  * 用法: node tests/run-ui-test.cjs [dist/md-flashcards.html]
  */
@@ -284,6 +285,39 @@ async function main() {
   })()`);
   check('反复开关大图后手势不叠加（拖 60px 只移动 60px）',
     reopen.dx !== null && Math.abs(reopen.dx + 60) <= 6, reopen);
+
+  // 8) v1.12.16：标题/提问里的 $公式$ 也要渲染；~~~ 围栏里的 $ 不是公式
+  const mathReview = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    var name = 'ui-math-probe';
+    A.state().decks = A.state().decks.filter(function (d) { return d.name !== name; });
+    A.importCardsJson(JSON.stringify({ decks: [{ name: name, cards: [{
+      title: '函数 $f(x)$ 标题',
+      question: '求 $x^2$ 的值',
+      answer: '答案是 $y$。\\n\\n~~~text\\n$a+b=c$\\n~~~'
+    }] }] }));
+    var deck = A.state().decks.filter(function (d) { return d.name === name; })[0];
+    if (!deck) return { deck: false };
+    A.startReview([deck.id], { resumeOk: true });
+    await new Promise(function (r) { setTimeout(r, 120); });
+    var titleKatex = document.querySelectorAll('#rvTitle .katex').length;
+    var qKatex = document.querySelectorAll('#rvQuestion .katex').length;
+    A.showAnswer();
+    await new Promise(function (r) { setTimeout(r, 160); });
+    var ansKatex = document.querySelectorAll('#rvAnswer .katex').length;
+    var pre = document.querySelector('#rvAnswer pre');
+    var preKatex = document.querySelectorAll('#rvAnswer pre .katex').length;
+    var preText = pre ? pre.textContent : '';
+    A.state().reviewSession = null;
+    A.state().decks = A.state().decks.filter(function (d) { return d.name !== name; });
+    A.renderHome();
+    return { deck: true, titleKatex: titleKatex, qKatex: qKatex, ansKatex: ansKatex,
+      preKatex: preKatex, preText: preText };
+  })()`);
+  check('标题/提问里的公式也渲染，~~~ 围栏内的 $ 不当公式',
+    mathReview.deck === true && mathReview.titleKatex >= 1 && mathReview.qKatex >= 1 &&
+    mathReview.ansKatex >= 1 && mathReview.preKatex === 0 &&
+    mathReview.preText.indexOf('$a+b=c$') >= 0, mathReview);
 
   ws.close();
   proc.kill();

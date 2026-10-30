@@ -858,6 +858,193 @@ async function main() {
     retryFail.hasUrl === true && retryFail.hasChip === true &&
     retryFail.stillImg === false && retryFail.hasName === true, retryFail);
 
+  // 26) v1.12.16：openDB 3s 超时后才到达的成功连接必须关闭，否则 deleteDatabase 永远 blocked
+  const lateOpen = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    await A.flushSave();
+    var origOpen = indexedDB.open;
+    var origST = window.setTimeout;
+    var conn = { closed: false, close: function () { this.closed = true; } };
+    var req = { result: conn, onsuccess: null, onerror: null, onblocked: null, onupgradeneeded: null };
+    var opened = 0;
+    indexedDB.open = function () { opened++; return req; };
+    window.setTimeout = function (fn, ms) {
+      if (ms === 3000) { try { fn(); } catch (e) {} return 0; }
+      return origST.call(window, fn, ms);
+    };
+    try {
+      A.store.close();
+      A.store.reopen();
+      await A.readRawState(); // 触发 openDB：超时立即触发 finish(null)
+      req.onsuccess();        // 迟到的成功连接
+      await new Promise(function (r) { origST.call(window, r, 0); });
+    } finally {
+      window.setTimeout = origST;
+      indexedDB.open = origOpen;
+      A.store.reopen();
+      await A.readRawState(); // 恢复真实连接
+    }
+    return { opened: opened, closed: conn.closed };
+  })()`);
+  check('openDB 超时后迟到的连接会被关闭（清空数据不再 blocked）',
+    lateOpen.opened === 1 && lateOpen.closed === true, lateOpen);
+
+  // 27) v1.12.16：备份里只有 queueIds 的残会话必须补齐字段，首页不能再白屏
+  const partialSession = await evalJs(`(function () {
+    var A = window.MDReviewApp;
+    var s = A._normalize({ decks: [], reviewSession: { queueIds: ['c1', 'c2'], undo: { queueIds: [] } } });
+    var rs = s.reviewSession || {};
+    return {
+      has: !!s.reviewSession,
+      deckIds: rs.deckIds,
+      round2: rs.round2Ids,
+      current: rs.currentId,
+      rated: rs.rated,
+      total: rs.total,
+      undo: rs.undo,
+      name: rs.deckName
+    };
+  })()`);
+  check('残缺复习会话被补齐字段（round2Ids/deckIds/currentId/rated/total）',
+    partialSession.has === true && Array.isArray(partialSession.deckIds) && partialSession.deckIds.length === 0 &&
+    Array.isArray(partialSession.round2) && partialSession.round2.length === 0 &&
+    partialSession.current === null && partialSession.rated === 0 && partialSession.total === 2 &&
+    partialSession.undo === null && typeof partialSession.name === 'string', partialSession);
+
+  // 28) v1.12.16：外部分享的单本笔记备份不应显示「覆盖」（点了本来就没反应）
+  const shareDeckBackup = await evalJs(`(async function () {
+    var Core = window.MDReviewCore;
+    var enc = new TextEncoder();
+    function b64(u8) { var s = ''; for (var i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s); }
+    function zipFor(kind) {
+      var payload = {
+        version: '1.12.15', kind: kind, exportedAt: Date.now(),
+        decks: [{ id: 'dshare', name: 'share-' + kind, cards: [{ id: 'cshare', title: 't', question: '', answer: '分享备份答案，长度足够。' }] }],
+        stats: {}
+      };
+      return Core.zipStore([{ name: 'backup.json', data: enc.encode(JSON.stringify(payload)) }]);
+    }
+    function readModal() {
+      return {
+        open: !document.getElementById('modal').classList.contains('hidden'),
+        overwrite: !!document.querySelector('#modalBox [data-act="backup-overwrite"]'),
+        merge: !!document.querySelector('#modalBox [data-act="backup-merge"]')
+      };
+    }
+    function close() {
+      var b = document.querySelector('#modalBox [data-act="close-modal"]');
+      if (b) b.click();
+    }
+    window.__externalImport('deck-share.zip', b64(zipFor('deck')));
+    await new Promise(function (r) { setTimeout(r, 160); });
+    var deckKind = readModal();
+    close();
+    window.__externalImport('full-share.zip', b64(zipFor('full')));
+    await new Promise(function (r) { setTimeout(r, 160); });
+    var fullKind = readModal();
+    close();
+    return { deckKind: deckKind, fullKind: fullKind };
+  })()`);
+  check('外部分享单本备份隐藏「覆盖」，整库备份仍保留',
+    shareDeckBackup.deckKind.open === true && shareDeckBackup.deckKind.merge === true &&
+    shareDeckBackup.deckKind.overwrite === false && shareDeckBackup.fullKind.open === true &&
+    shareDeckBackup.fullKind.overwrite === true, shareDeckBackup);
+
+  // 29) v1.12.16：删掉笔记后，指向它的复习会话必须一起清掉
+  const delSession = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    var name = 'idb-del-session';
+    var md = '## 甲\\n\\n删除会话甲内容，长度足够。\\n\\n## 乙\\n\\n删除会话乙内容，长度足够。';
+    A.importText(name, md, { mode: 'h2' }, { silent: true, replace: 'yes' });
+    var d = A.state().decks.filter(function (x) { return x.name === name; })[0];
+    A.startReview([d.id], { resumeOk: true });
+    var before = !!A.state().reviewSession;
+    A.renderHome();
+    var box = Array.prototype.filter.call(document.querySelectorAll('#deckList .deck'), function (el) {
+      var n = el.querySelector('.deck-name');
+      return n && n.textContent === name;
+    })[0];
+    var del = box ? box.querySelector('[data-act="delete-deck"]') : null;
+    var orig = window.confirm;
+    window.confirm = function () { return true; };
+    try { if (del) del.click(); } finally { window.confirm = orig; }
+    await new Promise(function (r) { setTimeout(r, 120); });
+    var after = A.state().reviewSession;
+    var resume = document.getElementById('resumeBar').textContent.trim();
+    var deckGone = !A.state().decks.some(function (x) { return x.name === name; });
+    A.state().reviewSession = null;
+    A.state().decks = A.state().decks.filter(function (x) { return x.name !== name; });
+    A.renderHome();
+    return { before: before, clicked: !!del, deckGone: deckGone, afterNull: after === null, resume: resume };
+  })()`);
+  check('删除笔记后复习会话被清理，首页不再留死入口',
+    delSession.before === true && delSession.clicked === true && delSession.deckGone === true &&
+    delSession.afterNull === true && delSession.resume === '', delSession);
+
+  // 30) v1.12.16：代码块里的 #include/#define 与 #fff/#123 不能被当成标签
+  const tagProbe = await evalJs(`(function () {
+    var A = window.MDReviewApp;
+    var name = 'idb-tag-probe';
+    var md = '# 标签\\n\\n## 代码\\n\\n\`\`\`c\\n#include <stdio.h>\\n#define N 10\\n\`\`\`\\n\\n## 颜色\\n\\n颜色 #fff，数字 #123，真标签 #算法 保留。';
+    A.importText(name, md, { mode: 'h2' }, { silent: true, replace: 'yes' });
+    var d = A.state().decks.filter(function (x) { return x.name === name; })[0];
+    var tags = [];
+    if (d) d.cards.forEach(function (c) { (c.tags || []).forEach(function (tg) { if (tags.indexOf(tg) < 0) tags.push(tg); }); });
+    A.state().decks = A.state().decks.filter(function (x) { return x.name !== name; });
+    A.renderHome();
+    return { tags: tags, cards: d ? d.cards.length : 0 };
+  })()`);
+  check('标签扫描跳过代码块并排除数字/颜色（#include/#define/#fff/#123）',
+    tagProbe.cards >= 2 && tagProbe.tags.length === 1 && tagProbe.tags[0] === '算法', tagProbe);
+
+  // 31) v1.12.16：更新检查保留原 5 个镜像，Gitee 兜底放最后（走 API：raw 无 CORS）
+  const updateFallback = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    var base = [
+      'https://fastly.jsdelivr.net/gh/fest77/flash-memory-cards@main/latest.json',
+      'https://gcore.jsdelivr.net/gh/fest77/flash-memory-cards@main/latest.json',
+      'https://testingcf.jsdelivr.net/gh/fest77/flash-memory-cards@main/latest.json',
+      'https://cdn.jsdelivr.net/gh/fest77/flash-memory-cards@main/latest.json',
+      'https://raw.githubusercontent.com/fest77/flash-memory-cards/main/latest.json'
+    ];
+    var gitee = 'https://gitee.com/api/v5/repos/festeel/flash-memory-cards/contents/latest.json?ref=main';
+    var calls = [];
+    var orig = window.fetch;
+    // 模拟 Gitee contents API 的真实形状：{encoding:'base64', content:'<base64 的 latest.json>'}
+    var b64 = btoa(JSON.stringify({ version: '0.0.1' }));
+    window.fetch = function (url) {
+      calls.push(String(url));
+      if (String(url) === gitee) {
+        return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ encoding: 'base64', content: b64 }); } });
+      }
+      return Promise.reject(new Error('net'));
+    };
+    var toastText = '';
+    try {
+      var btn = document.getElementById('checkUpdateBtn');
+      if (btn) btn.click();
+      await new Promise(function (r) { setTimeout(r, 250); });
+      var tEl = document.getElementById('toast');
+      toastText = tEl ? tEl.textContent : '';
+    } finally {
+      window.fetch = orig;
+    }
+    return {
+      calls: calls, count: calls.length, last: calls[calls.length - 1],
+      toast: toastText,
+      decoded: A.latestPayload ? A.latestPayload({ encoding: 'base64', content: b64 }) : null,
+      plain: A.latestPayload ? A.latestPayload({ version: '1.2.3' }) : null,
+      expect: base.concat([gitee])
+    };
+  })()`);
+  check('更新检查保留原 5 个镜像，Gitee 兜底走 API 且能解出 base64',
+    updateFallback.count === 6 &&
+    updateFallback.calls.slice(0, 5).join('\\n') === updateFallback.expect.slice(0, 5).join('\\n') &&
+    updateFallback.last.indexOf('gitee.com/api/v5/repos/festeel/flash-memory-cards/contents/latest.json') >= 0 &&
+    updateFallback.decoded && updateFallback.decoded.version === '0.0.1' &&
+    updateFallback.plain && updateFallback.plain.version === '1.2.3' &&
+    /最新|up to date/i.test(updateFallback.toast), updateFallback);
+
   // 收尾：清掉本组测试写入的图片探针
   await evalJs(`(async function () {
     var A = window.MDReviewApp;
