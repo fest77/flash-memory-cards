@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.14';
+  var APP_VERSION = '1.12.15';
   // 应用锁开关：手机系统普遍自带应用锁，默认隐藏该设置项（相关代码与原生桥全部保留）。
   // 需要恢复时把 false 改成 true（原生侧 APP_LOCK_ENABLED 同步改），选项即重新出现在「设置 → 存储」。
   var FEATURE_APP_LOCK = false;
@@ -73,7 +73,7 @@
       'set.importNote': '改动后，<b>下次导入</b>的笔记按新设置拆分；已导入的可以删掉重导。',
       'btn.aiTest': '测试连接', 'btn.aiImport': '导入 AI 卡片',
       'set.aiNote': '不经过任何服务器，请求从本机直接发到你在上面填的地址。浏览器直连多数厂商 API 可能被跨域拦截（CORS）：可以用本机 <b>Ollama</b>（启动前设 <code>OLLAMA_ORIGINS=*</code>），或改用电脑上的 <code>scripts/ai_cards.py</code> 生成卡片 JSON，再用「导入 AI 卡片」。',
-      'foot.tips': '数据只保存在本机浏览器里，不上传任何服务器。<br>换手机 / 清理浏览器前，记得用「备份」导出 json，再到新手机「恢复」。<br>手机浏览器菜单里选「添加到主屏幕」，可以像 App 一样打开。',
+      'foot.tips': '数据只保存在本机浏览器里，不上传任何服务器。<br>换手机 / 清理浏览器前，记得用「备份全部」导出 zip（含图片），再到新手机「恢复」。<br>手机浏览器菜单里选「添加到主屏幕」，可以像 App 一样打开。',
       'aria.back': '返回', 'aria.reshuffle': '重新洗牌', 'aria.resetProgress': '重置本笔记进度',
       'aria.toc': '题目目录', 'aria.toggleAll': '展开/收起全部', 'aria.restoreBundled': '恢复内置题库',
       'rv.hint': '轻点卡片显示答案', 'btn.show': '显示答案',
@@ -98,14 +98,14 @@
       'confirm.replaceDeck': '已存在同名笔记「{name}」，用新内容替换吗？（尽量保留已掌握进度）',
       'toast.cancelled': '已取消', 'toast.imported': '已导入「{name}」 {n} 张卡片',
       'import.title': '导入笔记', 'import.pick': '📄 选择文件（md 笔记 + 图片，可多选）', 'import.zip': '🗜️ 选择 .zip（多篇 md + 图片）', 'import.dir': '📁 导入整个文件夹（电脑端，含图片）',
-      'import.note': '图片按<b>文件名</b>匹配 md 里的引用（如 ![](images/a.png) 取 a.png），同名不同内容会<b>自动改名</b>（-2/-3）并按路径重写引用，不会覆盖已有图片。图片只存本机，<b>「备份全部」不含图片</b>，换机后重新导入即可。zip 只在本地解压，不上传。',
+      'import.note': '图片按<b>文件名</b>匹配 md 里的引用（如 ![](images/a.png) 取 a.png），同名不同内容会<b>自动改名</b>（-2/-3）并按路径重写引用，不会覆盖已有图片。图片只存本机，<b>「备份全部」会把图片一起打包成 zip</b>，换机恢复即可。zip 只在本地解压，不上传。',
       'import.empty': '还没有选择文件', 'import.doAll': '导入全部', 'import.doAllCount': '导入全部（{n}）',
       'toast.onlyMd': '未识别的文件（支持 md / txt / 图片）', 'toast.noFile': '没有选择文件',
       'toast.imgTaken': '已导入 {n} 张图片', 'toast.imgNoStore': '本机存储不可用，图片没有保存', 'toast.imgLost': '有 {n} 张图片保存失败（可能本机空间不足）', 'img.missing': '图片未导入', 'img.broken': '图片无法显示', 'img.ambiguous': '图片重名，无法确定',
       'toast.saveFail': '保存失败：本机存储不可用，进度可能丢失', 'toast.backupMerged': '已合并 {n} 本笔记（本地进度保留）', 'import.suffix': '(导入)', 'toast.notZip': '请选择 .zip 文件', 'toast.unzipping': '正在解压…', 'toast.zipEmpty': 'zip 里没有找到 md / 图片文件',
       'toast.zipTaken': '已从 zip 中取出 {n} 篇笔记', 'toast.unzipFail': '解压失败：{msg}',
       'toast.queueEmpty': '先选择要导入的文件',
-      'confirm.batchReplace': '有 {n} 个同名笔记，用新内容替换吗？（取消 = 跳过同名）',
+      'confirm.batchReplace': '有 {n} 个笔记与现有笔记同名，用新内容替换吗？（取消 = 跳过同名；不同文件夹的同名文件会分别保留）',
       'toast.importing': '开始导入 {n} 个文件…', 'toast.importDone': '导入完成：{ok} / {total} 个笔记', 'toast.readFail': '读取失败：{name}',
       'paste.title': '粘贴 Markdown 文本', 'paste.name': '笔记名称', 'paste.ph': '把 md 内容粘贴到这里…',
       'paste.note': '提示：按标题拆分会自动识别 # / ## / ###；如果笔记里是「Q: … A: …」格式，选「按问答」更准。',
@@ -145,7 +145,7 @@
       'rename.title': '重命名笔记', 'rename.note': '只改显示名称，卡片和复习进度不变。',
       'toast.nameEmpty': '名称不能为空', 'toast.renamed': '已重命名',
       'confirm.resetProgress': '把「{name}」的复习进度全部清零？', 'toast.progressCleared': '进度已清零',
-      'export.title': '导出备份', 'export.note': '{kb} KB · 含卡片与复习进度。下载后文件在手机「下载」目录；也可以复制文本自行保存。',
+      'export.title': '导出备份', 'export.note': '{kb} KB · 含卡片与复习进度，不含图片（图片请用「备份全部」）。下载后文件在手机「下载」目录；也可以复制文本自行保存。',
       'export.copy': '复制文本', 'export.download': '下载 .json',
       'toast.savedToDownloads': '已保存到手机「下载」目录：{name}', 'toast.downloading': '已开始下载（若没反应请用「复制文本」）',
       'toast.downloadFail': '下载失败，请用「复制文本」', 'toast.copied': '已复制', 'toast.copyFail': '复制失败，请手动全选复制',
@@ -192,7 +192,7 @@
       'set.importNote': '改動後，<b>下次匯入</b>的筆記按新設定拆分；已匯入的可以刪掉重匯。',
       'btn.aiTest': '測試連線', 'btn.aiImport': '匯入 AI 卡片',
       'set.aiNote': '不經過任何伺服器，請求從本機直接發到你在上面填的位址。瀏覽器直連多數廠商 API 可能被跨域攔截（CORS）：可以用本機 <b>Ollama</b>（啟動前設 <code>OLLAMA_ORIGINS=*</code>），或改用電腦上的 <code>scripts/ai_cards.py</code> 生成卡片 JSON，再用「匯入 AI 卡片」。',
-      'foot.tips': '資料只保存在本機瀏覽器裡，不上傳任何伺服器。<br>換手機 / 清理瀏覽器前，記得用「備份」匯出 json，再到新手機「還原」。<br>手機瀏覽器選單裡選「加到主畫面」，可以像 App 一樣開啟。',
+      'foot.tips': '資料只保存在本機瀏覽器裡，不上傳任何伺服器。<br>換手機 / 清理瀏覽器前，記得用「備份全部」匯出 zip（含圖片），再到新手機「還原」。<br>手機瀏覽器選單裡選「加到主畫面」，可以像 App 一樣開啟。',
       'aria.back': '返回', 'aria.reshuffle': '重新洗牌', 'aria.resetProgress': '重設本筆記進度',
       'aria.toc': '題目目錄', 'aria.toggleAll': '展開/收起全部', 'aria.restoreBundled': '還原內建題庫',
       'rv.hint': '輕點卡片顯示答案', 'btn.show': '顯示答案',
@@ -217,14 +217,14 @@
       'confirm.replaceDeck': '已存在同名筆記「{name}」，用新內容替換嗎？（盡量保留已掌握進度）',
       'toast.cancelled': '已取消', 'toast.imported': '已匯入「{name}」 {n} 張卡片',
       'import.title': '匯入筆記', 'import.pick': '📄 選擇檔案（md 筆記 + 圖片，可多選）', 'import.zip': '🗜️ 選擇 .zip（多篇 md + 圖片）', 'import.dir': '📁 匯入整個資料夾（電腦端，含圖片）',
-      'import.note': '圖片按<b>檔名</b>匹配 md 裡的引用（如 ![](images/a.png) 取 a.png），同名不同內容會<b>自動改名</b>（-2/-3）並按路徑重寫引用，不會覆蓋已有圖片。圖片只存本機，<b>「備份全部」不含圖片</b>，換機後重新匯入即可。zip 只在本機解壓，不上傳。',
+      'import.note': '圖片按<b>檔名</b>匹配 md 裡的引用（如 ![](images/a.png) 取 a.png），同名不同內容會<b>自動改名</b>（-2/-3）並按路徑重寫引用，不會覆蓋已有圖片。圖片只存本機，<b>「備份全部」會把圖片一起打包成 zip</b>，換機還原即可。zip 只在本機解壓，不上傳。',
       'import.empty': '還沒有選擇檔案', 'import.doAll': '匯入全部', 'import.doAllCount': '匯入全部（{n}）',
       'toast.onlyMd': '未識別的檔案（支援 md / txt / 圖片）', 'toast.noFile': '沒有選擇檔案',
       'toast.imgTaken': '已匯入 {n} 張圖片', 'toast.imgNoStore': '本機儲存不可用，圖片沒有保存', 'toast.imgLost': '有 {n} 張圖片保存失敗（可能本機空間不足）', 'img.missing': '圖片未匯入', 'img.broken': '圖片無法顯示', 'img.ambiguous': '圖片重名，無法確定',
       'toast.saveFail': '儲存失敗：本機儲存不可用，進度可能遺失', 'toast.backupMerged': '已合併 {n} 本筆記（本機進度保留）', 'import.suffix': '(匯入)', 'toast.notZip': '請選擇 .zip 檔案', 'toast.unzipping': '正在解壓…', 'toast.zipEmpty': 'zip 裡沒有找到 md / 圖片檔案',
       'toast.zipTaken': '已從 zip 中取出 {n} 篇筆記', 'toast.unzipFail': '解壓失敗：{msg}',
       'toast.queueEmpty': '先選擇要匯入的檔案',
-      'confirm.batchReplace': '有 {n} 個同名筆記，用新內容替換嗎？（取消 = 跳過同名）',
+      'confirm.batchReplace': '有 {n} 個筆記與現有筆記同名，用新內容替換嗎？（取消 = 跳過同名；不同資料夾的同名檔案會分別保留）',
       'toast.importing': '開始匯入 {n} 個檔案…', 'toast.importDone': '匯入完成：{ok} / {total} 個筆記', 'toast.readFail': '讀取失敗：{name}',
       'paste.title': '貼上 Markdown 文字', 'paste.name': '筆記名稱', 'paste.ph': '把 md 內容貼到這裡…',
       'paste.note': '提示：按標題拆分會自動辨識 # / ## / ###；如果筆記裡是「Q: … A: …」格式，選「按問答」更準。',
@@ -264,7 +264,7 @@
       'rename.title': '重新命名筆記', 'rename.note': '只改顯示名稱，卡片和複習進度不變。',
       'toast.nameEmpty': '名稱不能為空', 'toast.renamed': '已重新命名',
       'confirm.resetProgress': '把「{name}」的複習進度全部清零？', 'toast.progressCleared': '進度已清零',
-      'export.title': '匯出備份', 'export.note': '{kb} KB · 含卡片與複習進度。下載後檔案在手機「下載」目錄；也可以複製文字自行保存。',
+      'export.title': '匯出備份', 'export.note': '{kb} KB · 含卡片與複習進度，不含圖片（圖片請用「備份全部」）。下載後檔案在手機「下載」目錄；也可以複製文字自行保存。',
       'export.copy': '複製文字', 'export.download': '下載 .json',
       'toast.savedToDownloads': '已保存到手機「下載」目錄：{name}', 'toast.downloading': '已開始下載（若沒反應請用「複製文字」）',
       'toast.downloadFail': '下載失敗，請用「複製文字」', 'toast.copied': '已複製', 'toast.copyFail': '複製失敗，請手動全選複製',
@@ -311,7 +311,7 @@
       'set.importNote': 'Changes apply to <b>the next import</b>; re-import existing notes to re-split them.',
       'btn.aiTest': 'Test connection', 'btn.aiImport': 'Import AI cards',
       'set.aiNote': 'No server involved: requests go straight from this device to the API you enter. Most LLM APIs block browser calls via CORS — use local <b>Ollama</b> (set <code>OLLAMA_ORIGINS=*</code> before starting), or run <code>scripts/ai_cards.py</code> on a PC to generate card JSON, then use "Import AI cards".',
-      'foot.tips': 'All data stays in this browser; nothing is uploaded.<br>Before switching phones or clearing browser data, export a json backup and restore it on the new device.<br>Use your browser menu → "Add to Home Screen" to use it like an app.',
+      'foot.tips': 'All data stays in this browser; nothing is uploaded.<br>Before switching phones or clearing browser data, export a zip backup (images included) and restore it on the new device.<br>Use your browser menu → "Add to Home Screen" to use it like an app.',
       'aria.back': 'Back', 'aria.reshuffle': 'Reshuffle', 'aria.resetProgress': 'Reset progress for this note',
       'aria.toc': 'Question outline', 'aria.toggleAll': 'Expand/collapse all', 'aria.restoreBundled': 'Restore bundled decks',
       'rv.hint': 'Tap the card to reveal the answer', 'btn.show': 'Show answer',
@@ -336,14 +336,14 @@
       'confirm.replaceDeck': 'A note named "{name}" already exists. Replace it with the new content? (mastered progress is kept where possible)',
       'toast.cancelled': 'Cancelled', 'toast.imported': 'Imported "{name}" — {n} cards',
       'import.title': 'Import notes', 'import.pick': '📄 Pick files (md notes + images, multi-select)', 'import.zip': '🗜️ Pick a .zip (md files + images)', 'import.dir': '📁 Import a whole folder (desktop, images included)',
-      'import.note': 'Images are matched by <b>filename</b> against references in the md (e.g. ![](images/a.png) uses a.png); same-name but different images are renamed (-2/-3) and their references rewritten; existing images are never overwritten. Images stay on this device and are <b>not included in backups</b> — re-import after switching devices. Zip files are unpacked locally, nothing is uploaded.',
+      'import.note': 'Images are matched by <b>filename</b> against references in the md (e.g. ![](images/a.png) uses a.png); same-name but different images are renamed (-2/-3) and their references rewritten; existing images are never overwritten. Images stay on this device and are <b>included in full zip backups</b> — restore the zip after switching devices. Zip files are unpacked locally, nothing is uploaded.',
       'import.empty': 'No files selected yet', 'import.doAll': 'Import all', 'import.doAllCount': 'Import all ({n})',
       'toast.onlyMd': 'Unrecognized files (md / txt / images only)', 'toast.noFile': 'No file selected',
       'toast.imgTaken': 'Imported {n} images', 'toast.imgNoStore': 'Local storage unavailable, images not saved', 'toast.imgLost': '{n} images could not be saved (storage may be full)', 'img.missing': 'Image not imported', 'img.broken': 'Image cannot be shown', 'img.ambiguous': 'Duplicate image name',
       'toast.saveFail': 'Save failed: local storage unavailable, progress may be lost', 'toast.backupMerged': 'Merged {n} notes (local progress kept)', 'import.suffix': ' (imported)', 'toast.notZip': 'Please choose a .zip file', 'toast.unzipping': 'Unpacking…', 'toast.zipEmpty': 'No .md / .txt files found in the zip',
       'toast.zipTaken': 'Extracted {n} notes from the zip', 'toast.unzipFail': 'Unpack failed: {msg}',
       'toast.queueEmpty': 'Select files to import first',
-      'confirm.batchReplace': '{n} notes share names with existing ones. Replace them? (Cancel = skip those)',
+      'confirm.batchReplace': '{n} notes share names with existing ones. Replace them? (Cancel = skip those; same-name files from different folders are kept separately)',
       'toast.importing': 'Importing {n} files…', 'toast.importDone': 'Import finished: {ok} / {total} notes', 'toast.readFail': 'Read failed: {name}',
       'paste.title': 'Paste Markdown text', 'paste.name': 'Note name', 'paste.ph': 'Paste md content here…',
       'paste.note': 'Tip: heading-based splitting detects # / ## / ### automatically; if the note uses "Q: … A: …" format, pick "By Q:/A:" instead.',
@@ -383,7 +383,7 @@
       'rename.title': 'Rename note', 'rename.note': 'Only the display name changes; cards and progress are untouched.',
       'toast.nameEmpty': 'Name cannot be empty', 'toast.renamed': 'Renamed',
       'confirm.resetProgress': 'Reset all review progress for "{name}"?', 'toast.progressCleared': 'Progress cleared',
-      'export.title': 'Export backup', 'export.note': '{kb} KB · includes cards and review progress. The file lands in your phone\'s Downloads folder; you can also copy the text.',
+      'export.title': 'Export backup', 'export.note': '{kb} KB · includes cards and review progress, but not images (use "Backup all" for a full zip). The file lands in your phone\'s Downloads folder; you can also copy the text.',
       'export.copy': 'Copy text', 'export.download': 'Download .json',
       'toast.savedToDownloads': 'Saved to phone Downloads: {name}', 'toast.downloading': 'Download started (if nothing happens, use "Copy text")',
       'toast.downloadFail': 'Download failed — use "Copy text"', 'toast.copied': 'Copied', 'toast.copyFail': 'Copy failed — select and copy manually',
@@ -1713,7 +1713,7 @@
       '<p class="modal-note">' + t('card.editNote') + '</p>' +
       '<div class="modal-actions">' +
         '<button class="btn" data-act="close-modal">' + t('btn.cancel') + '</button>' +
-        '<button class="btn primary" data-act="card-edit-save" data-deck="' + deckId + '" data-card="' + cardId + '">' + t('btn.save') + '</button>' +
+        '<button class="btn primary" data-act="card-edit-save" data-deck="' + ESC(deckId) + '" data-card="' + ESC(cardId) + '">' + t('btn.save') + '</button>' +
       '</div>'
     );
   }
@@ -1758,7 +1758,7 @@
       '<p class="modal-note">' + t('card.splitHint') + '</p>' +
       '<div class="modal-actions">' +
         '<button class="btn" data-act="close-modal">' + t('btn.cancel') + '</button>' +
-        '<button class="btn primary" data-act="card-split-do" data-deck="' + deckId + '" data-card="' + cardId + '">' + t('card.splitDo') + '</button>' +
+        '<button class="btn primary" data-act="card-split-do" data-deck="' + ESC(deckId) + '" data-card="' + ESC(cardId) + '">' + t('card.splitDo') + '</button>' +
       '</div>'
     );
     var ta = $('#csA');
@@ -1832,7 +1832,7 @@
       '<div class="field"><label>' + t('card.moveDeck') + '</label><select id="cmDeck">' + opts + '</select></div>' +
       '<div class="modal-actions">' +
         '<button class="btn" data-act="close-modal">' + t('btn.cancel') + '</button>' +
-        '<button class="btn primary" data-act="card-move-do" data-deck="' + deckId + '" data-card="' + cardId + '">' + t('btn.save') + '</button>' +
+        '<button class="btn primary" data-act="card-move-do" data-deck="' + ESC(deckId) + '" data-card="' + ESC(cardId) + '">' + t('btn.save') + '</button>' +
       '</div>'
     );
   }
@@ -1905,8 +1905,8 @@
       '<div class="gs-a">' + resolveImgSrc(Core.renderMarkdown(h.card.answer)) + '</div>' +
       '<div class="modal-actions">' +
         '<button class="btn" data-act="close-modal">' + t('btn.close') + '</button>' +
-        '<button class="btn" data-act="gs-review" data-deck="' + h.deckId + '" data-card="' + h.card.id + '">' + t('search.reviewFrom') + '</button>' +
-        '<button class="btn primary" data-act="gs-browse" data-deck="' + h.deckId + '" data-card="' + h.card.id + '">' + t('search.openDeck') + '</button>' +
+        '<button class="btn" data-act="gs-review" data-deck="' + ESC(h.deckId) + '" data-card="' + ESC(h.card.id) + '">' + t('search.reviewFrom') + '</button>' +
+        '<button class="btn primary" data-act="gs-browse" data-deck="' + ESC(h.deckId) + '" data-card="' + ESC(h.card.id) + '">' + t('search.openDeck') + '</button>' +
       '</div>'
     );
   }
@@ -2079,7 +2079,7 @@
       if (code) return code; // 代码块 / 行内代码里的 [[x]] 原样保留
       var hit = titleMap[String(target).trim()];
       return hit
-        ? '<a href="#" class="wikilink" data-act="wiki-jump" data-deck="' + hit.deckId + '" data-card="' + hit.cardId + '">' + ESC(String(target).trim()) + '</a>'
+        ? '<a href="#" class="wikilink" data-act="wiki-jump" data-deck="' + ESC(hit.deckId) + '" data-card="' + ESC(hit.cardId) + '">' + ESC(String(target).trim()) + '</a>'
         : m; // 目标不存在：原样显示
     });
   }
@@ -2172,15 +2172,15 @@
           '</div>' +
           '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
           '<div class="deck-actions">' +
-            '<button class="btn sm primary" data-act="review" data-deck="' + d.id + '">' + t('deck.review') + '</button>' +
-            '<button class="btn sm" data-act="quick" data-deck="' + d.id + '">' + t('deck.quick') + '</button>' +
-            '<button class="btn sm" data-act="browse" data-deck="' + d.id + '">' + t('deck.browse') + '</button>' +
-            '<button class="btn sm" data-act="ai-deck" data-deck="' + d.id + '">' + t('deck.ai') + '</button>' +
+            '<button class="btn sm primary" data-act="review" data-deck="' + ESC(d.id) + '">' + t('deck.review') + '</button>' +
+            '<button class="btn sm" data-act="quick" data-deck="' + ESC(d.id) + '">' + t('deck.quick') + '</button>' +
+            '<button class="btn sm" data-act="browse" data-deck="' + ESC(d.id) + '">' + t('deck.browse') + '</button>' +
+            '<button class="btn sm" data-act="ai-deck" data-deck="' + ESC(d.id) + '">' + t('deck.ai') + '</button>' +
             (aiRun.lastRefine && aiRun.lastRefine.deckId === d.id && !aiRun.lastRefine.undone
-              ? '<button class="btn sm" data-act="ai-undo" data-deck="' + d.id + '">' + t('ai.undo') + '</button>'
+              ? '<button class="btn sm" data-act="ai-undo" data-deck="' + ESC(d.id) + '">' + t('ai.undo') + '</button>'
               : '') +
-            '<button class="btn sm" data-act="export-deck" data-deck="' + d.id + '">' + t('deck.export') + '</button>' +
-            '<button class="btn sm danger" data-act="delete-deck" data-deck="' + d.id + '">' + t('deck.delete') + '</button>' +
+            '<button class="btn sm" data-act="export-deck" data-deck="' + ESC(d.id) + '">' + t('deck.export') + '</button>' +
+            '<button class="btn sm danger" data-act="delete-deck" data-deck="' + ESC(d.id) + '">' + t('deck.delete') + '</button>' +
           '</div>' +
         '</div>';
     }).join('');
@@ -2298,15 +2298,57 @@
     renderImportQueue();
   }
 
+  /* 同一批里不同文件夹可以各有一个 note.md：只按文件名入队会互相顶掉。
+     有目录信息时用「文件夹/文件名」区分；目录也相同才加序号。 */
+  function queueSourceDir(item) {
+    if (item.relDir) return String(item.relDir).replace(/\\/g, '/');
+    var src = String(item.source || '').replace(/\\/g, '/');
+    var k = src.lastIndexOf('/');
+    return k >= 0 ? src.slice(0, k + 1) : '';
+  }
+
+  function computeQueueNames(items) {
+    var names = items.map(function (it) { return it.name; });
+    var groups = {};
+    items.forEach(function (it, i) {
+      if (!groups[it.name]) groups[it.name] = [];
+      groups[it.name].push(i);
+    });
+    Object.keys(groups).forEach(function (base) {
+      var idxs = groups[base];
+      if (idxs.length < 2) return;
+      var segs = idxs.map(function (i) {
+        return (queueSourceDir(items[i]) + items[i].name).replace(/^\/+/, '').split('/');
+      });
+      // 文件夹选择器带上的顶层目录（如 notes/）对用户没意义，成组时去掉
+      var first = segs[0][0];
+      var stripRoot = first && segs.every(function (s) { return s.length > 1 && s[0] === first; });
+      var cands = segs.map(function (s) { return (stripRoot ? s.slice(1) : s).join('/'); });
+      var used = {};
+      idxs.forEach(function (i, k) {
+        var nm = cands[k];
+        if (used[nm]) {
+          var n = 2;
+          while (used[nm + ' (' + n + ')']) n++;
+          nm = nm + ' (' + n + ')';
+        }
+        used[nm] = 1;
+        names[i] = nm;
+      });
+    });
+    return names;
+  }
+
   function renderImportQueue() {
     var box = $('#impList');
     if (!box) return;
+    var names = computeQueueNames(importQueue);
     if (!importQueue.length) {
       box.innerHTML = '<p class="imp-empty">' + t('import.empty') + '</p>';
     } else {
       box.innerHTML = importQueue.map(function (item, idx) {
         var size = item.size ? ' · ' + (item.size / 1024).toFixed(0) + 'KB' : '';
-        return '<div class="imp-item"><span class="imp-name">' + ESC(item.name) + size + '</span>' +
+        return '<div class="imp-item"><span class="imp-name">' + ESC(names[idx]) + size + '</span>' +
           '<button class="imp-del" data-act="imp-remove" data-idx="' + idx + '" aria-label="×">×</button></div>';
       }).join('');
     }
@@ -2413,8 +2455,8 @@
   function doImportQueue() {
     if (!importQueue.length) { toast(t('toast.queueEmpty')); return; }
     var opts = currentOpts();
-    var names = importQueue.map(function (x) { return x.name; });
-    var conflicts = names.filter(function (n) {
+    var queueNames = computeQueueNames(importQueue);
+    var conflicts = queueNames.filter(function (n) {
       return state.decks.some(function (d) { return d.name === n; });
     }).length;
     var replace = 'ask';
@@ -2441,16 +2483,18 @@
         IMG_PATH_MAP = {}; // 本批结束：清空映射，避免影响下一次导入
         return;
       }
-      var item = importQueue[idx++];
+      var item = importQueue[idx];
+      var itemName = queueNames[idx];
+      idx++;
       var p = item.text != null ? Promise.resolve(item.text) : readFileText(item.file);
       p.then(function (text) {
         // 文件/文件夹导入：按相对路径把改名后的图片引用写回去（zip 导入在入队时已重写）
         if (item.text == null && imagesRenamed()) {
           text = rewriteZipImageRefs(text, item.relDir || '', IMG_PATH_MAP);
         }
-        if (importText(item.name, text, opts, { silent: true, replace: replace, source: item.source || '' })) okCount++;
+        if (importText(itemName, text, opts, { silent: true, replace: replace, source: item.source || '' })) okCount++;
       }).catch(function () {
-        toast(tf('toast.readFail', { name: item.name }));
+        toast(tf('toast.readFail', { name: itemName }));
       }).then(function () {
         setTimeout(next, 20);
       });
@@ -2822,7 +2866,7 @@
           : t('ai.noneEnabled')) + '</div>' +
       '<div class="modal-actions">' +
         '<button class="btn" data-act="close-modal">' + t('btn.close') + '</button>' +
-        '<button class="btn primary" data-act="ai-start" data-deck="' + d.id + '"' + (aiReady() ? '' : ' disabled') + '>' + t('ai.start') + '</button>' +
+        '<button class="btn primary" data-act="ai-start" data-deck="' + ESC(d.id) + '"' + (aiReady() ? '' : ' disabled') + '>' + t('ai.start') + '</button>' +
       '</div>'
     );
     modalPayload = { deckId: d.id };
@@ -2983,7 +3027,11 @@
       };
       var existIdx = -1;
       for (var i = 0; i < state.decks.length; i++) if (state.decks[i].name === name) { existIdx = i; break; }
-      if (existIdx >= 0) state.decks[existIdx] = deck; else state.decks.push(deck);
+      if (existIdx >= 0) {
+        // 同名直接替换会静默丢旧卡与进度，必须让用户确认
+        if (!window.confirm(tf('confirm.replaceDeck', { name: name }))) return;
+        state.decks[existIdx] = deck;
+      } else state.decks.push(deck);
       added += cards.length;
     });
     if (!added) { toast(t('toast.nothingToImport')); return; }
@@ -3127,7 +3175,7 @@
         '</select></div>' +
       '<div class="modal-actions">' +
         '<button class="btn" data-act="close-modal">' + t('btn.cancel') + '</button>' +
-        '<button class="btn primary" data-act="review-start" data-deck="' + d.id + '">' + t('review.start') + '</button>' +
+        '<button class="btn primary" data-act="review-start" data-deck="' + ESC(d.id) + '">' + t('review.start') + '</button>' +
       '</div>'
     );
     modalPayload = { deckId: d.id };
@@ -3255,6 +3303,9 @@
 
   function renderCard() {
     if (!review || !review.current) return;
+    // 重画界面必须同步内部状态：洗牌/切语言只重画不重置 revealed 时，
+    // 答案被藏起来但「显示答案」被 revealed 拦住，空格却会直接评分。
+    review.revealed = false;
     var card = review.current.card;
     var q = review.current;
 
@@ -3466,16 +3517,16 @@
       var s = statusOf(c.id);
       var label = s === 'known' ? t('card.known') : (s === 'learning' ? t('card.learning') : t('card.new'));
       return '' +
-        '<div class="citem" data-act="open-card" data-deck="' + d.id + '" data-card="' + ESC(c.id) + '">' +
+        '<div class="citem" data-act="open-card" data-deck="' + ESC(d.id) + '" data-card="' + ESC(c.id) + '">' +
           '<span class="dot ' + s + '" title="' + label + '"></span>' +
           '<div class="citem-main">' +
             '<div class="citem-title">' + ESC(c.title) + (c.modified ? ' <span class="citem-mod">' + ESC(t('card.modified')) + '</span>' : '') + '</div>' +
             '<div class="citem-snip">' + ESC(Core.plainText(c.answer).slice(0, 80)) + '</div>' +
             '<div class="citem-ops">' +
-              '<button class="btn xs" data-act="card-edit" data-deck="' + d.id + '" data-card="' + ESC(c.id) + '">' + t('card.opEdit') + '</button>' +
-              '<button class="btn xs" data-act="card-split" data-deck="' + d.id + '" data-card="' + ESC(c.id) + '">' + t('card.opSplit') + '</button>' +
-              '<button class="btn xs" data-act="card-merge" data-deck="' + d.id + '" data-card="' + ESC(c.id) + '">' + t('card.opMerge') + '</button>' +
-              '<button class="btn xs" data-act="card-move" data-deck="' + d.id + '" data-card="' + ESC(c.id) + '">' + t('card.opMove') + '</button>' +
+              '<button class="btn xs" data-act="card-edit" data-deck="' + ESC(d.id) + '" data-card="' + ESC(c.id) + '">' + t('card.opEdit') + '</button>' +
+              '<button class="btn xs" data-act="card-split" data-deck="' + ESC(d.id) + '" data-card="' + ESC(c.id) + '">' + t('card.opSplit') + '</button>' +
+              '<button class="btn xs" data-act="card-merge" data-deck="' + ESC(d.id) + '" data-card="' + ESC(c.id) + '">' + t('card.opMerge') + '</button>' +
+              '<button class="btn xs" data-act="card-move" data-deck="' + ESC(d.id) + '" data-card="' + ESC(c.id) + '">' + t('card.opMove') + '</button>' +
               '<button class="btn xs ghost" data-act="card-undo">' + t('card.opUndo') + '</button>' +
             '</div>' +
           '</div>' +
@@ -3824,12 +3875,12 @@
           '<div class="mdeck-meta">' + n + ' · ' + tf('deck.knownOf', { k: k }) + ' · ' + ESC(String(src)).slice(0, 40) + (when ? ' · ' + when : '') + '</div>' +
         '</div>' +
         '<div class="mdeck-actions">' +
-          '<button class="btn sm primary" data-act="quick" data-deck="' + d.id + '">' + t('deck.quick') + '</button>' +
-          '<button class="btn sm" data-act="review" data-deck="' + d.id + '">' + t('deck.review') + '</button>' +
-          '<button class="btn sm" data-act="manage-rename" data-deck="' + d.id + '">' + t('manage.rename') + '</button>' +
-          '<button class="btn sm" data-act="manage-reset" data-deck="' + d.id + '">' + t('manage.reset') + '</button>' +
-          '<button class="btn sm" data-act="export-deck" data-deck="' + d.id + '">' + t('deck.export') + '</button>' +
-          '<button class="btn sm danger" data-act="delete-deck" data-deck="' + d.id + '">' + t('deck.delete') + '</button>' +
+          '<button class="btn sm primary" data-act="quick" data-deck="' + ESC(d.id) + '">' + t('deck.quick') + '</button>' +
+          '<button class="btn sm" data-act="review" data-deck="' + ESC(d.id) + '">' + t('deck.review') + '</button>' +
+          '<button class="btn sm" data-act="manage-rename" data-deck="' + ESC(d.id) + '">' + t('manage.rename') + '</button>' +
+          '<button class="btn sm" data-act="manage-reset" data-deck="' + ESC(d.id) + '">' + t('manage.reset') + '</button>' +
+          '<button class="btn sm" data-act="export-deck" data-deck="' + ESC(d.id) + '">' + t('deck.export') + '</button>' +
+          '<button class="btn sm danger" data-act="delete-deck" data-deck="' + ESC(d.id) + '">' + t('deck.delete') + '</button>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -3843,7 +3894,7 @@
       '<div class="field" style="display:block"><input id="renameInput" type="text" value="' + ESC(d.name) + '" maxlength="60" style="max-width:100%"></div>' +
       '<div class="modal-actions">' +
         '<button class="btn" data-act="close-modal">' + t('btn.cancel') + '</button>' +
-        '<button class="btn primary" data-act="do-rename" data-deck="' + d.id + '">' + t('btn.save') + '</button>' +
+        '<button class="btn primary" data-act="do-rename" data-deck="' + ESC(d.id) + '">' + t('btn.save') + '</button>' +
       '</div>' +
       '<p class="modal-note">' + t('rename.note') + '</p>'
     );
@@ -4116,8 +4167,15 @@
           var nm = en.name || '';
           if (/^backup\.json$/i.test(nm.split('/').pop()) && !obj) {
             try { obj = JSON.parse(dec.decode(en.bytes)); } catch (e) { obj = null; }
-          } else if (nm.indexOf('images/') === 0) {
-            images.push({ name: nm.slice('images/'.length), bytes: en.bytes });
+          } else {
+            // 备份 zip 被解压后重新打包时，images/ 外面会多一层文件夹；
+            // 只认根目录 images/ 会让笔记恢复成功但图片全丢。
+            // 只收图片扩展名：images/ 下的说明文件不能混进图库。
+            var parts = nm.split('/');
+            var ii = parts.indexOf('images');
+            if (ii >= 0 && ii < parts.length - 1 && IMG_EXT_RE.test(parts[parts.length - 1])) {
+              images.push({ name: parts.slice(ii + 1).join('/'), bytes: en.bytes });
+            }
           }
         });
         if (!obj) throw new Error('no backup.json');
@@ -4509,7 +4567,11 @@
         browse.q = '';
         var jumpId = el.getAttribute('data-card');
         setTimeout(function () {
-          var el2 = document.querySelector('.citem[data-card="' + jumpId + '"]');
+          var items = document.querySelectorAll('.citem');
+          var el2 = null;
+          for (var i = 0; i < items.length; i++) {
+            if (items[i].getAttribute('data-card') === jumpId) { el2 = items[i]; break; }
+          }
           if (el2) { el2.scrollIntoView({ block: 'center' }); el2.style.outline = '2px solid #3b82f6'; setTimeout(function () { el2.style.outline = ''; }, 2000); }
         }, 120);
         break;
@@ -4744,7 +4806,11 @@
       var el = e.target;
       if (!el || !el.tagName || el.tagName !== 'IMG') return;
       if (el.closest && el.closest('#imgViewer')) return;
-      if (el.dataset && el.dataset.broken) return;
+      if (el.dataset && el.dataset.broken) {
+        // 重试过一次仍失败：继续走占位。直接 return 会让浏览器把 alt 撑成一屏大字。
+        if (el.dataset.broken !== 'retry') return;
+        delete el.dataset.broken;
+      }
       var name = (el.dataset && el.dataset.img) || el.getAttribute('alt') || '';
       // 旧 URL 被回收后重新导入会换新 URL：先重试一次，别急着判定「无法显示」
       var cur = (el.dataset && el.dataset.img && IMG_URLS[el.dataset.img]) || '';
@@ -4773,7 +4839,7 @@
     document.addEventListener('click', function (e) {
       var ivImg = e.target.closest ? e.target.closest('#imgViewer img') : null;
       if (ivImg) return; // 大图自身的双击由 touchend 处理
-      var mdImg = e.target.closest ? e.target.closest('.md-img, .rv-title img, .rv-q img, .rv-answer img, .quick-a img') : null;
+      var mdImg = e.target.closest ? e.target.closest('.md-img, .rv-title img, .rv-q img, .rv-answer img, .quick-a img, #cardList img, #quickBody img, #modalBox img') : null;
       if (mdImg && mdImg.getAttribute('src')) { openImageViewer(mdImg.getAttribute('src')); return; }
       var copyBtn = e.target.closest ? e.target.closest('[data-act="code-copy"]') : null;
       if (copyBtn) {
@@ -4809,6 +4875,11 @@
     });
 
     document.addEventListener('keydown', function (e) {
+      var viewer = $('#imgViewer');
+      if (viewer && !viewer.classList.contains('hidden')) {
+        if (e.key === 'Escape') closeImageViewer();
+        return; // 大图打开时不要同时关弹层/给复习卡评分
+      }
       if (!$('#modal').classList.contains('hidden')) {
         if (e.key === 'Escape') closeModal();
         return;

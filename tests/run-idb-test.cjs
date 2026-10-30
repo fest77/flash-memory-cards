@@ -590,14 +590,283 @@ async function main() {
   check('图片入库抛错时队列仍渲染（不卡死）',
     importReject.queueLen === 1 && importReject.rendered === true, importReject);
 
+  // 19) v1.12.15：洗牌后答案必须能重新显示并评分（renderCard 要同步内部 revealed）
+  const revealReshuffle = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    var md = '## 甲\\n\\n洗牌甲内容，长度足够。\\n\\n## 乙\\n\\n洗牌乙内容，长度足够。\\n\\n## 丙\\n\\n洗牌丙内容，长度足够。';
+    A.importText('idb-reshuffle', md, { mode: 'h2' }, { silent: true, replace: 'yes' });
+    var deck = A.state().decks.filter(function (d) { return d.name === 'idb-reshuffle'; })[0];
+    A.startReview([deck.id], { resumeOk: true });
+    A.showAnswer();
+    var beforeAnswered = !document.getElementById('rvAnswer').classList.contains('hidden');
+    var beforeRated = A.state().reviewSession.rated;
+    document.querySelector('[data-act="reshuffle"]').click();
+    await new Promise(function (r) { setTimeout(r, 80); });
+    var afterReshuffle = {
+      answerHidden: document.getElementById('rvAnswer').classList.contains('hidden'),
+      showVisible: !document.getElementById('btnShow').classList.contains('hidden'),
+      rateHidden: document.getElementById('rateRow').classList.contains('hidden')
+    };
+    document.querySelector('[data-act="show-answer"]').click();
+    await new Promise(function (r) { setTimeout(r, 40); });
+    var reopened = !document.getElementById('rvAnswer').classList.contains('hidden');
+    document.querySelector('[data-act="rate"][data-rate="ok"]').click();
+    await new Promise(function (r) { setTimeout(r, 80); });
+    var afterRated = A.state().reviewSession ? A.state().reviewSession.rated : -1;
+    A.state().reviewSession = null;
+    A.renderHome();
+    return {
+      cards: deck.cards.length, beforeAnswered: beforeAnswered, beforeRated: beforeRated,
+      afterReshuffle: afterReshuffle, reopened: reopened, afterRated: afterRated
+    };
+  })()`);
+  check('洗牌后答案重置：可再次显示并正常评分',
+    revealReshuffle.cards >= 3 && revealReshuffle.beforeAnswered === true &&
+    revealReshuffle.afterReshuffle.answerHidden === true &&
+    revealReshuffle.afterReshuffle.showVisible === true &&
+    revealReshuffle.afterReshuffle.rateHidden === true &&
+    revealReshuffle.reopened === true &&
+    revealReshuffle.afterRated === revealReshuffle.beforeRated + 1, revealReshuffle);
+
+  // 20) v1.12.15：AI 导入同名笔记必须先确认；取消时旧卡与进度都不能丢
+  const aiDupConfirm = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    var name = 'ai-dup-probe';
+    function payload(answer) {
+      return JSON.stringify({ decks: [{ name: name, cards: [{ title: '标题', answer: answer }] }] });
+    }
+    function deck() {
+      return A.state().decks.filter(function (d) { return d.name === name; })[0];
+    }
+    A.importCardsJson(payload('旧答案内容'));
+    var first = deck() ? deck().cards[0].answer : null;
+    var calls = 0, answer = false;
+    var orig = window.confirm;
+    window.confirm = function () { calls++; return answer; };
+    var afterNo = null, afterYes = null;
+    try {
+      A.importCardsJson(payload('新答案内容'));
+      afterNo = deck() ? deck().cards[0].answer : null;
+      answer = true;
+      A.importCardsJson(payload('新答案内容'));
+      afterYes = deck() ? deck().cards[0].answer : null;
+    } finally {
+      window.confirm = orig;
+    }
+    var count = A.state().decks.filter(function (d) { return d.name === name; }).length;
+    return { first: first, calls: calls, afterNo: afterNo, afterYes: afterYes, count: count };
+  })()`);
+  check('AI 导入同名笔记需确认：取消保留旧内容，确认才替换',
+    aiDupConfirm.first === '旧答案内容' && aiDupConfirm.calls >= 2 &&
+    aiDupConfirm.afterNo === '旧答案内容' && aiDupConfirm.afterYes === '新答案内容' &&
+    aiDupConfirm.count === 1, aiDupConfirm);
+
+  // 21) v1.12.15：导入文件里的 deck/card id 不能逃出 data 属性（首页 + 浏览 + 弹窗）
+  const attrEscape = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    var deckId = 'd"><img src=x onerror="window.__xssDeck=1">';
+    var cardId = 'c"><svg onload="window.__xssCard=1"></svg>';
+    A.state().settings.filter = 'all';
+    A.state().settings.tagFilter = '';
+    A.state().decks.push({
+      id: deckId, name: 'evil-probe', title: 'evil', createdAt: Date.now(),
+      mode: 'x', qstyle: 'prompt', raw: '',
+      cards: [{ id: cardId, title: '恶意卡', question: '', answer: '正文内容，长度足够。' }]
+    });
+    A.renderHome();
+    await new Promise(function (r) { setTimeout(r, 120); });
+    var deckBox = Array.prototype.filter.call(document.querySelectorAll('#deckList .deck'), function (el) {
+      var n = el.querySelector('.deck-name');
+      return n && n.textContent === 'evil-probe';
+    })[0];
+    var browseBtn = deckBox ? deckBox.querySelector('[data-act="browse"]') : null;
+    var home = {
+      injected: document.querySelectorAll('#deckList img, #deckList svg').length,
+      deckAttr: browseBtn ? browseBtn.getAttribute('data-deck') : null
+    };
+    if (browseBtn) browseBtn.click();
+    await new Promise(function (r) { setTimeout(r, 80); });
+    var item = document.querySelector('#cardList .citem');
+    var browse = {
+      injected: document.querySelectorAll('#cardList img, #cardList svg').length,
+      cardAttr: item ? item.getAttribute('data-card') : null,
+      items: document.querySelectorAll('#cardList .citem').length
+    };
+    if (item) item.click();
+    await new Promise(function (r) { setTimeout(r, 80); });
+    var modal = {
+      open: !document.getElementById('modal').classList.contains('hidden'),
+      answer: document.getElementById('editAnswer') ? document.getElementById('editAnswer').value : null
+    };
+    var close = document.querySelector('#modalBox [data-act="close-modal"]');
+    if (close) close.click();
+    A.state().decks = A.state().decks.filter(function (d) { return d.id !== deckId; });
+    A.renderHome();
+    return {
+      xss: [!!window.__xssDeck, !!window.__xssCard],
+      home: home, browse: browse, modal: modal, deckId: deckId, cardId: cardId
+    };
+  })()`);
+  check('恶意 deck/card id 被转义：不注入 DOM，data 属性仍可回读原值',
+    attrEscape.xss[0] === false && attrEscape.xss[1] === false &&
+    attrEscape.home.injected === 0 && attrEscape.home.deckAttr === attrEscape.deckId &&
+    attrEscape.browse.injected === 0 && attrEscape.browse.cardAttr === attrEscape.cardId &&
+    attrEscape.browse.items === 1 && attrEscape.modal.open === true &&
+    attrEscape.modal.answer === '正文内容，长度足够。', attrEscape);
+
+  // 22) v1.12.15：浏览页编辑弹窗里的图片也能点开大图
+  const modalImgClick = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="32"><rect width="64" height="32" fill="#0af"/></svg>';
+    var bytes = Array.prototype.slice.call(new TextEncoder().encode(svg));
+    await A.setImgForTest('click-probe.svg', bytes);
+    var idx = await A.imgIndexNames();
+    if (idx.indexOf('click-probe.svg') < 0) await A.setImgIndexForTest(idx.concat(['click-probe.svg']));
+    await A.loadStoredImages();
+    A.importText('click-probe', '## 看图\\n\\n看图：![](click-probe.svg) 这是内容。', { mode: 'h2' }, { silent: true, replace: 'yes' });
+    var deck = A.state().decks.filter(function (d) { return d.name === 'click-probe'; })[0];
+    A.renderHome();
+    var deckBox = Array.prototype.filter.call(document.querySelectorAll('#deckList .deck'), function (el) {
+      var n = el.querySelector('.deck-name');
+      return n && n.textContent === 'click-probe';
+    })[0];
+    deckBox.querySelector('[data-act="browse"]').click();
+    await new Promise(function (r) { setTimeout(r, 80); });
+    var item = document.querySelector('#cardList .citem');
+    item.click();
+    await new Promise(function (r) { setTimeout(r, 80); });
+    var img = document.querySelector('#modalBox img');
+    var src = img ? img.getAttribute('src') : '';
+    var opened = false;
+    if (img) {
+      img.click();
+      await new Promise(function (r) { setTimeout(r, 120); });
+      opened = !document.getElementById('imgViewer').classList.contains('hidden') &&
+        !!document.querySelector('#imgViewer img');
+    }
+    A.closeImageViewer();
+    var close = document.querySelector('#modalBox [data-act="close-modal"]');
+    if (close) close.click();
+    A.state().decks = A.state().decks.filter(function (d) { return d.id !== deck.id; });
+    A.renderHome();
+    return { hasImg: !!img, blob: /^blob:/.test(src), opened: opened };
+  })()`);
+  check('浏览页/编辑弹窗图片可点开大图（#modalBox img）',
+    modalImgClick.hasImg === true && modalImgClick.blob === true &&
+    modalImgClick.opened === true, modalImgClick);
+
+  // 23) v1.12.15：文件夹里不同子目录的同名笔记按文件夹区分，不再互相覆盖
+  const dupFolders = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    function mk(name, rel, text) {
+      var f = new File([new TextEncoder().encode(text)], name, { type: 'text/markdown' });
+      Object.defineProperty(f, 'webkitRelativePath', { value: rel });
+      return f;
+    }
+    var mdA = '# 甲\\n\\n## 小节\\n\\n甲文件夹里的唯一一段内容，长度足够。';
+    var mdB = '# 乙\\n\\n## 小节\\n\\n乙文件夹里的唯一一段内容，长度足够。';
+    var orig = window.confirm;
+    window.confirm = function () { return true; };
+    var listed = [];
+    try {
+      A.openImportModal();
+      A.addQueueFiles([mk('dup-note.md', 'root/a/dup-note.md', mdA), mk('dup-note.md', 'root/b/dup-note.md', mdB)]);
+      await A.pendingImageWorkForTest();
+      listed = Array.prototype.map.call(document.querySelectorAll('#impList .imp-name'), function (n) {
+        return n.textContent.replace(/ · .*$/, '');
+      });
+      A.doImportQueue();
+      var deadline = Date.now() + 4000;
+      while (Date.now() < deadline) {
+        var ds = A.state().decks;
+        if (ds.some(function (d) { return d.name === 'a/dup-note'; }) &&
+            ds.some(function (d) { return d.name === 'b/dup-note'; })) break;
+        await new Promise(function (r) { setTimeout(r, 50); });
+      }
+    } finally {
+      window.confirm = orig;
+    }
+    var a = A.state().decks.filter(function (d) { return d.name === 'a/dup-note'; })[0];
+    var b = A.state().decks.filter(function (d) { return d.name === 'b/dup-note'; })[0];
+    function body(d) { return d ? d.cards.map(function (c) { return c.answer; }).join('\\n') : ''; }
+    return {
+      listed: listed, a: !!a, b: !!b,
+      aText: body(a).indexOf('甲文件夹') >= 0,
+      bText: body(b).indexOf('乙文件夹') >= 0,
+      oldStyleCount: A.state().decks.filter(function (d) { return d.name === 'dup-note'; }).length
+    };
+  })()`, 120000);
+  check('文件夹导入：不同目录同名笔记按文件夹区分（a/…、b/…）',
+    dupFolders.listed.indexOf('a/dup-note') >= 0 && dupFolders.listed.indexOf('b/dup-note') >= 0 &&
+    dupFolders.a === true && dupFolders.b === true &&
+    dupFolders.aText === true && dupFolders.bText === true &&
+    dupFolders.oldStyleCount === 0, dupFolders);
+
+  // 24) v1.12.15：备份 zip 被重新打包后 images/ 多一层前缀也要能恢复图片
+  const nestedZip = await evalJs(`(async function () {
+    var Core = window.MDReviewCore;
+    var A = window.MDReviewApp;
+    var enc = new TextEncoder();
+    var nested = Core.zipStore([
+      { name: 'pkg/backup.json', data: enc.encode(JSON.stringify({ version: '1.12.15', decks: [{ name: 'x', cards: [] }] })) },
+      { name: 'pkg/images/nested-probe.png', data: new Uint8Array([1, 2, 3, 4, 5]) },
+      { name: 'pkg/images/readme.md', data: enc.encode('not an image') },
+      { name: 'pkg/notes/readme.md', data: enc.encode('hello') }
+    ]);
+    var root = Core.zipStore([
+      { name: 'backup.json', data: enc.encode(JSON.stringify({ version: '1.12.15', decks: [] })) },
+      { name: 'images/root-probe.png', data: new Uint8Array([9, 9]) }
+    ]);
+    var rn = await A.parseBackupBuffer(nested.buffer);
+    var rr = await A.parseBackupBuffer(root.buffer);
+    return {
+      nested: rn.images.map(function (im) { return im.name; }),
+      nestedBytes: rn.images.length ? Array.prototype.slice.call(rn.images[0].bytes) : [],
+      hasObj: !!rn.obj,
+      root: rr.images.map(function (im) { return im.name; })
+    };
+  })()`);
+  check('备份 zip：images/ 在任意层级都能识别（根目录仍兼容）',
+    nestedZip.hasObj === true && nestedZip.nested.length === 1 &&
+    nestedZip.nested[0] === 'nested-probe.png' &&
+    nestedZip.nestedBytes.join(',') === '1,2,3,4,5' &&
+    nestedZip.root.length === 1 && nestedZip.root[0] === 'root-probe.png', nestedZip);
+
+  // 25) v1.12.15：重试后仍解码失败 → 必须落到占位，不能留下 alt 大字
+  const retryFail = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    await A.setImgForTest('retry-bad.png', [137, 80, 78, 71, 0, 0, 0, 0]);
+    var idx = await A.imgIndexNames();
+    if (idx.indexOf('retry-bad.png') < 0) await A.setImgIndexForTest(idx.concat(['retry-bad.png']));
+    await A.loadStoredImages();
+    var host = document.createElement('div');
+    host.innerHTML = '<img data-img="retry-bad.png" alt="retry-bad.png" src="data:text/plain;base64,PGh0bWw+YmFk">';
+    document.body.appendChild(host);
+    await new Promise(function (r) { setTimeout(r, 1500); });
+    var chip = host.querySelector('.img-missing');
+    var left = host.querySelector('img');
+    var text = chip ? chip.textContent : '';
+    host.remove();
+    return {
+      hasChip: !!chip, stillImg: !!left, hasName: text.indexOf('retry-bad.png') >= 0,
+      hasUrl: !!A.imgUrls()['retry-bad.png']
+    };
+  })()`);
+  check('图片二次解码失败仍显示占位（不留下 alt 大字）',
+    retryFail.hasUrl === true && retryFail.hasChip === true &&
+    retryFail.stillImg === false && retryFail.hasName === true, retryFail);
+
   // 收尾：清掉本组测试写入的图片探针
   await evalJs(`(async function () {
     var A = window.MDReviewApp;
-    var extra = ['corrupt-probe.png'];
+    var extra = ['corrupt-probe.png', 'retry-bad.png', 'click-probe.svg'];
     var idx = await A.imgIndexNames();
     await A.setImgIndexForTest(idx.filter(function (n) { return extra.indexOf(n) < 0; }));
     for (var i = 0; i < extra.length; i++) { try { await A.rawDeleteForTest('img/' + extra[i]); } catch (e) {} }
+    var decks = ['idb-reshuffle', 'ai-dup-probe', 'evil-probe', 'click-probe', 'a/dup-note', 'b/dup-note'];
+    A.state().decks = A.state().decks.filter(function (d) { return decks.indexOf(d.name) < 0; });
     A.state().reviewSession = null;
+    A.renderHome();
     return true;
   })()`).catch(() => null);
 

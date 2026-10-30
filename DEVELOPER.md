@@ -12,7 +12,7 @@ A **zero-backend, dependency-free, single-file** markdown flashcard app:
 - Input: `.md` / `.txt` / `.zip`, or the bundled deck;
 - Process: split into Q/A cards by heading / `Q:`/`A:` / bold questions; generate a question when the heading is not one;
 - Output: random recall (3-way self-rating), "quick read" by chapter + question outline, deck management, JSON backup, settings (theme / language / about);
-- Ship forms: one HTML (about 849 KB, no bundled data) or an Android WebView APK.
+- Ship forms: one HTML (about 879 KB, no bundled data) or an Android WebView APK.
 
 **Non-goals**: accounts, cloud sync, SM-2/FSRS scheduling, any framework or CDN.
 
@@ -40,11 +40,11 @@ md-flashcards/
 │   ├── build_interview_decks.py  # interview md → bundled-decks.js
 │   └── build_interview_images.py # interview images/ → bundled-images.js
 ├── tests/
-│   ├── core.test.cjs          # 63 unit tests (Node, no browser)
+│   ├── core.test.cjs          # 65 unit tests (Node, no browser)
 │   ├── browser-harness.js     # injected into the built page
 │   ├── run-browser-test.cjs   # static checks + 175 headless-Edge assertions
-│   ├── run-idb-test.cjs       # 19 real-clock IndexedDB assertions (CDP; skips without Chromium)
-│   ├── run-ui-test.cjs        # 7 real-clock interaction assertions (viewer gestures + wide tables)
+│   ├── run-idb-test.cjs       # 26 real-clock IndexedDB assertions (CDP; skips without Chromium)
+│   ├── run-ui-test.cjs        # 8 real-clock interaction assertions (viewer gestures/Esc + wide tables)
 │   ├── run-screenshots.cjs    # writes docs/images/*
 │   ├── persist-test.cjs       # file:// persistence check
 │   └── fixtures/notes.zip     # zip-parsing fixture
@@ -208,7 +208,7 @@ Notes:
 | quick | `openQuick`/`renderQuick` (with TOC)/`toggleQuickToc`/`quickJump`/`toggleQuickAll` |
 | browse | `openBrowse`/`renderBrowse`/`openCardModal`/`saveCard`/`deleteCard` |
 | manage | `openManage`/`renderManage`/`openRenameModal`/`doRename`/`resetDeckProgress` |
-| backup | `backupJson` (via `stripAiKeys` — backups never contain API keys or images)/`showExport`/`downloadFile` (AndroidSaver bridge first)/`importBackup` |
+| backup | `backupJson` (via `stripAiKeys` — single-deck JSON export never contains API keys or images)/`showExport`/`downloadFile` (AndroidSaver bridge first)/`buildBackupZipFiles` + `exportBackupZip` (full zip: `backup.json` + `images/`)/`parseBackupBuffer`/`importBackupBuffer` |
 | user images | `IMG_URLS` (basename → objectURL)/`loadStoredImages` (kv keys `img/NAME` + `imgIndex`)/`storeImage`/`importImageFiles`/`importImageEntries` (zip)/`resolveImgSrc` (post-render `<img>` swap; missing → `.img-missing` chip)/`rememberImage` (test hook) |
 | AI | `aiChat` (openai + native anthropic `/v1/messages` protocols, fetch + timeout + error mapping)/`startAiRefine` (batched, question-only)/`parseAiQuestions` |
 | ai providers | `AI_PRESETS` (DeepSeek/Z.ai/Kimi/Bailian/ChatGPT/Claude, added on demand — not auto-seeded)/`normalizeAi` (migration)/`renderAiProviders`/`onProviderField`/`openAddProviderModal`/`addPreset`/`addCustomProvider`/`deleteProvider`/`testProviderModal` |
@@ -276,7 +276,7 @@ Notes:
 ## 9. Tests
 
 ```bash
-node tests/core.test.cjs            # 63 tests, Node 18+ (DecompressionStream)
+node tests/core.test.cjs            # 65 tests, Node 18+ (DecompressionStream)
 node tests/run-browser-test.cjs     # static checks + 175 headless Edge assertions
 node tests/run-screenshots.cjs      # docs/images screenshots
 node tests/persist-test.cjs         # file:// persistence
@@ -335,6 +335,7 @@ How the E2E works: inject `tests/browser-harness.js` into the built page → hea
 | 1.12.5 (upd) | same release cycle: app-lock hidden by default (`FEATURE_APP_LOCK=false` / `APP_LOCK_ENABLED=false`, `#fieldAppLock` hidden, lock screen skipped; all PIN code/bridge/wipe path kept — flip both booleans to restore); UI wording PIN → 密码/密碼/password |
 | 1.12.6 | UI fix: `.resume-bar` gets `margin-bottom: 10px` through `:not(:empty)`, so the resume button no longer touches the import button right below it; with no unfinished session the bar stays empty and contributes no space (measured `.btn` rect gap 0px → 10px, empty state unchanged) |
 | 1.12.7 | release automation: new `.github/workflows/release.yml` — pushing a `v*` tag builds dist+APK, creates the GitHub Release with the APK, bot-commits root APK + README links + `latest.json` to main (`[skip ci]`), mirror-pushes main+tag to Gitee with the `GITEE_TOKEN` secret, and creates the Gitee Release + uploads the APK via `attach_files`; version guard fails the run if tag ≠ version files. See "Release automation" section above |
+| 1.12.15 | interaction/import fixes: (1) `renderCard` now resets the internal reveal flag — reshuffle/language switch hid the answer but `showAnswer` was blocked by `review.revealed` while Space still rated the card; (2) an image that fails again after the one-shot URL retry now falls through to the 「图片无法显示」 chip instead of leaving alt text; (3) when the viewer is open, Esc / Android back closes only the viewer (keyboard no longer closes the modal underneath or rates with Space/1/2/3); (4) images in the browse/edit modal open the viewer (`#modalBox img`); (5) AI same-name JSON import asks before replacing a deck — cancel keeps the old cards and stats; (6) every dynamic `data-deck`/`data-card` attribute is escaped, so imported ids cannot inject DOM; (7) batch import disambiguates duplicate basenames by folder (`a/note`, `b/note`) instead of overwriting; (8) backup zip accepts `images/` at any nesting depth, so a re-zipped backup restores images; (9) backup/export copy matches reality (full backup contains images, single-deck JSON does not). New regressions: 7 IDB assertions + 1 UI Esc assertion, each verified failing on the v1.12.14 artifact before the fix |
 | 1.12.14 | polish: (1) paragraph mode no longer splits a code block at blank lines inside it (fenced block stays whole and balanced); (2) header-only tables no longer emit a stray `</tbody>`; (3) `[[…]]` inside `<pre>`/`<code>` is left as text instead of becoming a card link; (4) dropped the ineffective 60-hit cap in `globalSearch` — the panel renders 30 and now reports the exact remaining count; (5) defensive prune: a session whose `rated >= total` with empty queues but a leftover `currentId` is cleared on home render (legit `rated < total` pauses are untouched); (6) ambiguous same-name images are rewritten to a `__mdfc_ambiguous__/<name>` sentinel and render as an 「重名」 placeholder instead of an arbitrary image; (7) import dialog copy now says images are renamed and references rewritten (the old text claimed overwrite); (8) a rejected image job no longer stalls the import queue; dead code removed; CI runs the pure-Node suite and an optional browser job |
 | 1.12.13 | stability fixes: (1) finishing a review now persists the empty session immediately — previously a restart brought back "resume: 1 card remaining" and re-showed an already-rated card, double-counting stats; `rate()` also clears `current` before saving, so a kill mid-rate cannot resurrect the rated card. (2) folder/multi-file import now rewrites renamed image references by **relative path** (same as zip); with no directory info it deliberately leaves references untouched instead of guessing. (3) IndexedDB open failure/timeout is retried on the next call instead of caching `null` for the session (which silently disabled all image I/O). (4) undoing a rating now also decrements today's counter and flushes. (5) the home sort dropdown follows the saved setting. (6) corrupt image records (key without blob) are overwritten instead of aborting the import |
 | 1.12.12 | viewer + table UX: the image viewer only scaled — one-finger drag did nothing (`touchmove` with one finger just called `preventDefault`), pinch ignored the midpoint, and the only way out was tapping the backdrop. Rewritten: one-finger pan when `scale > 1`, clamp so the image cannot be dragged off-screen, pinch keeps the midpoint fixed (and pans with it), double-tap zooms to 2.5x **at the tap point**, and a horizontal swipe (>70 px, <700 ms, |dx| > 1.5|dy|) at 1x slides the image out and closes the viewer (`dir` → translate 45vw + fade, 180 ms). Zoom is floored at 1x. Desktop mouse drag + wheel zoom kept for testing. Tables: `table { min-width:100% }` with `overflow-x` on the *inner* box let Blink squeeze columns instead of scrolling; now `.md-table-wrap` is the single scroll container (`overflow-x:auto`, thin scrollbar, `overscroll-behavior-x: contain`), the table is `width:max-content; min-width:100%`, and cells get `min-width:4.5em; max-width:26em` — wide tables scroll, narrow ones stay flush. New `tests/run-ui-test.cjs` (CDP, real clock, synthetic Touch/Mouse events): double-tap → 2.5x, one-finger pan changes translate3d, pinch grows scale, swipe-left hides the viewer, wide table `scrollWidth > clientWidth` with cell ≥ 60 px, narrow table does not overflow, and re-opening the viewer 3x does not stack gesture listeners (a 60 px drag moves exactly 60 px) |

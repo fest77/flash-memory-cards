@@ -188,6 +188,26 @@ async function main() {
   })()`);
   check('未放大时左滑退出大图', swipe.atOne === true && swipe.hidden === true, swipe);
 
+  // 4b) v1.12.15：大图打开时 Esc 只关大图；下层弹窗保持打开（键盘优先给大图）
+  const escViewer = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    A.openImportModal();
+    var modalOpen = !document.getElementById('modal').classList.contains('hidden');
+    A.openImageViewer(window.__bigSvg);
+    await new Promise(function (r) { setTimeout(r, 100); });
+    var viewerOpen = !document.getElementById('imgViewer').classList.contains('hidden');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise(function (r) { setTimeout(r, 220); });
+    var viewerClosed = document.getElementById('imgViewer').classList.contains('hidden');
+    var modalStillOpen = !document.getElementById('modal').classList.contains('hidden');
+    var close = document.querySelector('#modalBox [data-act="close-modal"]');
+    if (close) close.click();
+    return { modalOpen: modalOpen, viewerOpen: viewerOpen, viewerClosed: viewerClosed, modalStillOpen: modalStillOpen };
+  })()`);
+  check('大图打开时 Esc 只关大图、不误关底层弹窗',
+    escViewer.modalOpen === true && escViewer.viewerOpen === true &&
+    escViewer.viewerClosed === true && escViewer.modalStillOpen === true, escViewer);
+
   // 5) 宽表格：外层可横向滚动、列不被压扁
   const table = await evalJs(`(async function () {
     var A = window.MDReviewApp;

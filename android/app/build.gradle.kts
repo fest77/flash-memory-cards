@@ -12,8 +12,8 @@ android {
         applicationId = "com.mdflashcards.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 38
-        versionName = "1.12.14"
+        versionCode = 39
+        versionName = "1.12.15"
     }
 
     // 固定的调试签名：debug.keystore 随仓库提交（debug 密钥按惯例不是机密），

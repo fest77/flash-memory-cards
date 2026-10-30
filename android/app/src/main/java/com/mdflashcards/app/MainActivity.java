@@ -388,6 +388,8 @@ public class MainActivity extends Activity {
         }
         webView.evaluateJavascript(
                 "(function(){"
+                        + "var v=document.getElementById('imgViewer');"
+                        + "if(v&&!v.classList.contains('hidden')){if(window.MDReviewApp)window.MDReviewApp.closeImageViewer();return 'viewer';}"
                         + "var m=document.getElementById('modal');"
                         + "if(m&&!m.classList.contains('hidden')){"
                         + "var b=document.querySelector('[data-act=\"close-modal\"]');if(b)b.click();return 'modal';}"
