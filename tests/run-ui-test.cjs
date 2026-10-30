@@ -30,6 +30,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function fail(msg) { console.error('FAIL: ' + msg); process.exit(1); }
 
 if (!fs.existsSync(HTML)) fail('产物不存在，先运行 python scripts/build.py: ' + HTML);
+// CDP 走全局 WebSocket（Node 22+ 才内置）：Node 20 会以「WebSocket is not defined」直接崩
+if (typeof WebSocket === 'undefined') fail('需要 Node 22+（全局 WebSocket），当前 ' + process.version);
 if (!BROWSER) {
   if (process.env.REQUIRE_BROWSER) fail('未找到 Chromium 内核浏览器（REQUIRE_BROWSER=1）');
   console.log('skip 未找到 Chromium 内核浏览器，跳过 UI 交互测试');

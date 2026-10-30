@@ -4,6 +4,7 @@ name: Tests
 # - core：纯 Node，零依赖（build-apk / release 流水线里也会跑）
 # - browser/idb/ui：用 ubuntu runner 自带的 Chrome 跑 CDP；REQUIRE_BROWSER=1 表示
 #   找不到浏览器必须失败，而不是静默 skip（避免"全绿但其实没跑"）
+# - CDP 依赖全局 WebSocket（Node 22+ 内置），因此 node 固定 22；20 会直接 ReferenceError
 on:
   pull_request:
   workflow_dispatch:
@@ -15,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Core unit tests
         run: node tests/core.test.cjs
 
@@ -29,7 +30,7 @@ jobs:
           python-version: '3.11'
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Build single-file HTML
         run: python scripts/build.py
       - name: Headless browser suites

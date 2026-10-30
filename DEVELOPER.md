@@ -278,9 +278,13 @@ Notes:
 ```bash
 node tests/core.test.cjs            # 65 tests, Node 18+ (DecompressionStream)
 node tests/run-browser-test.cjs     # static checks + 175 headless Edge assertions
+node tests/run-idb-test.cjs         # 26 real-clock IndexedDB assertions (CDP; Node 22+ — global WebSocket)
+node tests/run-ui-test.cjs          # 8 real-clock interaction assertions (CDP; Node 22+)
 node tests/run-screenshots.cjs      # docs/images screenshots
 node tests/persist-test.cjs         # file:// persistence
 ```
+
+CI: `.github/workflows/tests.yml` runs `core` plus the three browser suites on every PR and on `workflow_dispatch` (Node 22, `REQUIRE_BROWSER=1` so a missing browser fails instead of silently skipping). `build-apk.yml` / `release.yml` run the pure-Node suite before shipping.
 
 How the E2E works: inject `tests/browser-harness.js` into the built page → headless Edge `--dump-dom` → parse `body[data-test-results]`. Static checks: required element ids, app-script syntax (`new Function` compiles only), no external refs, bundled script doesn't break inlining.
 
