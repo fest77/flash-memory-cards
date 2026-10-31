@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import android.util.Base64;
 import java.nio.charset.Charset;
 import android.app.AlarmManager;
 import android.app.NotificationChannel;
@@ -196,7 +196,7 @@ public class MainActivity extends Activity {
             if (intent.getExtras() != null && intent.getStringExtra(Intent.EXTRA_TEXT) != null) {
                 String text = intent.getStringExtra(Intent.EXTRA_TEXT);
                 byte[] textBytes = text.getBytes(StandardCharsets.UTF_8);
-                final String b64 = Base64.getEncoder().encodeToString(textBytes);
+                final String b64 = Base64.encodeToString(textBytes, Base64.NO_WRAP);
                 pushExternalImport(b64, "shared.md", textBytes.length);
                 return;
             }
@@ -232,7 +232,7 @@ public class MainActivity extends Activity {
             } finally {
                 is.close();
             }
-            final String b64 = Base64.getEncoder().encodeToString(bos.toByteArray());
+            final String b64 = Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP);
             pushExternalImport(b64, name, total);
         } catch (Exception e) {
             Toast.makeText(this, "无法读取分享的文件", Toast.LENGTH_SHORT).show();
@@ -511,7 +511,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean saveBinary(String filename, String mime, String base64) {
             try {
-                byte[] bytes = Base64.getDecoder().decode(base64);
+                byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
                 return writeBytes(filename, mime, bytes) != null;
             } catch (Exception e) {
                 return false;
@@ -546,7 +546,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean shareFile(String filename, String mime, String base64) {
             try {
-                Uri uri = writeBytes("share-" + filename, mime, Base64.getDecoder().decode(base64));
+                Uri uri = writeBytes("share-" + filename, mime, Base64.decode(base64, Base64.DEFAULT));
                 if (uri == null) {
                     return false;
                 }

@@ -74,9 +74,44 @@ def json_js_string(text: str) -> str:
     return json.dumps(text)
 
 
+def check_css_braces(css: str) -> None:
+    """花括号配平校验：多余/缺失的 {} 会让后续规则整段失效，构建时直接拦下。"""
+    depth = 0
+    i = 0
+    n = len(css)
+    while i < n:
+        ch = css[i]
+        if ch == "/" and i + 1 < n and css[i + 1] == "*":
+            end = css.find("*/", i + 2)
+            if end < 0:
+                raise SystemExit("styles.css: unterminated comment")
+            i = end + 2
+        elif ch in ("'", '"'):
+            quote = ch
+            i += 1
+            while i < n and css[i] != quote:
+                i += 2 if css[i] == "\\" else 1
+            if i >= n:
+                raise SystemExit("styles.css: unterminated string")
+            i += 1
+        elif ch == "{":
+            depth += 1
+            i += 1
+        elif ch == "}":
+            depth -= 1
+            if depth < 0:
+                raise SystemExit("styles.css: stray closing brace")
+            i += 1
+        else:
+            i += 1
+    if depth:
+        raise SystemExit("styles.css: %d unclosed block(s)" % depth)
+
+
 def build(images_path: str, out_path: str) -> pathlib.Path:
     tpl = read("index.tpl.html")
     css = read("styles.css")
+    check_css_braces(css)
     core = read("core.js")
     app = read("app.js")
     bundled = read_bundled()

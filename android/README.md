@@ -19,7 +19,7 @@ android/
             └── mipmap-*/ic_launcher.png
 ```
 
-`copyWebAssets` 会把 `../dist/md-flashcards.html`（约 7 MB，内置 3 本题库和 199 张配图）复制成 `app/src/main/assets/index.html`，所以**先构建网页**：
+`copyWebAssets` 会把 `../dist/md-flashcards.html`（约 900 KB 的单文件网页；内置题库与配图是可选项，本仓库未包含，需要时用 `scripts/build_interview_decks.py` / `scripts/build_interview_images.py` 生成后再构建）复制成 `app/src/main/assets/index.html`，所以**先构建网页**：
 
 ```bash
 python scripts/build.py

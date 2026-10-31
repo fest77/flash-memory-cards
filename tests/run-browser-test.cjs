@@ -10,7 +10,8 @@ const os = require('os');
 
 const ROOT = path.join(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
-const HTML = path.join(DIST, 'md-flashcards.html');
+// 可指定待测产物（反向验证旧版产物时用）：node tests/run-browser-test.cjs <html路径>
+const HTML = process.argv[2] || process.env.MDFC_HTML || path.join(DIST, 'md-flashcards.html');
 const HARNESS = path.join(__dirname, 'browser-harness.js');
 // 测试产物写到系统临时目录，不污染 dist/
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'mdfc-test-'));

@@ -894,27 +894,329 @@
                         check('v1123 copy equals source char-by-char', allEqual, allEqual ? '3/3' : detail.join(' | '));
                       })();
 
-                      // 3) 清库：顺序 close 先于 delete；仅 onsuccess 置 ok
-                      var deckCountBefore = A6.state().decks.length;
-                      // dryRun：headless 虚拟时钟下真实 deleteDatabase 会挂起；真实删除已在 IAB 实测（清库后重载 0 笔记/0 进度/0 localStorage 键）
-                      A6.wipeAllData(true);
-                      return new Promise(function (res) {
-                        setTimeout(function () {
-                          try {
-                            var order = A6.wipeOrder() || [];
-                            var iClose = order.indexOf('close');
-                            var iLocal = order.indexOf('localStorage');
-                            var iDel = order.indexOf('deleteRequested');
-                            check('v1123 wipe closes store before delete',
-                              iClose >= 0 && iLocal > iClose && iDel > iLocal, order.join('>'));
-                            check('v1123 wipe ok only on success', window.__wipeDone === 'ok', String(window.__wipeDone));
-                            check('v1123 writes locked after wipe', A6.store.isLocked() === true, 'locked');
-                            check('v1123 had data before wipe', deckCountBefore > 0, deckCountBefore);
-                          } catch (e) {
-                            check('v1123 block error', false, e && e.message);
-                          }
-                          res();
-                        }, 800);
+                      /* ============ v1.12.18 回归 ============ */
+                      /* 每条用例独立跑（各自 try/catch + 各自 Promise）：一条炸了不影响其它条。
+                         断言全部走「v1.12.17 与 v1.12.18 都存在」的公开路径（data-act 委托事件、
+                         DOM 文本、MDReviewApp 公共接口），这样在旧产物上失败 = 缺陷真的存在，
+                         而不是「新版才有这个接口」。 */
+                      var A7 = window.MDReviewApp;
+
+                      /* 记录页面级错误/未处理 rejection：旧产物的原型键崩溃是异步抛出的，
+                         靠它才能把「为什么旧版失败」写进用例详情 */
+                      var v11218Errors = [];
+                      window.addEventListener('error', function (e) {
+                        v11218Errors.push('error: ' + (e && e.message));
+                      });
+                      window.addEventListener('unhandledrejection', function (e) {
+                        var r = e && e.reason;
+                        v11218Errors.push('rejection: ' + ((r && r.message) || r));
+                      });
+                      function v11218TakeErrors() {
+                        var out = v11218Errors.join(' | ');
+                        v11218Errors = [];
+                        return out;
+                      }
+
+                      /* 触发 app 的委托点击（data-act）——两版都有 onAction 委托 */
+                      function v11218Act(act, attrs) {
+                        var b = document.createElement('button');
+                        b.setAttribute('data-act', act);
+                        Object.keys(attrs || {}).forEach(function (k) { b.setAttribute(k, attrs[k]); });
+                        document.body.appendChild(b);
+                        b.click();
+                        b.remove();
+                      }
+                      /* 造一个 md 文件（可带相对路径，用于导入队列的同名去重） */
+                      function v11218MdFile(name, rel, body) {
+                        var f = new File([body || '# 标题\n\n正文内容。'], name, { type: 'text/markdown' });
+                        try { Object.defineProperty(f, 'webkitRelativePath', { value: rel || name }); } catch (e) { /* ignore */ }
+                        return f;
+                      }
+                      /* 造一个带卡片的笔记（撤销用例专用） */
+                      function v11218MakeDeck(name) {
+                        A7.importText(name, '## 甲\n\n答案甲内容。\n\n## 乙\n\n答案乙内容。', { mode: 'h2' });
+                        return A7.state().decks.filter(function (d) { return d.name === name; })[0];
+                      }
+                      /* 供应商名里塞 HTML，探一下首页 AI 快捷按钮。
+                         注意：探针不能带会真正执行的脚本（旧版会把这段当 HTML 插入，
+                         onerror=alert(1) 会在 headless 里弹窗卡死），
+                         所以用 <b> 标签：旧版会真的生成 <b> 节点，新版只显示纯文本。 */
+                      function v11218AiProbe() {
+                        var st = A7.state();
+                        var ai = st.settings.ai;
+                        if (!ai.providers) ai.providers = [];
+                        var saved = JSON.parse(JSON.stringify(ai.providers));
+                        var savedActive = ai.activeId;
+                        ai.providers = [{
+                          id: 'xss-probe', name: '<b id="v11218-xss-probe">x</b>', model: 'm',
+                          base: 'https://api.example.com/v1', key: 'k', models: ['m'],
+                          model2: '', enabled: true, protocol: 'openai'
+                        }];
+                        ai.activeId = 'xss-probe';
+                        A7.renderHome();
+                        var btn = document.getElementById('aiQuickBtn');
+                        var res = {
+                          hasTag: !!(btn && btn.querySelector('#v11218-xss-probe')),
+                          txt: btn ? btn.textContent : ''
+                        };
+                        ai.providers = saved;
+                        ai.activeId = savedActive;
+                        A7.renderHome();
+                        return res;
+                      }
+                      /* 轮询（按轮数，不按时间：headless 虚拟时钟下 Date.now 不可靠） */
+                      function v11218Poll(fn, rounds, step) {
+                        step = step || 20;
+                        return new Promise(function (resolve) {
+                          var n = 0;
+                          (function once() {
+                            var v = null;
+                            try { v = fn(); } catch (e) { v = null; }
+                            if (v || n++ >= (rounds || 100)) { resolve(v); return; }
+                            setTimeout(once, step);
+                          })();
+                        });
+                      }
+                      var V11218_CASES = [];
+
+                      /* 1) 原型键文件名：导入队列里出现 constructor/__proto__/toString 时不得抛错，
+                             且同名文件按目录区分。断言渲染出来的队列项（#impList .imp-name）。 */
+                      V11218_CASES.push(['v11218 原型键文件名不抛错且按目录去重', function () {
+                        v11218TakeErrors();
+                        A7.openImportModal();
+                        A7.addQueueFiles([
+                          v11218MdFile('constructor.md', 'a/constructor.md'),
+                          v11218MdFile('constructor.md', 'b/constructor.md'),
+                          v11218MdFile('__proto__.md', 'c/__proto__.md'),
+                          v11218MdFile('toString.md', 'd/toString.md')
+                        ]);
+                        return v11218Poll(function () {
+                          var box = document.getElementById('impList');
+                          var items = box ? box.querySelectorAll('.imp-item .imp-name') : [];
+                          if (items.length !== 4) return null;
+                          // imp-name 里还带体积后缀（" · 0KB"），只取文件名部分
+                          return Array.prototype.map.call(items, function (n) {
+                            return String(n.textContent).replace(/\s·\s[\d.]+KB$/, '');
+                          });
+                        }, 150, 20).then(function (names) {
+                          var ok = !!names && names.length === 4 &&
+                            names[0] === 'a/constructor' && names[1] === 'b/constructor' &&
+                            names[2] === '__proto__' && names[3] === 'toString';
+                          return {
+                            ok: ok,
+                            detail: (names ? JSON.stringify(names) : '队列未渲染') + ' err=' + v11218TakeErrors()
+                          };
+                        });
+                      }]);
+
+                      /* 2) 原型键标签计数：首页标签栏 chip 的计数必须是数字 1，
+                             而不是 "function Object() {...}1" 之类乱码。 */
+                      V11218_CASES.push(['v11218 标签原型键计数正确', function () {
+                        var st = A7.state();
+                        var d0 = st.decks[0];
+                        if (!d0) return { ok: false, detail: 'no deck' };
+                        var oldTags = d0.tags;
+                        d0.tags = ['constructor', 'toString'];
+                        A7.renderHome();
+                        var bar = document.getElementById('tagBar');
+                        var chips = bar ? bar.querySelectorAll('.chip') : [];
+                        var got = {};
+                        Array.prototype.forEach.call(chips, function (c) {
+                          var tg = c.getAttribute('data-tag');
+                          var b = c.querySelector('b');
+                          got[tg] = b ? b.textContent : '';
+                        });
+                        d0.tags = oldTags;
+                        A7.renderHome();
+                        var ok = got['constructor'] === '1' && got['toString'] === '1';
+                        return { ok: ok, detail: JSON.stringify(got) };
+                      }]);
+
+                      /* 3) AI 快捷按钮：供应商名含 HTML 时按纯文本显示，不产生元素节点 */
+                      V11218_CASES.push(['v11218 AI 按钮供应商名不产生元素节点', function () {
+                        var p = v11218AiProbe();
+                        return { ok: !p.hasTag, detail: 'hasTag=' + p.hasTag + ' txt=' + p.txt.slice(0, 60) };
+                      }]);
+                      V11218_CASES.push(['v11218 AI 按钮供应商名按纯文本显示', function () {
+                        var p = v11218AiProbe();
+                        return { ok: p.txt.indexOf('<b id=') >= 0, detail: p.txt.slice(0, 60) };
+                      }]);
+
+                      /* 4) 缺失 i18n key：三语字典都要有 card.splitHint，且拆分弹窗不露出原始 key */
+                      V11218_CASES.push(['v11218 card.splitHint 三语均已定义', function () {
+                        // 统计三语字典里的定义次数（应为 3）；探针串拆开写，避免用例自身的字面量被算进去
+                        var html = document.documentElement.innerHTML;
+                        var needle = "'card.split" + "Hint':";
+                        var count = 0, idx = 0;
+                        while ((idx = html.indexOf(needle, idx)) >= 0) { count++; idx += needle.length; }
+                        return { ok: count === 3, detail: 'count=' + count };
+                      }]);
+                      V11218_CASES.push(['v11218 拆分弹窗不显示原始 key', function () {
+                        var st = A7.state();
+                        var savedLang = st.settings.lang;
+                        var d0 = st.decks[0], c0 = d0 && d0.cards[0];
+                        if (!c0) return { ok: false, detail: 'no card' };
+                        var bad = [];
+                        ['zh-Hans', 'zh-Hant', 'en'].forEach(function (lg) {
+                          st.settings.lang = lg;
+                          v11218Act('card-split', { 'data-deck': d0.id, 'data-card': c0.id });
+                          var box = document.getElementById('modalBox');
+                          var txt = box ? box.textContent : '';
+                          // 缺键时 t() 会原样返回键名 → 界面露出 "card.splitHint"
+                          if (txt.indexOf('card.split' + 'Hint') >= 0) bad.push(lg);
+                          var close = document.querySelector('[data-act="close-modal"]');
+                          if (close) close.click();
+                        });
+                        st.settings.lang = savedLang;
+                        return { ok: bad.length === 0, detail: bad.join(',') || 'clean' };
+                      }]);
+
+                      /* 5) importText 覆盖用户设置：加载示例不得重置用户选好的拆分方式/粒度/题型 */
+                      V11218_CASES.push(['v11218 加载示例不重置用户设置', function () {
+                        var st = A7.state();
+                        var saved = { mode: st.settings.mode, gran: st.settings.gran, qstyle: st.settings.qstyle };
+                        st.settings.mode = 'qa'; st.settings.gran = 'fine'; st.settings.qstyle = 'cloze';
+                        v11218Act('demo', {});
+                        var after = st.settings.mode + '/' + st.settings.gran + '/' + st.settings.qstyle;
+                        st.settings.mode = saved.mode; st.settings.gran = saved.gran; st.settings.qstyle = saved.qstyle;
+                        return { ok: after === 'qa/fine/cloze', detail: after };
+                      }]);
+
+                      /* 6) 显式覆盖路径仍生效：粘贴弹层里用户主动选的拆分参数要写回设置 */
+                      V11218_CASES.push(['v11218 显式覆盖仍写入设置', function () {
+                        var st = A7.state();
+                        var saved = { mode: st.settings.mode, gran: st.settings.gran, qstyle: st.settings.qstyle };
+                        st.settings.mode = 'auto'; st.settings.gran = 'mid'; st.settings.qstyle = 'prompt';
+                        v11218Act('paste', {});
+                        var nm = document.getElementById('pasteName');
+                        var tx = document.getElementById('pasteText');
+                        var md = document.getElementById('pasteMode');
+                        var gz = document.getElementById('pasteGran');
+                        var qs = document.getElementById('pasteQstyle');
+                        if (!nm || !tx || !md || !gz || !qs) {
+                          st.settings.mode = saved.mode; st.settings.gran = saved.gran; st.settings.qstyle = saved.qstyle;
+                          return { ok: false, detail: 'paste modal missing' };
+                        }
+                        nm.value = 'v11218-explicit';
+                        tx.value = '## 甲\n\n答案甲内容。\n\n## 乙\n\n答案乙内容。';
+                        md.value = 'h2'; gz.value = 'coarse'; qs.value = 'title';
+                        v11218Act('do-paste', {});
+                        var after = st.settings.mode + '/' + st.settings.gran + '/' + st.settings.qstyle;
+                        st.settings.mode = saved.mode; st.settings.gran = saved.gran; st.settings.qstyle = saved.qstyle;
+                        st.decks = st.decks.filter(function (d) { return d.name !== 'v11218-explicit'; });
+                        return { ok: after === 'h2/coarse/title', detail: after };
+                      }]);
+
+                      /* 7) 撤销快照边界：删除笔记后撤销卡片操作，不得把笔记复活 */
+                      V11218_CASES.push(['v11218 删笔记后撤销不复活笔记', function () {
+                        var name = 'v11218-undo-del-' + Date.now();
+                        var deck = v11218MakeDeck(name);
+                        if (!deck || !deck.cards.length) return { ok: false, detail: 'no deck' };
+                        // 先做一次卡片编辑 → 建立撤销快照（两版都是「写前快照」）
+                        v11218Act('card-edit', { 'data-deck': deck.id, 'data-card': deck.cards[0].id });
+                        v11218Act('card-edit-save', { 'data-deck': deck.id, 'data-card': deck.cards[0].id });
+                        // 再删笔记（笔记级操作）
+                        v11218Act('delete-deck', { 'data-deck': deck.id });
+                        var gone = !A7.state().decks.some(function (d) { return d.id === deck.id; });
+                        // 撤销卡片操作
+                        v11218Act('card-undo', {});
+                        var back = A7.state().decks.some(function (d) { return d.id === deck.id; });
+                        return { ok: gone && !back, detail: 'gone=' + gone + ' back=' + back };
+                      }]);
+
+                      /* 8) 撤销快照边界：重命名后撤销，不得把名字回滚 */
+                      V11218_CASES.push(['v11218 重命名后撤销不回滚名称', function () {
+                        var name = 'v11218-undo-ren-' + Date.now();
+                        var deck = v11218MakeDeck(name);
+                        if (!deck || !deck.cards.length) return { ok: false, detail: 'no deck' };
+                        v11218Act('card-edit', { 'data-deck': deck.id, 'data-card': deck.cards[0].id });
+                        v11218Act('card-edit-save', { 'data-deck': deck.id, 'data-card': deck.cards[0].id });
+                        v11218Act('manage-rename', { 'data-deck': deck.id });
+                        var inp = document.getElementById('renameInput');
+                        if (inp) inp.value = 'v11218-renamed';
+                        v11218Act('do-rename', { 'data-deck': deck.id });
+                        var renamed = A7.state().decks.filter(function (d) { return d.id === deck.id; })[0];
+                        v11218Act('card-undo', {});
+                        var after = A7.state().decks.filter(function (d) { return d.id === deck.id; })[0];
+                        var ok = !!(renamed && renamed.name === 'v11218-renamed') &&
+                          !!(after && after.name === 'v11218-renamed');
+                        return { ok: ok, detail: 'renamed=' + (renamed && renamed.name) + ' after=' + (after && after.name) };
+                      }]);
+
+                      /* 9) 导入队列换代：zip 解压未完成时重开导入弹层，旧批次不得进入新队列。
+                             先跑一遍「控制组」证明解压能在等待窗口内完成（否则用例无意义），
+                             再跑「竞态组」：旧批次一旦入队就是缺陷。 */
+                      V11218_CASES.push(['v11218 导入队列换代后旧批次不入队', function () {
+                        var zipB64 = 'UEsDBBQAAAAIACRMV11XkjbrigAAAJcAAAAMAAAAbm90ZXMvdGNwLm1kU1YIcQ5QeL5myot1G7i4lJUVnuzofLZm4bP+hc86u7m4nq5b9Kxj+/PV6xWCI/3e7+l5Nqf3addCKF/b0dkbKIZQA+Q/bmiCGrPrye6GJzs7nuzofTZj/ZMdS4CmcnG9nLHp2dpFT/vanvZverF/3rO+pS/Wb3+2senZ1lUvtux8sbXl2a4JICMAUEsDBBQAAAAIACRMV13q6RrmVQAAAFAAAAASAAAAbm90ZXMvZGVlcC9tZW0udHh0AVAAr/8jIOWGheWtmOeslOiusAoKIyMg6Jma5ouf5YaF5a2YCgrmr4/kuKrov5vnqIvni6znq4vlnLDlnYDnqbrpl7TvvIxNTVUg5pig5bCE44CCClBLAwQUAAAACAAkTFddOZz7BgYAAAAEAAAAEQAAAF9fTUFDT1NYLy5fdGNwLm1kyyrNywYAUEsDBBQAAAAIACRMV10EwL7RBgAAAAQAAAAQAAAAbm90ZXMvcmVhZG1lLnBkZlMNcHEDAFBLAQIUABQAAAAIACRMV11XkjbrigAAAJcAAAAMAAAAAAAAAAAAAACAAQAAAABub3Rlcy90Y3AubWRQSwECFAAUAAAACAAkTFdd6uka5lUAAABQAAAAEgAAAAAAAAAAAAAAgAG0AAAAbm90ZXMvZGVlcC9tZW0udHh0UEsBAhQAFAAAAAgAJExXXTmc+wYGAAAABAAAABEAAAAAAAAAAAAAAIABOQEAAF9fTUFDT1NYLy5fdGNwLm1kUEsBAhQAFAAAAAgAJExXXQTAvtEGAAAABAAAABAAAAAAAAAAAAAAAIABbgEAAG5vdGVzL3JlYWRtZS5wZGZQSwUGAAAAAAQABAD3AAAAogEAAAAA';
+                        var bin = atob(zipB64);
+                        var bytes = new Uint8Array(bin.length);
+                        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                        function mkZip() { return new File([bytes], 'race.zip', { type: 'application/zip' }); }
+                        function queueNames() {
+                          var q = A7.importQueue();
+                          return q.length ? q.map(function (it) { return it.name; }) : null;
+                        }
+                        // 控制组：解压本身能在等待窗口内完成
+                        A7.openImportModal();
+                        A7.addQueueFiles([mkZip()]);
+                        return v11218Poll(queueNames, 150, 20).then(function (control) {
+                          // 竞态组：加 zip 后立刻重开弹层（换代）
+                          A7.openImportModal();
+                          A7.addQueueFiles([mkZip()]);
+                          A7.openImportModal();
+                          return v11218Poll(queueNames, 150, 20).then(function (leaked) {
+                            var q = A7.importQueue();
+                            var map = A7.imgPathMapForTest();
+                            var ok = !!control && !leaked && q.length === 0 && Object.keys(map).length === 0;
+                            return {
+                              ok: ok,
+                              detail: 'control=' + JSON.stringify(control) + ' leaked=' + JSON.stringify(leaked) +
+                                ' queue=' + q.length + ' map=' + Object.keys(map).length
+                            };
+                          });
+                        });
+                      }]);
+
+                      /* 10) state 带 savedAt（IDB / localStorage 取较新用的时间戳） */
+                      V11218_CASES.push(['v11218 state 含 savedAt 字段', function () {
+                        A7.flushSave();
+                        var st = A7.state();
+                        return { ok: typeof st.savedAt === 'number', detail: 'savedAt=' + st.savedAt };
+                      }]);
+
+                      var v11218Chain = Promise.resolve();
+                      V11218_CASES.forEach(function (c) {
+                        v11218Chain = v11218Chain.then(function () {
+                          return Promise.resolve().then(function () { return c[1](); }).then(function (res) {
+                            check(c[0], !!(res && res.ok), res && res.detail);
+                          }, function (err) {
+                            check(c[0], false, '异常: ' + (err && err.message));
+                          });
+                        });
+                      });
+                      return v11218Chain.then(function () {
+                        // 3) 清库：顺序 close 先于 delete；仅 onsuccess 置 ok
+                        var deckCountBefore = A6.state().decks.length;
+                        // dryRun：headless 虚拟时钟下真实 deleteDatabase 会挂起；真实删除已在 IAB 实测（清库后重载 0 笔记/0 进度/0 localStorage 键）
+                        A6.wipeAllData(true);
+                        return new Promise(function (res) {
+                          setTimeout(function () {
+                            try {
+                              var order = A6.wipeOrder() || [];
+                              var iClose = order.indexOf('close');
+                              var iLocal = order.indexOf('localStorage');
+                              var iDel = order.indexOf('deleteRequested');
+                              check('v1123 wipe closes store before delete',
+                                iClose >= 0 && iLocal > iClose && iDel > iLocal, order.join('>'));
+                              check('v1123 wipe ok only on success', window.__wipeDone === 'ok', String(window.__wipeDone));
+                              check('v1123 writes locked after wipe', A6.store.isLocked() === true, 'locked');
+                              check('v1123 had data before wipe', deckCountBefore > 0, deckCountBefore);
+                            } catch (e) {
+                              check('v1123 block error', false, e && e.message);
+                            }
+                            res();
+                          }, 800);
+                        });
                       });
                     }).then(function () {
                       finish();

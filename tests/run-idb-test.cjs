@@ -1184,6 +1184,31 @@ async function main() {
     shareLimit.big.modal === false && /文件过大/.test(shareLimit.big.toast) === true &&
     shareLimit.small.modal === true, shareLimit);
 
+  // 35) v1.12.18：保存时 IDB 与 localStorage 同时写（以前只在 IDB 写失败时才写 LS）
+  const dualWrite = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    A.importText('idb-dual-write', '## 一\\n\\n双写探针内容。', { mode: 'h2' }, { silent: true, replace: 'yes' });
+    await A.flushSave();
+    var raw = null;
+    try { raw = await A.readRawState(); } catch (e) { raw = null; }
+    var ls = null;
+    try { ls = window.localStorage.getItem('mdreview.state.v1'); } catch (e) { ls = null; }
+    var idbObj = null, lsObj = null;
+    try { idbObj = JSON.parse(raw); } catch (e) {}
+    try { lsObj = JSON.parse(ls); } catch (e) {}
+    return {
+      lsPresent: !!ls,
+      idbSavedAt: idbObj && typeof idbObj.savedAt === 'number' ? idbObj.savedAt : null,
+      lsSavedAt: lsObj && typeof lsObj.savedAt === 'number' ? lsObj.savedAt : null,
+      same: !!(idbObj && lsObj && idbObj.savedAt === lsObj.savedAt),
+      idbDeck: !!(idbObj && idbObj.decks && idbObj.decks.some(function (d) { return d.name === 'idb-dual-write'; })),
+      lsDeck: !!(lsObj && lsObj.decks && lsObj.decks.some(function (d) { return d.name === 'idb-dual-write'; }))
+    };
+  })()`);
+  check('保存同时写 IDB 与 localStorage（两边都有 savedAt 且内容一致）',
+    dualWrite.lsPresent === true && dualWrite.idbSavedAt !== null && dualWrite.lsSavedAt !== null &&
+    dualWrite.same === true && dualWrite.idbDeck === true && dualWrite.lsDeck === true, dualWrite);
+
   // 收尾：清掉本组测试写入的图片探针
   await evalJs(`(async function () {
     var A = window.MDReviewApp;
@@ -1197,6 +1222,92 @@ async function main() {
     A.renderHome();
     return true;
   })()`).catch(() => null);
+
+  // 36) v1.12.18：导入弹层换代后，旧批次仍在途的图片不得写进库（否则留下孤儿图）
+  const imgGen = await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    var nm = 'gen-race-' + Date.now() + '.png';
+    var bin = atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/lL6nWQAAAABJRU5ErkJggg==');
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    A.openImportModal();
+    A.addQueueFiles([new File([bytes], nm, { type: 'image/png' })]);
+    var work = A.pendingImageWorkForTest();
+    A.openImportModal();
+    await work;
+    var list = await A.imgIndexNames();
+    var has = list.indexOf(nm) >= 0;
+    if (has) {
+      await A.setImgIndexForTest(list.filter(function (x) { return x !== nm; }));
+      await A.rawDeleteForTest('img/' + nm);
+    }
+    return { has: has, nm: nm };
+  })()`);
+  check('导入弹层换代后旧批次图片不入库', imgGen.has === false, imgGen);
+
+  // 37) v1.12.18：IDB 里的旧数据 + localStorage 里的新数据 → 重启后必须读到较新的那份
+  //     （以前只读 IDB：一次 IDB 写失败后，重启读到的永远是旧数据）
+  //     注意：必须先 store.close() 冻结本页写入 —— 否则 pagehide 里的 flushSave
+  //     会在重载前把注入的数据覆盖掉。
+  await send('Page.enable').catch(() => null);
+  await evalJs(`(async function () {
+    var A = window.MDReviewApp;
+    await A.flushSave();
+    A.store.close();   // 冻结本页写入：后续的定时保存/pagehide 都不再落盘
+    function putIdbState(obj) {
+      return new Promise(function (resolve, reject) {
+        var req = indexedDB.open('md-review', 1);
+        req.onupgradeneeded = function () { try { req.result.createObjectStore('kv'); } catch (e) {} };
+        req.onsuccess = function () {
+          var db = req.result;
+          var tx = db.transaction('kv', 'readwrite');
+          tx.objectStore('kv').put(JSON.stringify(obj), 'state');
+          tx.oncomplete = function () { db.close(); resolve(true); };
+          tx.onerror = function () { try { db.close(); } catch (e) {} reject(new Error('tx failed')); };
+        };
+        req.onerror = function () { reject(new Error('open failed')); };
+      });
+    }
+    function mkState(name, savedAt) {
+      return {
+        v: 1,
+        decks: [{
+          id: 'd-' + name, name: name, title: '', createdAt: 1, mode: 'auto', qstyle: 'prompt',
+          raw: '', tags: [], source: '', bundled: false,
+          cards: [{ id: 'c-' + name, title: 't', question: '', answer: '分裂探针答案内容。', path: [], tags: [], modified: false }]
+        }],
+        stats: {}, daily: {}, settings: {}, savedAt: savedAt
+      };
+    }
+    await putIdbState(mkState('idb-old', 1000));
+    window.localStorage.setItem('mdreview.state.v1', JSON.stringify(mkState('idb-new', 2000)));
+    return true;
+  })()`);
+  await send('Page.reload', { ignoreCache: true });
+  let rebooted = false;
+  for (let i = 0; i < 80; i++) {
+    await sleep(300);
+    try {
+      rebooted = await evalJs('!!(window.MDReviewApp && window.MDReviewApp.state() && window.MDReviewApp.state().decks)');
+    } catch (e) { rebooted = false; }
+    if (rebooted) break;
+  }
+  const newer = await evalJs(`(function () {
+    var A = window.MDReviewApp;
+    var names = A.state().decks.map(function (d) { return d.name; });
+    var ls = null;
+    try { ls = window.localStorage.getItem('mdreview.state.v1'); } catch (e) { ls = null; }
+    var lso = null; try { lso = JSON.parse(ls); } catch (e) {}
+    return {
+      names: names,
+      hasNew: names.indexOf('idb-new') >= 0,
+      hasOld: names.indexOf('idb-old') >= 0,
+      lsSavedAt: lso && typeof lso.savedAt === 'number' ? lso.savedAt : null,
+      lsDecks: lso && lso.decks ? lso.decks.map(function (d) { return d.name; }) : null
+    };
+  })()`);
+  check('IDB 旧 / localStorage 新时，重启读到较新的那份（不再数据分裂）',
+    rebooted === true && newer.hasNew === true && newer.hasOld === false, newer);
 
   ws.close();
   proc.kill();
