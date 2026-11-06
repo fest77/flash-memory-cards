@@ -113,6 +113,48 @@
       A6.runGlobalSearch();
     } catch (e) { check('v11214 search block error', false, e && e.message); }
 
+    /* v1.12.18 回归：同名替换沿用 deck id / 迁移进度 / 清孤儿；安卓分享文本导入 */
+    try {
+      var A8 = window.MDReviewApp;
+      var st8 = A8.state();
+      A8.importText('同名替换回归', '## 卡片甲\n\n这是卡片甲的完整答案内容，长度足够。',
+        { mode: 'h2' }, { silent: true, replace: 'yes' });
+      var d1 = st8.decks.filter(function (x) { return x.name === '同名替换回归'; })[0];
+      var oldDeckId = d1 && d1.id;
+      var oldCardId = d1 && d1.cards[0].id;
+      st8.stats[oldCardId] = { s: 'known', box: 3, n: 5, ok: 5, bad: 0,
+        last: Date.now(), dueAt: Date.now() + 86400000, ivl: 7 };
+      A8.importText('同名替换回归', '## 卡片甲\n\n这是卡片甲修改后的完整答案内容，长度足够。',
+        { mode: 'h2' }, { silent: true, replace: 'yes' });
+      var d2 = st8.decks.filter(function (x) { return x.name === '同名替换回归'; })[0];
+      check('v11218 同名替换沿用 deck id', !!d2 && d2.id === oldDeckId,
+        String(oldDeckId) + '/' + (d2 && d2.id));
+      check('v11218 同名替换迁移卡片进度',
+        !!d2 && !!st8.stats[d2.cards[0].id] && st8.stats[d2.cards[0].id].box === 3,
+        d2 && d2.cards[0].id);
+      check('v11218 同名替换不留下孤儿进度',
+        !st8.stats[oldCardId] || oldCardId === (d2 && d2.cards[0].id), String(oldCardId));
+      // 同内容重导：card id 不变，进度必须原样保留（README 的原有承诺不能被迁移逻辑破坏）
+      A8.importText('同名替换回归', '## 卡片甲\n\n这是卡片甲修改后的完整答案内容，长度足够。',
+        { mode: 'h2' }, { silent: true, replace: 'yes' });
+      var d3 = st8.decks.filter(function (x) { return x.name === '同名替换回归'; })[0];
+      check('v11218 同内容重导进度不丢',
+        !!d3 && d3.id === oldDeckId && d3.cards[0].id === d2.cards[0].id &&
+        !!st8.stats[d3.cards[0].id] && st8.stats[d3.cards[0].id].box === 3,
+        d3 && d3.cards[0].id);
+    } catch (e) { check('v11218 replace block error', false, e && e.message); }
+    try {
+      var shareText = '## 分享回归标题\n\n这是一段从外部应用分享进来的 Markdown 正文内容，长度足够通过导入校验。';
+      var sb8 = new TextEncoder().encode(shareText);
+      var bin8 = '';
+      for (var bi8 = 0; bi8 < sb8.length; bi8++) bin8 += String.fromCharCode(sb8[bi8]);
+      window.__externalImport('分享回归笔记.md', btoa(bin8), sb8.length);
+      var shared = window.MDReviewApp.state().decks.filter(
+        function (x) { return x.name === '分享回归笔记'; })[0];
+      check('v11218 安卓分享文本导入', !!shared && shared.cards.length > 0,
+        shared ? shared.cards.length + ' cards' : 'not imported');
+    } catch (e) { check('v11218 share block error', false, e && e.message); }
+
     var pre = document.createElement('pre');
     pre.id = 'testResult';
     pre.textContent = results.join('\n');

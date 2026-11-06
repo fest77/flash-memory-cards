@@ -290,6 +290,35 @@
     return chunks;
   }
 
+  /* 超长子节正文的二次切分：先按空行段落合并，仍超长时按行/定长切到 maxLen 以内。
+     含围栏代码块的正文保持整块（返回单元素），避免把围栏从中间劈开导致渲染不成对。 */
+  function splitSectionBody(text, maxLen) {
+    var src = trimBlank(String(text || ''));
+    if (src.length <= maxLen) return [src];
+    if (/^ {0,3}(?:`{3,}|~{3,})/m.test(src)) return [src];
+    var paras = src.split(/\n[ \t]*\n/);
+    var out = [];
+    var cur = '';
+    for (var i = 0; i < paras.length; i++) {
+      var para = paras[i];
+      if (cur && (cur.length + para.length + 2) > maxLen) {
+        if (cur.trim()) out.push(trimBlank(cur));
+        cur = '';
+      }
+      cur = cur ? cur + '\n\n' + para : para;
+      // 单个段落本身超长（例如一整段复制的说明）：尽量在换行处切，否则按定长切
+      while (cur.length > maxLen) {
+        var at = cur.lastIndexOf('\n', maxLen);
+        if (at < Math.floor(maxLen / 2)) at = maxLen;
+        var piece = trimBlank(cur.slice(0, at));
+        if (piece) out.push(piece);
+        cur = cur.slice(at).replace(/^\n+/, '');
+      }
+    }
+    if (cur.trim()) out.push(trimBlank(cur));
+    return out.length ? out : [src];
+  }
+
   /* ============================== 提问生成（让标题不像标题时也能提问） ============================== */
 
   var QSTYLES = ['prompt', 'title', 'cloze'];
@@ -455,6 +484,23 @@
                 if (kidQA.pre) subOut.push({ title: kid.title, question: '', answer: kidQA.pre, path: basePath, chapter: sec.title });
                 for (var kq = 0; kq < kidQA.pairs.length; kq++) {
                   subOut.push({ title: kid.title, question: kidQA.pairs[kq].q, answer: kidQA.pairs[kq].a, path: basePath, chapter: sec.title });
+                }
+              } else if (kid.body.length > opts.maxCardLen) {
+                // 子小节自身仍超长：以前整段塞进一张卡，使「细/中/粗」粒度在嵌套标题下失效。
+                // 按段落/行二次切分；含围栏代码块的正文保持原样（splitSectionBody 返回单片）。
+                var pieces = splitSectionBody(kid.body, opts.maxCardLen);
+                if (pieces.length > 1) {
+                  for (var pi = 0; pi < pieces.length; pi++) {
+                    subOut.push({
+                      title: kid.title + ' (' + (pi + 1) + '/' + pieces.length + ')',
+                      question: frontFromChunk(pieces[pi]),
+                      answer: pieces[pi],
+                      path: basePath,
+                      chapter: sec.title
+                    });
+                  }
+                } else {
+                  subOut.push({ title: kid.title, question: '', answer: kid.body, path: basePath, chapter: sec.title });
                 }
               } else {
                 subOut.push({ title: kid.title, question: '', answer: kid.body, path: basePath, chapter: sec.title });
@@ -738,7 +784,9 @@
         var style = (title && /^\d+$/.test(title)) ? ' style="max-width:' + title + 'px"' : '';
         return '<img src="' + url + '" alt="' + alt + '" loading="lazy"' + style + '>';
       });
-      s = s.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, function (m, label, url) {
+      // 文本已先经 escapeHtml，标题里的引号是 &quot;（与上面的图片正则一致）。
+      // 以前这里写的是字面 " ，导致带 title 的链接整条匹配不上、原样输出。
+      s = s.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g, function (m, label, url) {
         return safeUrl(url) ? '<a href="' + url + '" target="_blank" rel="noopener">' + label + '</a>' : label;
       });
       s = s.replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
@@ -1234,7 +1282,10 @@
     var parsed = parseMarkdown(text, options);
     var deckName = String(name || '').replace(/\.(md|markdown|txt)$/i, '').trim() || '未命名笔记';
     return {
-      id: 'd' + hash32(deckName + '|' + (text || '').length + '|' + parsed.cards.length),
+      // 用全文内容参与哈希：只用「文件名 + 文本长度 + 卡片数」时，同名、等长、
+      // 卡数相同但内容不同的两本笔记会得到同一个 id，复习会话与备份合并会认错笔记。
+      // 同一份内容重导仍得到相同 id；JSON.stringify 避免分隔符造成的拼接歧义。
+      id: 'd' + hash32(JSON.stringify([deckName, String(text || ''), parsed.cards.length])),
       name: deckName,
       title: parsed.title || deckName,
       createdAt: Date.now(),

@@ -29,7 +29,7 @@
   };
   var AI_BATCH_CHARS = 5000;
   var AI_TIMEOUT = 60000;
-  var APP_VERSION = '1.12.18';
+  var APP_VERSION = '1.12.19';
   // 应用锁开关：手机系统普遍自带应用锁，默认隐藏该设置项（相关代码与原生桥全部保留）。
   // 需要恢复时把 false 改成 true（原生侧 APP_LOCK_ENABLED 同步改），选项即重新出现在「设置 → 存储」。
   var FEATURE_APP_LOCK = false;
@@ -2417,7 +2417,31 @@
           return false;
         }
       }
+      var oldDeck = state.decks[existIdx];
+      // 替换同名笔记时沿用旧 id：复习会话的 deckIds、标签、备份合并都按 id 关联，
+      // 重新生成 id 会让「继续上次复习」失效，也会让旧进度成为孤儿。
+      deck.id = oldDeck.id;
+      // 内容或拆分设置变化会改变 card id（内容哈希）。按「同位置 + 同标题」保守迁移进度，
+      // 且只在目标卡尚无进度时写入；同内容重导时 id 相同，进度本来就会保留。
+      for (var mi = 0; mi < deck.cards.length; mi++) {
+        var nc = deck.cards[mi];
+        if (state.stats[nc.id]) continue;
+        var oc = oldDeck.cards[mi];
+        if (oc && oc.title === nc.title && state.stats[oc.id]) {
+          state.stats[nc.id] = state.stats[oc.id];
+        }
+      }
       state.decks[existIdx] = deck;
+      // 只清理本次替换留下的孤儿进度：仍被任何现存笔记引用的 id 一律保留
+      //（口径与 delete-deck 的共享判断一致），不动其它历史数据。
+      var aliveIds = Object.create(null);
+      state.decks.forEach(function (dd) {
+        dd.cards.forEach(function (cc) { aliveIds[cc.id] = 1; });
+      });
+      for (var oi = 0; oi < oldDeck.cards.length; oi++) {
+        var oldId = oldDeck.cards[oi].id;
+        if (!aliveIds[oldId]) delete state.stats[oldId];
+      }
     } else {
       state.decks.push(deck);
     }
@@ -5705,9 +5729,10 @@
           openImportModal();
         });
       } else {
-        decodeTextBytes(buf).then(function (text) {
-          importText(String(name || '分享笔记').replace(/\.[^.]+$/, ''), text, {});
-        });
+        // decodeTextBytes 同步返回字符串（不是 Promise）：以前误调 .then() 会抛 TypeError，
+        // 被下面的 catch 吞成通用「读取失败」，导致安卓分享 .md/.txt 永远导入不了。
+        var sharedText = decodeTextBytes(buf);
+        importText(String(name || '分享笔记').replace(/\.[^.]+$/, ''), sharedText, {});
       }
     } catch (e) { toast(t('toast.readFailGeneric')); }
   };

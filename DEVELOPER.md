@@ -40,10 +40,10 @@ md-flashcards/
 │   ├── build_interview_decks.py  # interview md → bundled-decks.js
 │   └── build_interview_images.py # interview images/ → bundled-images.js
 ├── tests/
-│   ├── core.test.cjs          # 65 unit tests (Node, no browser)
+│   ├── core.test.cjs          # 70 unit tests (Node, no browser)
 │   ├── browser-harness.js     # injected into the built page
-│   ├── run-browser-test.cjs   # static checks + 175 headless-Edge assertions
-│   ├── run-idb-test.cjs       # 35 real-clock IndexedDB assertions (CDP; skips without Chromium)
+│   ├── run-browser-test.cjs   # static checks + 192 headless-Edge assertions
+│   ├── run-idb-test.cjs       # 38 real-clock IndexedDB assertions (CDP; skips without Chromium)
 │   ├── run-ui-test.cjs        # 10 real-clock interaction assertions (viewer gestures/Esc + wide tables + formulas + export copy)
 │   ├── run-screenshots.cjs    # writes docs/images/*
 │   ├── persist-test.cjs       # file:// persistence check
@@ -276,8 +276,8 @@ Notes:
 ## 9. Tests
 
 ```bash
-node tests/core.test.cjs            # 65 tests, Node 18+ (DecompressionStream)
-node tests/run-browser-test.cjs     # static checks + 187 headless Edge assertions
+node tests/core.test.cjs            # 70 tests, Node 18+ (DecompressionStream)
+node tests/run-browser-test.cjs     # static checks + 192 headless Edge assertions
 node tests/run-idb-test.cjs         # 38 real-clock IndexedDB assertions (CDP; Node 22+ — global WebSocket)
 node tests/run-ui-test.cjs          # 10 real-clock interaction assertions (CDP; Node 22+)
 node tests/run-screenshots.cjs      # docs/images screenshots

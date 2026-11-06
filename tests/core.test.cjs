@@ -156,6 +156,23 @@ test('超长无子标题小节按段落切', () => {
   assert.ok(res.cards.every((c) => !c.title.startsWith('#')), '卡片标题不应带 # 号');
   assert.ok(res.cards.every((c) => c.answer.length > 0 && !c.answer.includes('# 一个很长的知识点')));
 });
+test('嵌套标题下超长子节仍按粒度二次切分', () => {
+  let md = '## 父节\n\n### 子节一\n\n' + '内容段落。'.repeat(400) +
+    '\n\n### 子节二\n\n' + '其他内容。'.repeat(20);
+  const cards = cardsOf(md, { mode: 'h2', maxCardLen: 800 });
+  assert.ok(cards.length >= 3, '2000 字子节应被拆开，实际 ' + cards.length + ' 张');
+  assert.ok(cards.every((c) => c.answer.length <= 800),
+    '每张卡不得超过 800 字: ' + cards.map((c) => c.answer.length).join(','));
+});
+test('含围栏代码块的超长子节保持整块（不切开围栏）', () => {
+  let md = '## 父节\n\n### 代码子节\n\n```js\n' + 'const x = 1;'.repeat(150) +
+    '\n```\n\n### 短子节\n\n短内容';
+  const cards = cardsOf(md, { mode: 'h2', maxCardLen: 800 });
+  const code = cards.filter((c) => c.title.indexOf('代码子节') === 0)[0];
+  assert.ok(code, '应保留代码子节卡片');
+  assert.ok(code.answer.indexOf('```js') >= 0 && code.answer.lastIndexOf('```') > code.answer.indexOf('```js'),
+    '围栏必须成对保留，不能被从中间切开');
+});
 
 /* ------------------------------------------------------------------ */
 console.log('\n[5] 卡片唯一性与稳定性');
@@ -201,6 +218,12 @@ test('javascript: 链接被拒绝', () => {
   const html = Core.renderMarkdown('[点我](javascript:alert(1))');
   assert.ok(!html.includes('javascript:'), html);
 });
+test('带 title 的链接正常渲染（转义后是 &quot;）', () => {
+  const html = Core.renderInline('[官网](https://example.com "标题")');
+  assert.ok(html.includes('<a href="https://example.com"'), html);
+  assert.ok(html.includes('>官网</a>'), html);
+  assert.ok(!html.includes('&quot;标题&quot;'), 'title 不应残留在输出里: ' + html);
+});
 test('列表渲染', () => {
   const html = Core.renderMarkdown('- 一\n- 二\n  - 二点一\n\n1. 甲\n2. 乙');
   assert.ok(html.includes('md-list'), html);
@@ -219,6 +242,15 @@ test('buildDeck 生成名称与卡', () => {
   assert.strictEqual(deck.name, '算法笔记');
   assert.ok(deck.cards.length >= 3);
   assert.strictEqual(deck.title, '计算机网络');
+});
+test('deck id 由全文内容决定：同名等长同卡数不碰撞', () => {
+  const a = Core.buildDeck('note.md', 'aaaaaaaaaa', {});
+  const b = Core.buildDeck('note.md', 'bbbbbbbbbb', {});
+  assert.notStrictEqual(a.id, b.id, '内容不同却得到同一个 deck id: ' + a.id);
+});
+test('deck id 同内容重导保持稳定', () => {
+  const text = '## 小节\n\n这里是一段足够长的正文内容，用于生成卡片。';
+  assert.strictEqual(Core.buildDeck('note.md', text, {}).id, Core.buildDeck('note.md', text, {}).id);
 });
 
 /* ------------------------------------------------------------------ */

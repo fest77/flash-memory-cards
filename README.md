@@ -265,8 +265,8 @@ md-flashcards/
 │   ├── build_interview_decks.py   # 题库 md → bundled-decks.js（可选，本版未含数据）
 │   └── build_interview_images.py  # 题库配图 → bundled-images.js（可选，本版未含数据）
 ├── tests/
-│   ├── core.test.cjs         # 65 项单元测试
-│   ├── run-browser-test.cjs  # 187 项 headless Edge 端到端
+│   ├── core.test.cjs         # 70 项单元测试
+│   ├── run-browser-test.cjs  # 192 项 headless Edge 端到端
 │   ├── run-idb-test.cjs      # 38 项 IndexedDB 真实时钟回归（图片索引/类型/同名图/会话/复习重绘/导入去重/备份层级/超时连接/解压预算/每日统计合并/分享体积阈值/双写存储与取较新/导入换代图片）
 │   ├── run-ui-test.cjs       # 10 项交互回归（大图缩放/平移/滑动/Esc 关闭、宽表格横向滚动、标题/提问公式、单本导出说明三语）
 │   ├── run-screenshots.cjs   # 生成 docs/images 截图
